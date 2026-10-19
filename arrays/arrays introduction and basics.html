@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Arrays from First Principles</title>
+<style>
+:root{--bg:#fff;--ink:#111;--mut:#555;--line:#ccc;--acc:#1f4e8c;--hi:#fff3b0;--hib:#c9a227;--ok:#dcf0dc;--okb:#3a8a3a;--mv:#e6edf7;--dim:#eee;--card:#fafafa;--red:#b5342b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#121212;--ink:#eee;--mut:#aaa;--line:#3a3a3a;--acc:#8ab4f8;--hi:#4a4220;--hib:#c9a227;--ok:#1d3a22;--okb:#5cb85c;--mv:#1c2a40;--dim:#2a2a2a;--card:#1a1a1a;--red:#ff7b72;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Roman",Times,serif}
+main{max-width:720px;margin:0 auto;padding:40px 20px 80px}
+h1,h2,h3{font-family:inherit;line-height:1.25}
+h1{font-size:2.1rem;margin:.2em 0 .6em}
+h2{font-size:1.5rem;margin:2.6em 0 .6em;padding-top:1.2em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin:1.6em 0 .4em}
+blockquote{margin:1.2em 0;padding:.4em 1em;border-left:4px solid var(--acc);font-size:1.12rem}
+blockquote p{margin:.3em 0}
+code{font:inherit;background:var(--card);padding:1px 5px;border-radius:4px}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:1.2em 0}
+.cap{font-size:.9rem;color:var(--mut);margin:.6em 0 0}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:flex-end}
+.cw{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ix{font-size:.8rem;color:var(--mut);min-height:1.1em}
+.cell{min-width:54px;padding:7px 6px;text-align:center;border:2px solid var(--line);background:var(--bg);border-radius:6px;font-weight:600;transition:background .2s}
+.gap{border-style:dashed;background:transparent}
+.ok{background:var(--ok);border-color:var(--okb)}
+.now{background:var(--hi);border-color:var(--hib)}
+.dim{background:var(--dim);color:var(--mut);border-color:var(--dim)}
+.no{background:var(--dim);color:var(--mut);border-color:var(--dim);text-decoration:line-through}
+.mv{background:var(--mv);border-color:var(--acc)}
+.mem .cell{min-width:26px;padding:3px;font-size:.8rem}
+.mem{gap:4px}
+button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
+button:hover:not(:disabled){background:var(--mv)}
+button:disabled{opacity:.4;cursor:default}
+button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--hib);outline-offset:2px}
+.tools{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5;display:flex;gap:8px}
+.ctl{display:flex;align-items:center;gap:12px;margin-top:10px}
+.pos{color:var(--mut);font-size:.9rem}
+.note{min-height:3em;margin:.4em 0 0;font-weight:500}
+.lbl{font-size:.9rem;margin:8px 0 3px}
+.bar{height:16px;border-radius:4px;background:var(--acc);min-width:3px;transition:width .2s}
+.bar.g{background:var(--okb)}.bar.r{background:var(--red)}
+input[type=range]{width:100%}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--dim)}
+details{margin:1em 0;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+summary{cursor:pointer;padding:8px 12px;font-size:.95rem;color:var(--acc)}
+pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,Menlo,Consolas,monospace}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.two{grid-template-columns:1fr}}
+.flow{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;font-size:.95rem}
+.flow .cell{min-width:140px}
+.bars{display:flex;align-items:flex-end;gap:2px;height:100px;margin-top:8px}
+.bars div{flex:1;background:var(--acc);min-width:2px}
+.flag{font-size:.9rem;color:var(--mut)}
+.top-nav{display:flex;align-items:center;gap:8px;font-size:.95rem;margin-bottom:20px;color:var(--mut)}
+.top-nav a{color:var(--acc);text-decoration:none}
+.top-nav a:hover{text-decoration:underline}
+.nav-sep{color:var(--line)}
+.nav-current{color:var(--mut)}
+.article-nav{display:flex;justify-content:space-between;gap:16px;margin-top:48px;padding-top:24px;border-top:1px solid var(--line);flex-wrap:wrap}
+.article-nav a{display:flex;flex-direction:column;padding:12px 16px;border:1px solid var(--line);border-radius:6px;background:var(--card);text-decoration:none;color:var(--ink);transition:border-color .15s,background .15s;flex:1;min-width:200px}
+.article-nav a:hover{border-color:var(--acc);background:var(--mv)}
+.article-nav .an-sub{font-size:.8rem;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.article-nav .an-title{font-weight:600;color:var(--acc)}
+</style>
+</head>
+<body>
+<div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
+<main>
+<nav class="top-nav"><a href="../index.html">← DSA from First Principles</a> <span class="nav-sep">/</span> <span class="nav-current">Essay 03 · Arrays</span></nav>
+<h1>Arrays from First Principles</h1>
+<p>When learning data structures, it is tempting to memorize facts like these:</p>
+<ul><li>Array access is <code>O(1)</code></li><li>Searching is <code>O(n)</code></li><li>Insertion is <code>O(n)</code></li><li>Dynamic arrays have amortized <code>O(1)</code> append</li><li>Binary search is <code>O(log n)</code></li></ul>
+<p>These facts are useful. But memorizing them doesn’t tell us <strong>why</strong> they are true. A better way to learn arrays is to start with a simple problem:</p>
+<blockquote><p>We have a lot of related data. How should we organize it so that a computer can work with it efficiently?</p></blockquote>
+<p>Once we start solving that problem, arrays and their properties begin to emerge naturally. Every piece of code below can be hidden with the button at the top, or one block at a time.</p>
+
+<h2>We have many values</h2>
+<p>Suppose we want to store the marks of five students: 85, 72, 91, 64, 78. The simplest approach is separate variables.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>mark1 = 85
+mark2 = 72
+mark3 = 91
+mark4 = 64
+mark5 = 78</pre></details>
+<p>This works. But something is wrong. These five values are related: they are the same kind of information. Yet our program has no single thing representing “these are all the marks.” With 10,000 students we would have <code>mark1</code>, <code>mark2</code>, … <code>mark10000</code>. The computer can store them all. The problem is that <strong>we have no convenient way to treat them as one collection.</strong></p>
+<div class="fig two"><div><div class="lbl">Separate variables: no single thing holds them</div><div class="row"><div class="cell">mark1<br>85</div><div class="cell">mark2<br>72</div><div class="cell">mark3<br>91</div><div class="cell">mark4<br>64</div><div class="cell">mark5<br>78</div></div></div>
+<div><div class="lbl">One collection: <code>marks</code> represents the whole</div><div style="border:2px solid var(--acc);border-radius:8px;padding:4px 8px"><div class="row" style="margin:2px 0"><div class="cell mv">85</div><div class="cell mv">72</div><div class="cell mv">91</div><div class="cell mv">64</div><div class="cell mv">78</div></div></div></div></div>
+<p>The first important idea: <strong>we want to group related values into a single structure.</strong></p>
+
+<h2>Finding one value: positions and indices</h2>
+<p>Now we have <code>marks = [85, 72, 91, 64, 78]</code> and want the third student’s mark. How do we identify it? We could give every value its own name (first, second, third…), but that doesn’t scale. Instead, notice something natural about a collection: every element has a <strong>position</strong>. Pick a position:</p>
+<div class="fig"><div id="idxBtns" class="row" style="align-items:center" role="group" aria-label="Choose an index"></div><div id="idxView" class="scroll"></div><p class="note" id="idxNote" aria-live="polite"></p></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>marks = [85, 72, 91, 64, 78]
+print(marks[2])   # 91</pre></details>
+<p>This is the idea of an <strong>index</strong>. Instead of naming every element, we identify it by its position. Our collection now has two important properties: all related values belong to one structure, and each value can be identified by an index. That is already very close to an array.</p>
+
+<h2>What an array looks like in memory</h2>
+<p>Now look underneath the abstraction. At the conceptual level, <code>arr = [10, 20, 30, 40, 50]</code> is a row of boxes with indices. But the computer’s memory isn’t really a row of boxes called “index 0”, “index 1”. Memory is a large collection of <strong>addresses</strong>. The important thing about a traditional array is that its elements are stored in <strong>contiguous memory</strong>: consecutive locations, one right after another. If each integer takes 4 bytes:</p>
+<div class="fig scroll" id="memFig"></div>
+<p>This physical organization is responsible for many of the properties we associate with arrays.</p>
+
+<h2>How do we derive a time complexity?</h2>
+<p>Above we listed facts like <code>O(1)</code> and <code>O(n)</code>. Where do they come from? Every one of them comes from the same three steps, which we met in the complexity article:</p>
+<div class="fig"><div class="flow"><div class="cell">1. Pick a unit step that takes constant time</div>↓<div class="cell">2. Count how many steps are needed, as a function of n: T(n)</div>↓<div class="cell ok">3. Keep the dominant growth: drop constants and smaller terms</div></div></div>
+<p>The unit step is one small thing the computer does that doesn’t get slower as the array gets bigger. Different machines take different amounts of time per step, but each step is still a constant. We also have to say <em>which case</em> we are counting: best, average or worst. Here is the unit step for each operation we’ll derive:</p>
+<div class="fig scroll"><table><tr><th>Operation</th><th>Unit step we count</th></tr><tr><td>Access <code>arr[i]</code></td><td>one address calculation and one memory read</td></tr><tr><td>Linear search</td><td>one comparison</td></tr><tr><td>Insert / delete</td><td>moving one element by one place</td></tr><tr><td>Resize</td><td>copying one element</td></tr><tr><td>Binary search</td><td>one comparison</td></tr><tr><td>Traversing a 2D array</td><td>visiting one element</td></tr></table></div>
+<p>For instance, if counting gave <code>T(n) = 3n + 7</code> steps, step 3 reduces it to <code>Θ(n)</code>. We’ll now do the counting for each operation, right where it appears.</p>
+
+<h2>Why is array access O(1)?</h2>
+<p>Consider <code>arr[3]</code>, the fourth element. A beginner might imagine the computer starts at the beginning and walks 10 → 20 → 30 → 40. That isn’t necessary. Because the elements are contiguous and each has the same size, the address can be <strong>calculated</strong>:</p>
+<blockquote><p>address = starting_address + index × element_size</p></blockquote>
+<p>Choose an index and watch the calculation (starting address 1000, element size 4 bytes):</p>
+<div class="fig"><label for="aS">index = <strong id="aO"></strong></label><input id="aS" type="range" min="0" max="4" value="3"><div id="aV" class="scroll"></div><p class="note" id="aN"></p></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>arr = [10, 20, 30, 40, 50]
+print(arr[3])   # 40</pre></details>
+<p>We jump straight to the location of <code>40</code> without walking past the earlier elements. The flow is: <em>index → calculate address → jump directly to element</em>. That is why <code>arr[i]</code> is <code>O(1)</code>. But “arrays are O(1)” is incomplete. Arrays are good at <strong>indexed access</strong> because of their memory organization:</p>
+<blockquote><p>Contiguous storage + fixed-size elements → predictable address → direct access. O(1) is the consequence.</p></blockquote>
+<h3>Deriving it: count the steps</h3>
+<p>To evaluate <code>arr[i]</code> the computer does three things: multiply the index by the element size, add the starting address, and read that location. That is <strong>3 unit steps</strong>. Notice that none of them depends on how many elements the array has:</p>
+<div class="fig scroll"><table><tr><th>Array size n</th><th>Steps to get <code>arr[i]</code></th></tr><tr><td>5</td><td>3</td></tr><tr><td>5,000</td><td>3</td></tr><tr><td>5,000,000</td><td>3</td></tr></table></div>
+<p>So <code>T(n) = 3</code>, a constant that doesn’t grow with <code>n</code>. A function that doesn’t grow is <code>O(1)</code>. (This assumes that reading one memory address counts as one step.)</p>
+
+<h2>Knowing the index vs knowing the value</h2>
+<p>Now ask a different question: <em>where is 40?</em> This differs from <code>arr[3]</code>. With <code>arr[3]</code> we already know the location. Here we only know the value, and the array doesn’t tell us where it is. In an unsorted array like <code>[10, 50, 20, 90, 40, 30]</code>, we have no clue where 40 might be. It could be anywhere. So we inspect the elements one by one: <strong>linear search</strong>. Choose a target and step through:</p>
+<div class="fig" id="linW"></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>def linear_search(arr, target):
+    for i in range(len(arr)):
+        if arr[i] == target:
+            return i
+
+    return -1
+
+arr = [10, 50, 20, 90, 40, 30]
+print(linear_search(arr, 40))    # 4
+print(linear_search(arr, 100))   # -1  (not found)</pre></details>
+<h3>Why is linear search O(n)?</h3>
+<p>The important question isn’t “why does the formula say O(n)?” Ask: <strong>how many elements might I have to inspect?</strong> Searching for the first element takes 1 check (best case, <code>O(1)</code>). Searching for the last takes all of them. And searching for a value that isn’t there (like 100) <em>still</em> inspects everything, because we must prove it isn’t anywhere. So the average and worst cases are both <code>O(n)</code>.</p>
+<blockquote><p>An unsorted array gives us no information that lets us safely eliminate large parts of the search space. Each comparison mostly eliminates one possibility.</p></blockquote>
+<h3>Deriving it: count the comparisons</h3>
+<p>The unit step is one comparison. If the target sits at position <code>p</code> (counting from 1), the loop makes exactly <code>p</code> comparisons before stopping. If the target isn’t there, it makes <code>n</code>. Drag the slider to see the cost for every possible target:</p>
+<div class="fig"><label for="lsS">array size n = <strong id="lsO"></strong></label><input id="lsS" type="range" min="2" max="20" value="8"><div id="lsV"></div></div>
+<ul><li><strong>Best case:</strong> target is first, <code>T(n) = 1</code>, so <code>O(1)</code>.</li><li><strong>Worst case:</strong> target is last or missing, <code>T(n) = n</code>, so <code>O(n)</code>.</li><li><strong>Average case:</strong> if the target is equally likely to be at any of the <code>n</code> positions, the average is <code>(1 + 2 + … + n) / n</code>. To add those up, pair the first with the last: <code>1 + n</code>, then <code>2 + (n−1)</code>, and so on. Every pair sums to <code>n + 1</code>, and there are <code>n/2</code> pairs, so the sum is <code>n(n+1)/2</code>. Dividing by <code>n</code> gives <code>(n+1)/2</code>.</li></ul>
+<p>That average, <code>(n+1)/2 = n/2 + ½</code>, loses its constant <code>½</code> and its smaller term in step 3, leaving <code>Θ(n)</code>. Real loops also do a little bookkeeping per iteration, which only multiplies the count by a constant. Same conclusion.</p>
+<div class="fig two"><div><div class="lbl"><strong>Access</strong> <code>arr[3]</code></div>“I know the position. Give me what’s there.” The array calculates the location. <strong>O(1)</strong></div><div><div class="lbl"><strong>Search</strong> <code>linear_search(arr, 40)</code></div>“I know the value, not the position.” We may inspect every element. <strong>O(n)</strong></div></div>
+<p>Knowing the index and finding the index are completely different problems.</p>
+
+<h2>Keeping the row compact: insertion and deletion</h2>
+<p>The same contiguity that gives fast access creates a cost elsewhere. To insert <code>25</code> between 20 and 30, we want <code>10 20 25 30 40 50</code>. But the array must stay contiguous, and there is no room between 20 and 30. So elements must move. Deletion is the same problem in reverse: leaving a hole like <code>10 20 __ 40 50</code> would break the compact layout, so elements slide left. Try each operation:</p>
+<div class="fig" id="opW"></div>
+<ul><li><strong>Insert in the middle or at the beginning:</strong> potentially many elements shift → <code>O(n)</code>. At the beginning, almost the whole array moves.</li><li><strong>Delete from the middle or beginning:</strong> likewise <code>O(n)</code>.</li><li><strong>Delete from the end:</strong> nothing else moves → <code>O(1)</code> (assuming no shrinking work).</li><li><strong>Append at the end:</strong> no shifting, if there is spare room. That condition is the next problem.</li></ul>
+<h3>Deriving it: count the moves</h3>
+<p>The unit step is moving one element by one place. In an array of <code>n = 10</code> elements, choose where to insert or delete and count the elements that must move:</p>
+<div class="fig"><div class="row" style="align-items:center"><button id="mvI" aria-pressed="true">Insert at position k</button><button id="mvD" aria-pressed="false">Delete at position k</button></div><label for="mvS">k = <strong id="mvO"></strong></label><input id="mvS" type="range" min="0" max="10" value="0"><div id="mvV" class="scroll"></div><p class="note" id="mvN" aria-live="polite"></p></div>
+<p>Inserting at index <code>k</code> pushes every element from index <code>k</code> onward one place right. Those are the elements at indices <code>k, k+1, …, n−1</code>, which is <code>n − k</code> of them. Deleting at index <code>k</code> pulls the elements after it left: <code>n − k − 1</code> of them.</p>
+<ul><li><strong>Beginning (k = 0):</strong> <code>n</code> moves. <code>O(n)</code>.</li><li><strong>Middle (k ≈ n/2):</strong> about <code>n/2</code> moves. Still <code>O(n)</code>, because halving is just a constant factor.</li><li><strong>End (k = n):</strong> <code>0</code> moves.</li></ul>
+<p>Averaged over all <code>n + 1</code> insertion positions, the moves are <code>n/2</code>, again <code>Θ(n)</code>. So the worst case, and the typical case, are <code>O(n)</code>. Only the end escapes, and only because it needs no shifting.</p>
+
+<h2>What if we run out of space?</h2>
+<p>Suppose we allocated room for five elements and want to add <code>60</code>. Ideally it goes right after <code>50</code>. But what if the memory immediately after the array is already used by something else? We can’t put <code>60</code> somewhere far away, because then the elements are no longer contiguous, which would break the organization that gave us direct indexed access.</p>
+<blockquote><p>Arrays need contiguous memory, but a contiguous block has a fixed amount of space.</p></blockquote>
+<h3>Static arrays</h3>
+<p>One solution is to decide the size beforehand: “I need space for 100 elements.” Simple. But if we need 101, there’s no room. If we only need 5, we’ve reserved a lot of unused space. A <strong>static array</strong> has a capacity that is fixed once allocated: predictable, but not flexible.</p>
+<h3>Dynamic arrays</h3>
+<p>What we really want is to just write <code>arr.append(10)</code> without promising a maximum size. The idea: <strong>allocate more space than we currently need</strong>. With <code>size = 3</code> and <code>capacity = 5</code>:</p>
+<div class="fig"><div class="row"><div class="cell ok">10</div><div class="cell ok">20</div><div class="cell ok">30</div><div class="cell gap">&nbsp;</div><div class="cell gap">&nbsp;</div></div><p class="cap">Used: 3. Available: 2. Appending 40 needs no new allocation and moves nothing.</p></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>arr = []
+
+arr.append(10)
+arr.append(20)
+arr.append(30)</pre></details>
+<p>But eventually the extra space runs out. Then the dynamic array allocates a <strong>larger contiguous block</strong> somewhere else (for example, double the capacity), copies every old element across, and adds the new one. That particular append is expensive. So dynamic-array append is <strong>not literally O(1) every single time</strong>.</p>
+<h3>Then why “amortized O(1)”?</h3>
+<p>Resizing doesn’t happen every time. Capacities grow like 1, 2, 4, 8, 16, 32, 64… Most appends just use space already allocated; occasionally we resize and copy 1, 2, 4, 8, 16… elements. Press Append repeatedly and watch the cost of each one (the bar chart):</p>
+<div class="fig" id="daW"></div>
+<p>Over <code>n</code> appends, the total copying is proportional to <code>n</code>, so the total work is <code>O(n)</code>, and the average per append is <code>O(n) / n = O(1)</code>. This is what <strong>amortized O(1)</strong> means. It does <em>not</em> mean every append is constant time. It means that over a long sequence of operations, the occasional expensive resize is cheap enough once its cost is spread across all the ordinary appends.</p>
+<h3>Deriving it: add up the copies</h3>
+<p>Count two kinds of unit steps over <code>n</code> appends. First, placing each new element: <code>n</code> steps in total. Second, copying during resizes. With doubling, a resize happens when the size reaches 1, 2, 4, 8, … and copies that many elements. If the last resize happened at size <code>2<sup>j</sup></code> (which is less than <code>n</code>), the copies add up to:</p>
+<blockquote><p>1 + 2 + 4 + … + 2<sup>j</sup> = 2<sup>j+1</sup> − 1</p></blockquote>
+<p>An easy way to see it: <code>1 + 2 + 4 + 8 = 15</code>, which is one less than the next power, <code>16</code>. Each batch of copies is about as large as <em>all the earlier batches combined</em>. Since <code>2<sup>j</sup> &lt; n</code>, we get <code>2<sup>j+1</sup> &lt; 2n</code>, so the copies total less than <code>2n</code>. Total work is below <code>n + 2n = 3n</code>, and per append it is below <code>3</code>, a constant. Check the arithmetic:</p>
+<div class="fig scroll" id="amT"></div>
+<p>So the average cost per append never grows with <code>n</code>: <code>O(1)</code> amortized. This also matches the bar chart above, where the average stayed under 3. The same argument works for any constant growth factor above 1, not only doubling.</p>
+
+<h2>The complexity table, now derived</h2>
+<p>Every entry below comes from the step counts we derived above. For a dynamic-array-like structure:</p>
+<div class="fig scroll"><table><tr><th>Operation</th><th>Beginning</th><th>Middle</th><th>End</th></tr><tr><td>Access by index</td><td>O(1)</td><td>O(1)</td><td>O(1)</td></tr><tr><td>Search</td><td>O(n)</td><td>O(n)</td><td>O(n)</td></tr><tr><td>Insert</td><td>O(n)</td><td>O(n)</td><td>amortized O(1)</td></tr><tr><td>Delete</td><td>O(n)</td><td>O(n)</td><td>O(1)</td></tr></table></div>
+<p>But the table isn’t the thing to memorize. The physical rule underneath is:</p>
+<blockquote><p>If we can directly calculate the location and don’t need to move elements, the operation can be O(1). If many elements have to move or be inspected, the operation becomes O(n).</p></blockquote>
+
+<h2>What if our data has two dimensions?</h2>
+<p>So far we’ve worked with a single row. But many problems have rows and columns: a matrix, a chessboard, pixels in an image, student marks across subjects, a grid in a game. This is a <strong>2D array</strong>, accessed with two indices: <code>matrix[row][column]</code>.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>matrix = [
+    [1, 2, 3],
+    [4, 5, 6],
+    [7, 8, 9]
+]
+
+print(matrix[1][2])   # 6</pre></details>
+<h3>Memory is still one-dimensional</h3>
+<p>We visualize a grid, but physical memory is a linear sequence of addresses. There is no magical 2D memory. So the computer must map <code>(row, column)</code> to a position in a 1D block. There are two common ways. In <strong>row-major</strong> order, we store an entire row before the next one: <code>1 2 3 4 5 6 7 8 9</code>. In <strong>column-major</strong> order, we finish a column first: <code>1 4 7 2 5 8 3 6 9</code>.</p>
+<h3>Why does traversal order matter?</h3>
+<p>Choose how the matrix is stored and how we walk through it, then move the slider. The strip below shows memory:</p>
+<div class="fig" id="mxW"></div>
+<p>Both traversals visit the same number of elements. Counting: each element is visited once, and each visit costs a constant number of steps, so <code>T = c × rows × columns</code>, which is <code>O(rows × columns)</code>. (For a square <code>n × n</code> grid that is <code>n²</code>.) But with a mismatched order we jump around memory instead of moving through neighboring locations. Modern computers fetch memory in chunks and benefit when nearby data is used together. This is <strong>cache locality</strong>, which matters for performance beyond Big-O. The intuition:</p>
+<blockquote><p>A 2D structure is an abstraction. Physical memory is still linear, so the way we map the abstraction onto memory matters.</p></blockquote>
+
+<h2>Can we search faster?</h2>
+<p>Linear search gives each comparison very little information. But suppose the array is <strong>sorted</strong>: <code>[10, 20, 30, 40, 50, 60, 70, 80, 90]</code>. Now we have something new: <strong>order</strong>. And order gives us information.</p>
+<h3>The key insight</h3>
+<p>Search for <code>70</code>. Instead of starting from the beginning, look at the middle: 50. We compare, and find <code>70 &gt; 50</code>. What does sortedness tell us? Everything left of 50 (10, 20, 30, 40) is smaller than 50, and our target is 70, so <strong>none of those can be 70</strong>. In fact everything up to and including 50 can be thrown away.</p>
+<div class="fig"><div class="row"><div class="cell dim">10</div><div class="cell dim">20</div><div class="cell dim">30</div><div class="cell dim">40</div><div class="cell now">50</div><div class="cell ok">60</div><div class="cell ok">70</div><div class="cell ok">80</div><div class="cell ok">90</div></div><p class="cap">One comparison eliminated half the search space. That is the central idea of binary search.</p></div>
+<h3>Linear vs binary</h3>
+<p>With linear search the search space behaves like n → n−1 → n−2 → … With binary search it behaves like n → n/2 → n/4 → n/8 → … Slide to see how many possibilities remain after each comparison (starting with 16):</p>
+<div class="fig"><label for="cS">comparisons made: <strong id="cO"></strong></label><input id="cS" type="range" min="0" max="4" value="0"><div id="cV"></div></div>
+<div class="fig scroll" id="cT"></div>
+<p>The real insight is not the logarithm. It is: <strong>one comparison allows us to eliminate half the remaining possibilities.</strong></p>
+<h3>Deriving the logarithm</h3>
+<p>The unit step is one comparison. Let’s count how many we can be forced to make. After each comparison, at most half of the remaining possibilities are left. So after <code>k</code> comparisons, at most <code>n / 2<sup>k</sup></code> remain. In the worst case we keep going until a single possibility is left. Set that equal to 1 and solve for <code>k</code>:</p>
+<blockquote><p>n / 2<sup>k</sup> = 1 &nbsp;⇒&nbsp; 2<sup>k</sup> = n &nbsp;⇒&nbsp; k = log₂ n</p></blockquote>
+<p>That is all a logarithm is here: <code>log₂ n</code> is <strong>how many times you can halve <code>n</code> before reaching 1</strong>. One more comparison checks that last candidate, so the worst case is about <code>log₂ n + 1</code> comparisons. Exactly, it is <code>⌊log₂ n⌋ + 1</code>. Pick a size and count the halvings:</p>
+<div class="fig"><div class="row" id="bdB" style="align-items:center"></div><p class="note" id="bdN" aria-live="polite"></p></div>
+<p>Dropping the constant <code>+1</code> leaves <code>O(log n)</code>. The base of the logarithm doesn’t matter either: <code>log₂ n</code> and <code>log₁₀ n</code> differ only by a constant factor, which step 3 discards. Compare this with linear search, where the count was <code>n</code>, not <code>log n</code>: halving is what turned a million checks into about twenty.</p>
+<h3>Deriving binary search</h3>
+<p>We need to track the region where the target could still exist. Initially <code>left = 0</code> and <code>right = len(arr) - 1</code>. Everything between them is still possible. Calculate <code>mid = (left + right) // 2</code>. If <code>arr[mid] == target</code>, found. If <code>arr[mid] &lt; target</code>, the target must be to the right: <code>left = mid + 1</code>. If <code>arr[mid] &gt; target</code>, it must be to the left: <code>right = mid - 1</code>. The invariant:</p>
+<blockquote><p>Everything outside [left, right] has already been proven impossible.</p></blockquote>
+<details open><summary>Python code (click to hide or show)</summary><pre>def binary_search(arr, target):
+    left = 0
+    right = len(arr) - 1
+
+    while left &lt;= right:
+        mid = (left + right) // 2
+
+        if arr[mid] == target:
+            return mid
+
+        if arr[mid] &lt; target:
+            left = mid + 1
+        else:
+            right = mid - 1
+
+    return -1
+
+arr = [10, 20, 30, 40, 50, 60, 70, 80, 90]
+print(binary_search(arr, 70))   # 6</pre></details>
+<h3>Trace it, including when the target isn’t there</h3>
+<p>Pick a search. The first finds 70 in two rounds. The second looks for 35, which isn’t in the array. L, R and M mark <code>left</code>, <code>right</code> and <code>mid</code>.</p>
+<div class="fig" id="bsW"></div>
+<p>When the target is missing, the possibilities run out: <code>left &gt; right</code>, the search space is empty, and we return <code>-1</code>. That is why the loop is <code>while left &lt;= right</code>.</p>
+<h3>Why does binary search require sorted data?</h3>
+<p>This is the most important limitation. In the unsorted <code>[73, 12, 91, 5, 44, 28, 67]</code>, suppose we inspect 5 while searching for 44. We know <code>44 &gt; 5</code>, but can we throw away everything before 5? No: a 44 could be there. The comparison tells us nothing about the rest. Order is what lets one comparison say something about an entire region.</p>
+<blockquote><p>Binary search requires an ordered search space where a comparison lets us eliminate a portion of the possibilities.</p></blockquote>
+<h3>The deeper pattern: information</h3>
+<p>Search for 70 in both arrays, having inspected 50:</p>
+<div class="fig"><div class="lbl">Unsorted: <code>[50, 10, 90, 30, 70, 20]</code>. We learn only that 50 ≠ 70.</div><div class="row"><div class="cell now">50</div><div class="cell">10</div><div class="cell">90</div><div class="cell">30</div><div class="cell">70</div><div class="cell">20</div></div>
+<div class="lbl">Sorted: <code>[10, 20, 30, 50, 70, 90]</code>. We learn 50 &lt; 70, which has consequences for many elements.</div><div class="row"><div class="cell dim">10</div><div class="cell dim">20</div><div class="cell dim">30</div><div class="cell now">50</div><div class="cell ok">70</div><div class="cell ok">90</div></div></div>
+<div class="fig"><div class="flow"><div class="cell">more structure in the data</div>↓<div class="cell">more information from each comparison</div>↓<div class="cell">larger parts of the search space eliminated</div>↓<div class="cell ok">faster algorithms</div></div></div>
+<p>This idea appears again and again throughout data structures and algorithms.</p>
+
+<h2>Why do we need different data structures?</h2>
+<p>Perhaps the biggest lesson from arrays: an array is not “good” or “bad.” It makes certain operations cheap because of the choice it makes, <strong>contiguous storage and indexed access</strong>. Fast: indexed access, <code>O(1)</code>. Potentially expensive: middle insertion, middle deletion, searching. Another data structure makes a different trade-off. A hash table organizes information so finding something by its key can be very fast. A tree organizes information around ordering or hierarchy. A heap organizes it around priority. Different structures exist because <strong>different problems require different kinds of efficiency.</strong></p>
+
+<h2>The complete story of arrays</h2>
+<ol>
+<li>Many related values → we want <strong>one collection</strong>.</li>
+<li>How do we identify one value? → <strong>indices</strong>.</li>
+<li>How can the computer reach an indexed element efficiently? → store elements <strong>contiguously</strong>, so address = base + index × element size, so access is <strong>O(1)</strong>.</li>
+<li>Where is a value, if we only know the value? Unsorted arrays give no shortcut → <strong>linear search, O(n)</strong>.</li>
+<li>Insert or delete in the middle? Contiguity forces elements to shift → <strong>O(n)</strong>.</li>
+<li>Run out of contiguous space? → <strong>dynamic arrays</strong> resize and copy. Resizing is rare → append is <strong>amortized O(1)</strong>.</li>
+<li>Rows and columns? → <strong>2D arrays</strong>, mapped onto 1D memory by <strong>row-major or column-major</strong>, and traversal order can matter.</li>
+<li>Sorted data? One comparison eliminates half the possibilities → <strong>binary search, O(log n)</strong>.</li>
+</ol>
+
+<h2>The mental model</h2>
+<p>If there is only one thing to remember about arrays, it shouldn’t be a complexity table. It should be this:</p>
+<div class="fig two">
+<div class="flow"><div class="cell mv">contiguous storage</div>↓<div>predictable address &nbsp;|&nbsp; elements must stay together</div>↓<div>indexed access → <strong>O(1)</strong> &nbsp;|&nbsp; shifting → insert/delete potentially <strong>O(n)</strong></div>↓<div>growth problem → resize + copy</div>↓<div class="cell ok">amortized O(1) append</div></div>
+<div class="flow"><div class="cell mv">What do we know?</div>↓<div>unsorted &nbsp;|&nbsp; sorted</div>↓<div>little information per comparison &nbsp;|&nbsp; comparison speaks for a whole region</div>↓<div class="cell ok">linear search O(n) &nbsp;|&nbsp; binary search O(log n)</div></div></div>
+<p>The real lesson is bigger than arrays:</p>
+<blockquote><p>Don’t memorize the behavior of a data structure. Understand the physical and logical choices that created it.</p></blockquote>
+<p>Once you know <em>why</em> the data is organized in a particular way, the performance characteristics stop looking like arbitrary facts. They become consequences. And that is the real purpose of studying data structures from first principles.</p>
+<div class="article-nav">
+  <a href="../complexity%20analysis.html">
+    <span class="an-sub">Previous Essay · 02</span>
+    <span class="an-title">← Complexity Analysis from First Principles</span>
+  </a>
+  <a href="two%20pointers%20intuition.html" style="text-align:right">
+    <span class="an-sub">Next Essay · 04</span>
+    <span class="an-title">Two Pointers: Understanding the Idea →</span>
+  </a>
+</div>
+</main>
+<script>
+var $=function(i){return document.getElementById(i)};
+function cells(a,o){o=o||{};var c=o.c||{};return '<div class="row">'+a.map(function(v,i){var g=v===''||v===null;return '<div class="cw"><span class="ix">'+(o.ixs?o.ixs[i]:(o.noix?'':i))+'</span><div class="cell'+(g?' gap':'')+' '+(c[i]||'')+'">'+(g?'&nbsp;':v)+'</div><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span></div>'}).join('')+'</div>'}
+function widget(id,opts,build){
+  var el=$(id),i=0,st=[];
+  el.innerHTML=(opts.length>1?'<div class="row" style="align-items:center">'+opts.map(function(o,k){return '<button data-k="'+k+'">'+o[0]+'</button>'}).join('')+'</div>':'')+'<div class="scroll v"></div><p class="note" aria-live="polite"></p><div class="ctl"><button class="pv">Previous</button><span class="pos"></span><button class="nx">Next</button></div>';
+  var v=el.querySelector('.v'),n=el.querySelector('.note'),p=el.querySelector('.pos'),pv=el.querySelector('.pv'),nx=el.querySelector('.nx');
+  function r(){v.innerHTML=st[i].h;n.textContent=st[i].n;p.textContent='Step '+(i+1)+' of '+st.length;pv.disabled=i===0;nx.disabled=i===st.length-1}
+  function pick(k){st=build(opts[k][1]);i=0;[].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.k===k))});r()}
+  [].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.onclick=function(){pick(+b.dataset.k)}});
+  pv.onclick=function(){if(i>0){i--;r()}};nx.onclick=function(){if(i<st.length-1){i++;r()}};pick(0);
+}
+// index picker
+var MK=[85,72,91,64,78],ib=$('idxBtns');
+function pickIdx(k){var c={};if(k<5)c[k]='ok';$('idxView').innerHTML=cells(MK,{c:c});
+  $('idxNote').textContent=k<5?'marks['+k+'] → '+MK[k]+(k===2?'  (the third student)':''):'marks[5] → no such position. This array has indices 0 to 4.';
+  [].forEach.call(ib.children,function(b){b.setAttribute('aria-pressed',String(+b.dataset.k===k))})}
+[0,1,2,3,4,5].forEach(function(k){var b=document.createElement('button');b.textContent='index '+k;b.dataset.k=k;b.onclick=function(){pickIdx(k)};ib.appendChild(b)});pickIdx(2);
+// memory
+var AD=[1000,1004,1008,1012,1016],AV=[10,20,30,40,50];
+$('memFig').innerHTML=cells(AV,{ixs:AD.map(function(a){return 'address '+a}),sub:AD.map(function(a){return 'bytes '+a+'–'+(a+3)})})+'<p class="cap">Each element sits right after the previous one. The cell above each value is its starting address.</p>';
+function ua(){var k=+$('aS').value;$('aO').textContent=k;var c={};c[k]='ok';
+  $('aV').innerHTML=cells(AV,{ixs:AD,sub:AV.map(function(_,j){return 'index '+j}),c:c});
+  $('aN').textContent='address = 1000 + '+k+' × 4 = '+(1000+k*4)+'  →  '+AV[k]}
+$('aS').oninput=ua;ua();
+// linear search
+widget('linW',[['Target 40',40],['Target 10 (first)',10],['Target 100 (absent)',100]],function(t){
+  var a=[10,50,20,90,40,30],s=[],c={};
+  for(var i=0;i<a.length;i++){var f=a[i]===t,cc=JSON.parse(JSON.stringify(c));cc[i]=f?'ok':'now';
+    s.push({h:cells(a,{c:cc}),n:a[i]+' == '+t+'? '+(f?'Yes. Return index '+i+', after '+(i+1)+' check'+(i?'s':'')+'.':'No.')});
+    if(f)return s;c[i]='no'}
+  s.push({h:cells(a,{c:c}),n:'All '+a.length+' elements inspected. Not found: return -1. We had to check everything to be sure.'});return s});
+// insert / delete
+widget('opW',[['Insert 25 in middle','mi'],['Insert 5 at beginning','bi'],['Append 60 (room)','ap'],['Delete 30 (middle)','md'],['Delete 50 (end)','ed']],function(k){
+  var b=[10,20,30,40,50];
+  if(k==='mi')return [{h:cells(b),n:'Before: 5 elements. We want 25 at index 2.'},{h:cells([10,20,'',30,40,50],{c:{3:'mv',4:'mv',5:'mv'}}),n:'No room between 20 and 30. 30, 40, 50 each shift right: 3 elements moved.'},{h:cells([10,20,25,30,40,50],{c:{2:'ok'}}),n:'25 placed. Cost grows with the number of elements moved.'}];
+  if(k==='bi')return [{h:cells(b),n:'Before: 5 elements. We want 5 at index 0.'},{h:cells(['',10,20,30,40,50],{c:{1:'mv',2:'mv',3:'mv',4:'mv',5:'mv'}}),n:'Every element shifts right: 5 elements moved. Almost the whole array.'},{h:cells([5,10,20,30,40,50],{c:{0:'ok'}}),n:'5 placed at the front. O(n).'}];
+  if(k==='ap')return [{h:cells([10,20,30,40,50,'']),n:'Before: 5 elements and 1 spare slot (capacity 6).'},{h:cells([10,20,30,40,50,60],{c:{5:'ok'}}),n:'60 goes in the spare slot. 0 elements moved.'}];
+  if(k==='md')return [{h:cells(b,{c:{2:'now'}}),n:'Before: delete 30 (index 2).'},{h:cells([10,20,'',40,50],{c:{3:'mv',4:'mv'}}),n:'30 removed. We can’t leave a hole, so 40 and 50 shift left: 2 elements moved.'},{h:cells([10,20,40,50,''],{c:{2:'ok',3:'ok'}}),n:'Array is compact again: 10 20 40 50. O(n) in general.'}];
+  return [{h:cells(b,{c:{4:'now'}}),n:'Before: delete the last element, 50.'},{h:cells([10,20,30,40,''],{}),n:'Removed. Nothing else moves: 0 elements moved. O(1).'}]});
+// dynamic array
+var da;function daReset(){da={s:0,c:1,k:[],t:0,m:'Capacity 1, empty. Press Append.'}}
+function daApp(n){for(var j=0;j<n&&da.s<64;j++){var cost=1;if(da.s===da.c){cost+=da.s;da.m='Append #'+(da.s+1)+': array full. Allocated capacity '+(da.c*2)+', copied '+da.s+' elements, then added. Cost '+cost+'.';da.c*=2}else da.m='Append #'+(da.s+1)+': spare room, just placed it. Cost 1.';da.s++;da.k.push(cost);da.t+=cost}daDraw()}
+function daDraw(){var mx=Math.max.apply(null,da.k.concat([1])),a=[];for(var i=0;i<da.c;i++)a.push(i<da.s?i+1:'');
+  var c={};for(i=0;i<da.s;i++)c[i]='ok';
+  $('daW').innerHTML='<div class="row" style="align-items:center"><button id="dA">Append</button><button id="dB">Append 10</button><button id="dR">Reset</button></div><div class="row mem" style="align-items:flex-start">'+a.map(function(v,i){return '<div class="cell '+(v===''?'gap':'ok')+'">'+(v===''?'&nbsp;':v)+'</div>'}).join('')+'</div><p class="note">'+da.m+'</p><p class="cap">Size '+da.s+' · capacity '+da.c+' · total work '+da.t+' · average per append '+(da.s?(da.t/da.s).toFixed(2):'0')+'</p><div class="lbl">Cost of each append</div><div class="bars">'+da.k.map(function(x){return '<div style="height:'+Math.max(x/mx*100,3)+'%;'+(x>1?'background:var(--red)':'')+'" title="cost '+x+'"></div>'}).join('')+'</div><p class="cap">Red bars are resizes. They get rarer as the array grows, so the average stays small (never above 3 here).'+(da.s>=64?' Limit of 64 appends reached.':'')+'</p>';
+  $('dA').onclick=function(){daApp(1)};$('dB').onclick=function(){daApp(10)};$('dR').onclick=function(){daReset();daDraw()};
+  $('dA').disabled=$('dB').disabled=da.s>=64}
+daReset();daDraw();
+// 2D
+var mx={lay:'row',trv:'row',k:0};
+function mxDraw(){var R=3,C=3,ad=function(r,c){return mx.lay==='row'?r*C+c:c*R+r},ord=[],r,c;
+  if(mx.trv==='row'){for(r=0;r<R;r++)for(c=0;c<C;c++)ord.push([r,c])}else{for(c=0;c<C;c++)for(r=0;r<R;r++)ord.push([r,c])}
+  var mem=[],g='',vis={},cur=mx.k-1,dist=0,i;
+  for(r=0;r<R;r++)for(c=0;c<C;c++)mem[ad(r,c)]=r*C+c+1;
+  var va={},ca={};for(i=0;i<mx.k;i++){var p=ord[i],a=ad(p[0],p[1]);va[p[0]*C+p[1]]=i===cur?'now':'ok';ca[a]=i===cur?'now':'ok';if(i)dist+=Math.abs(a-ad(ord[i-1][0],ord[i-1][1]))}
+  for(r=0;r<R;r++){g+='<div class="row mem" style="align-items:flex-start">';for(c=0;c<C;c++)g+='<div class="cell '+(va[r*C+c]||'')+'" style="min-width:44px;font-size:1rem">'+(r*C+c+1)+'</div>';g+='</div>'}
+  var bt=function(k,key,l){return '<button data-k="'+key+'" data-v="'+k+'" aria-pressed="'+(mx[key]===k)+'">'+l+'</button>'};
+  $('mxW').innerHTML='<div class="row" style="align-items:center"><b>Stored as:</b>'+bt('row','lay','Row-major')+bt('col','lay','Column-major')+'<b>Walk:</b>'+bt('row','trv','By rows')+bt('col','trv','By columns')+'</div><div class="two"><div><div class="lbl">The grid (what we imagine)</div>'+g+'</div><div><div class="lbl">Memory (what exists), address 0 to 8</div>'+cells(mem,{c:ca,sub:mem.map(function(_,j){return ''})}).replace(/class="row"/,'class="row mem"')+'</div></div><label for="mS">elements visited: <strong>'+mx.k+'</strong></label><input id="mS" type="range" min="0" max="9" value="'+mx.k+'"><p class="note">Total distance moved through memory so far: '+dist+' cells. '+(mx.k===9?(mx.lay===mx.trv?'Every step went to the neighboring address.':'Many steps jumped over several cells.'):'')+'</p><p class="cap">Row '+1+', column '+2+' (<code>matrix[1][2]</code>) lives at memory index '+(mx.lay==='row'?'1×3+2 = 5':'2×3+1 = 7')+', and holds 6.</p>';
+  [].forEach.call($('mxW').querySelectorAll('button[data-k]'),function(b){b.onclick=function(){mx[b.dataset.k]=b.dataset.v;mx.k=0;mxDraw()}});
+  $('mS').oninput=function(){mx.k=+this.value;mxDraw();$('mS').focus()}}
+mxDraw();
+// linear vs binary
+function uc(){var k=+$('cS').value;$('cO').textContent=k;var l=16-k,b=Math.max(1,16>>k);
+  $('cV').innerHTML='<div class="lbl">Linear search: '+l+' possibilities remain</div><div class="bar r" style="width:'+l/16*100+'%"></div><div class="lbl">Binary search: '+b+' possibilit'+(b>1?'ies':'y')+' remain</div><div class="bar g" style="width:'+b/16*100+'%"></div>'}
+$('cS').oninput=uc;uc();
+$('cT').innerHTML='<table><tr><th>n</th><th>Linear: worst checks</th><th>Binary: worst checks</th></tr>'+[10,1000,1000000,1000000000].map(function(n){return '<tr><td>'+n.toLocaleString('en-US')+'</td><td>'+n.toLocaleString('en-US')+'</td><td>~'+(Math.floor(Math.log2(n))+1)+'</td></tr>'}).join('')+'</table><p class="cap">Binary search takes about log₂(n) + 1 checks in the worst case, and requires sorted data.</p>';
+// binary search
+widget('bsW',[['Search 70 in 9 items',[[10,20,30,40,50,60,70,80,90],70]],['Search 35 in 5 items',[[10,20,30,40,50],35]]],function(p){
+  var a=p[0],t=p[1],l=0,r=a.length-1,s=[],m,v;
+  function show(mid,hit){var c={},sub={},j;for(j=0;j<a.length;j++){c[j]=(j<l||j>r)?'dim':'';sub[j]=''}
+    if(l<a.length)sub[l]='L';if(r>=0)sub[r]=(sub[r]||'')+'R';if(mid!==null){c[mid]=hit?'ok':'now';sub[mid]=(sub[mid]||'')+'M'}return cells(a,{c:c,sub:sub})}
+  s.push({h:show(null),n:'left = 0, right = '+r+'. Everything in [left, right] is still possible. Target: '+t+'.'});
+  while(l<=r){m=Math.floor((l+r)/2);v=a[m];
+    if(v===t){s.push({h:show(m,true),n:'mid = ('+l+' + '+r+') // 2 = '+m+'. arr['+m+'] = '+v+' equals '+t+'. Found at index '+m+'.'});return s}
+    if(v<t){s.push({h:show(m),n:'mid = '+m+'. arr['+m+'] = '+v+' < '+t+', so the target is to the right. left = '+(m+1)+'.'});l=m+1}
+    else{s.push({h:show(m),n:'mid = '+m+'. arr['+m+'] = '+v+' > '+t+', so the target is to the left. right = '+(m-1)+'.'});r=m-1}}
+  s.push({h:show(null),n:'left = '+l+' > right = '+r+'. Nothing left to search. Return -1.'});return s});
+// derivations
+function ul(){var n=+$('lsS').value,h='',p,s=0;$('lsO').textContent=n;
+  for(p=1;p<=n;p++){s+=p;h+='<div style="display:flex;align-items:center;gap:8px;font-size:.8rem"><span style="width:7.5em">target at '+p+'</span><div class="bar" style="height:10px;width:'+p/n*75+'%"></div><span>'+p+'</span></div>'}
+  h+='<div style="display:flex;align-items:center;gap:8px;font-size:.8rem"><span style="width:7.5em">not present</span><div class="bar r" style="height:10px;width:75%"></div><span>'+n+'</span></div>';
+  $('lsV').innerHTML=h+'<p class="note">Best 1 · worst '+n+' · average over the '+n+' positions = (1+2+…+'+n+') / '+n+' = '+s+' / '+n+' = '+(s/n)+', which is (n+1)/2.</p>'}
+$('lsS').oninput=ul;ul();
+var mvM='i';
+function um(){var n=10,k,a=[],c={},sub={},mv,j,s=$('mvS');s.max=mvM==='i'?10:9;k=Math.min(+s.value,+s.max);s.value=k;$('mvO').textContent=k;
+  for(j=0;j<n;j++)a.push(j+1);
+  if(mvM==='i'){for(j=k;j<n;j++)c[j]='mv';mv=n-k;if(k<n)sub[k]='insert here';$('mvN').textContent='Insert at k = '+k+': elements at indices '+k+' to '+(n-1)+' shift right. Moves = n − k = '+n+' − '+k+' = '+mv+(k===n?'. This is the end: nothing moves.':'.')}
+  else{c[k]='no';for(j=k+1;j<n;j++)c[j]='mv';mv=n-k-1;sub[k]='delete';$('mvN').textContent='Delete at k = '+k+': elements at indices '+(k+1)+' to '+(n-1)+' shift left. Moves = n − k − 1 = '+n+' − '+k+' − 1 = '+mv+(k===n-1?'. This is the last element: nothing moves.':'.')}
+  $('mvV').innerHTML=cells(a,{c:c,sub:sub});
+  $('mvI').setAttribute('aria-pressed',String(mvM==='i'));$('mvD').setAttribute('aria-pressed',String(mvM==='d'))}
+$('mvI').onclick=function(){mvM='i';um()};$('mvD').onclick=function(){mvM='d';um()};$('mvS').oninput=um;um();
+$('amT').innerHTML='<table><tr><th>n appends</th><th>copies (sum of resizes)</th><th>bound 2n</th><th>total work n + copies</th><th>per append</th></tr>'+[8,16,100,1000,1000000].map(function(n){var c=0,s=1;while(s<n){c+=s;s*=2}return '<tr><td>'+n.toLocaleString('en-US')+'</td><td>'+c.toLocaleString('en-US')+'</td><td>'+(2*n).toLocaleString('en-US')+'</td><td>'+(n+c).toLocaleString('en-US')+'</td><td>'+((n+c)/n).toFixed(2)+'</td></tr>'}).join('')+'</table>';
+function ub(n){var q=[n],m=n;while(m>0){m=Math.floor(m/2);q.push(m)}var f=Math.floor(Math.log2(n))+1;
+  $('bdN').textContent=q.map(function(x){return x.toLocaleString('en-US')}).join(' → ')+'.  Comparisons: '+(q.length-1)+'  (⌊log₂ '+n.toLocaleString('en-US')+'⌋ + 1 = '+f+').';
+  [].forEach.call($('bdB').children,function(b){b.setAttribute('aria-pressed',String(+b.dataset.n===n))})}
+[9,16,100,1000,1000000].forEach(function(n){var b=document.createElement('button');b.textContent='n = '+n.toLocaleString('en-US');b.dataset.n=n;b.onclick=function(){ub(n)};$('bdB').appendChild(b)});ub(16);
+// code toggle and theme
+var cb=$('codeBtn'),hid=false;
+cb.onclick=function(){hid=!hid;[].forEach.call(document.querySelectorAll('details'),function(d){d.open=!hid});cb.textContent=hid?'Show code':'Hide code'};
+var root=document.documentElement,tb=$('theme');
+function setTheme(t){root.setAttribute('data-theme',t);tb.textContent=t==='dark'?'Light':'Dark'}
+try{var st=localStorage.getItem('theme');if(st==='dark'||st==='light')setTheme(st)}catch(e){}
+tb.onclick=function(){var t=root.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);try{localStorage.setItem('theme',t)}catch(e){}};
+</script>
+</body>
+</html>

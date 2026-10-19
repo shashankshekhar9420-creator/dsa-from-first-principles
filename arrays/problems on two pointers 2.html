@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Two Pointers: Beyond the Basic Pattern</title>
+<style>
+:root{--bg:#fff;--ink:#111;--mut:#555;--line:#ccc;--acc:#1f4e8c;--hi:#fff3b0;--hib:#c9a227;--ok:#dcf0dc;--okb:#3a8a3a;--mv:#e6edf7;--dim:#eee;--card:#fafafa;--red:#b5342b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#121212;--ink:#eee;--mut:#aaa;--line:#3a3a3a;--acc:#8ab4f8;--hi:#4a4220;--hib:#c9a227;--ok:#1d3a22;--okb:#5cb85c;--mv:#1c2a40;--dim:#2a2a2a;--card:#1a1a1a;--red:#ff7b72;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Roman",Times,serif}
+main{max-width:720px;margin:0 auto;padding:40px 20px 80px}
+h1,h2,h3{font-family:inherit;line-height:1.25}
+h1{font-size:2.1rem;margin:.2em 0 .6em}
+h2{font-size:1.5rem;margin:2.6em 0 .6em;padding-top:1.2em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin:1.6em 0 .4em}
+blockquote{margin:1.2em 0;padding:.4em 1em;border-left:4px solid var(--acc);font-size:1.12rem}
+blockquote p{margin:.3em 0}
+code{font:inherit;background:var(--card);padding:1px 5px;border-radius:4px}
+a{color:var(--acc)}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:1.2em 0}
+.cap{font-size:.9rem;color:var(--mut);margin:.6em 0 0}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:flex-end}
+.cw{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ix{font-size:.8rem;color:var(--mut);min-height:1.1em;font-weight:600}
+.cell{min-width:54px;padding:7px 6px;text-align:center;border:2px solid var(--line);background:var(--bg);border-radius:6px;font-weight:600;transition:background .2s}
+.gap{border-style:dashed;background:transparent}
+.ok{background:var(--ok);border-color:var(--okb)}
+.now{background:var(--hi);border-color:var(--hib)}
+.dim{background:var(--dim);color:var(--mut);border-color:var(--dim)}
+.mv{background:var(--mv);border-color:var(--acc)}
+.mx{display:grid;gap:3px;margin:8px 0}
+.mh{font-size:.8rem;color:var(--mut);text-align:center;align-self:center}
+.mx .cell{min-width:0;padding:3px 0;font-size:.8rem}
+button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
+button:hover:not(:disabled){background:var(--mv)}
+button:disabled{opacity:.4;cursor:default}
+button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--hib);outline-offset:2px}
+.tools{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5;display:flex;gap:8px}
+.ctl{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.pos{color:var(--mut);font-size:.9rem}
+.note{min-height:3em;margin:.4em 0 0;font-weight:500}
+.lbl{font-size:.9rem;margin:8px 0 3px}
+.bar{height:14px;border-radius:4px;background:var(--acc);min-width:3px}
+.bar.g{background:var(--okb)}.bar.r{background:var(--red)}
+input[type=range]{width:100%}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--dim)}
+details{margin:1em 0;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+summary{cursor:pointer;padding:8px 12px;font-size:.95rem;color:var(--acc)}
+pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,Menlo,Consolas,monospace}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.two{grid-template-columns:1fr}}
+.flow{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;font-size:.95rem}
+.flow .cell{min-width:140px}
+.zones{display:flex;border:2px solid var(--line);border-radius:6px;overflow:hidden;text-align:center;font-size:.85rem}
+.zones div{padding:10px 6px}
+.flag{font-size:.9rem;color:var(--mut)}
+.tt td:first-child{font-weight:600}
+.tt td{text-align:left}
+.top-nav{display:flex;align-items:center;gap:8px;font-size:.95rem;margin-bottom:20px;color:var(--mut)}
+.top-nav a{color:var(--acc);text-decoration:none}
+.top-nav a:hover{text-decoration:underline}
+.nav-sep{color:var(--line)}
+.nav-current{color:var(--mut)}
+.article-nav{display:flex;justify-content:space-between;gap:16px;margin-top:48px;padding-top:24px;border-top:1px solid var(--line);flex-wrap:wrap}
+.article-nav a{display:flex;flex-direction:column;padding:12px 16px;border:1px solid var(--line);border-radius:6px;background:var(--card);text-decoration:none;color:var(--ink);transition:border-color .15s,background .15s;flex:1;min-width:200px}
+.article-nav a:hover{border-color:var(--acc);background:var(--mv)}
+.article-nav .an-sub{font-size:.8rem;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.article-nav .an-title{font-weight:600;color:var(--acc)}
+</style>
+</head>
+<body>
+<div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
+<main>
+<nav class="top-nav"><a href="../index.html">← DSA from First Principles</a> <span class="nav-sep">/</span> <span class="nav-current">Essay 06 · Two Pointers: Beyond the Pattern (Part 2)</span></nav>
+<h1>Two Pointers: Beyond the Basic Pattern</h1>
+<p>In the previous article, we built the intuition behind the <strong>two-pointer technique</strong>. The important thing was not to memorize <em>“use two pointers when you see a sorted array.”</em> Instead, we arrived at something more fundamental:</p>
+<blockquote><p>Two pointers are useful when two positions in a data structure can help us continuously eliminate parts of the search space.</p></blockquote>
+<p>Sometimes the pointers move toward each other. Sometimes they move in the same direction. Sometimes they define regions. Sometimes they move backward. And sometimes they don’t directly find the answer at all: they help us discover <strong>where the answer must be</strong>. That is what we will explore here, through four problems. Each has a stepper you can click through, and code can be hidden with the button at the top.</p>
+<ol>
+<li><a href="#s1">Dutch National Flag</a></li>
+<li><a href="#s2">Quadruple Sum to Target</a></li>
+<li><a href="#s3">Comparing Strings Containing Backspaces</a></li>
+<li><a href="#s4">Minimum Window Sort</a></li>
+</ol>
+
+<h2 id="s1">1. Dutch National Flag</h2>
+<p>Suppose an array contains only <code>0</code>, <code>1</code> and <code>2</code>, and we want to sort it. For example <code>[2, 0, 2, 1, 1, 0]</code> should become <code>[0, 0, 1, 1, 2, 2]</code>. At first glance this is a sorting problem, and <code>arr.sort()</code> is perfectly reasonable in Python. But the problem is interesting because we know something very specific about the data: <strong>there are only three possible values</strong>. So perhaps we don’t need a general-purpose sorting algorithm at all.</p>
+<h3>The naive way</h3>
+<p>We could count the values (<code>0 → 2 times</code>, <code>1 → 2 times</code>, <code>2 → 2 times</code>) and then rewrite the array. That works, with the idea <em>“count first, reconstruct later.”</em> Can we rearrange the array directly? This is where <strong>boundaries</strong> become useful.</p>
+<h3>Think in regions</h3>
+<p>The final order is known: <code>0s | 1s | 2s</code>. Initially we don’t know where the regions end, but we can imagine growing them while we scan an <em>unknown</em> region. The regions are always:</p>
+<div class="fig"><div class="zones"><div style="flex:2;background:var(--ok)">all 0s</div><div style="flex:2;background:var(--mv)">all 1s</div><div style="flex:3">unknown</div><div style="flex:2;background:var(--dim)">all 2s</div></div><div class="zones" style="border:0;margin-top:2px;font-weight:600"><div style="flex:2"></div><div style="flex:2;text-align:left;padding:4px">↑ low</div><div style="flex:3;text-align:left;padding:4px">↑ current</div><div style="flex:2;text-align:left;padding:4px">↑ high</div></div></div>
+<p>That gives three pointers, and an invariant:</p>
+<div class="fig scroll"><table class="tt"><tr><th>Indices</th><th>Contents</th></tr><tr><td><code>[0 … low−1]</code></td><td>all 0s</td></tr><tr><td><code>[low … current−1]</code></td><td>all 1s</td></tr><tr><td><code>[current … high]</code></td><td>unknown</td></tr><tr><td><code>[high+1 … end]</code></td><td>all 2s</td></tr></table></div>
+<blockquote><p>This invariant is the entire algorithm. The pointers are boundaries between regions whose correctness we already know.</p></blockquote>
+<h3>What should happen with each value?</h3>
+<p>Look at the element at <code>current</code>. It is the first element of the unknown region, and it must join one of the known regions.</p>
+<ul>
+<li><strong>It’s a 0.</strong> It belongs at the end of the 0s. Swap it with <code>arr[low]</code> (the first cell of the 1s region). Both regions grew: <code>low++</code>, <code>current++</code>.</li>
+<li><strong>It’s a 1.</strong> It already belongs between the 0s and 2s. Nothing moves: <code>current++</code>.</li>
+<li><strong>It’s a 2.</strong> It belongs at the end. Swap it with <code>arr[high]</code> and <code>high--</code>. But <code>current</code> <strong>must not move</strong>.</li>
+</ul>
+<div class="fig two"><div><div class="lbl"><strong>The 0 case:</strong> swap with low</div><div id="c0a"></div><div id="c0b"></div></div><div><div class="lbl"><strong>The 2 case:</strong> swap with high</div><div id="c2a"></div><div id="c2b"></div></div></div>
+<p>Why must <code>current</code> stay in the 2 case? The element that arrived from <code>high</code> came from the <em>unknown</em> region. We haven’t examined it, and it might be a 0, a 1 or a 2 (in the figure above, it is a 0 that still needs to go left). One of the most important details of the algorithm. Now take the controls and run it yourself:</p>
+<h3>Try it: you drive the algorithm</h3>
+<p>At each step, choose what to do with the element at <code>current</code>. Colours: green is a finished 0, blue a finished 1, grey a finished 2, yellow is <code>current</code>. Try the “swap with high; current++” button when you see a 2.</p>
+<div class="fig" id="ddW"></div>
+<h3>The complete algorithm</h3>
+<details open><summary>Python code (click to hide or show)</summary><pre>def dutch_national_flag(arr):
+    low = 0
+    current = 0
+    high = len(arr) - 1
+
+    while current &lt;= high:
+        if arr[current] == 0:
+            arr[low], arr[current] = arr[current], arr[low]
+            low += 1
+            current += 1
+
+        elif arr[current] == 1:
+            current += 1
+
+        else:  # arr[current] == 2
+            arr[current], arr[high] = arr[high], arr[current]
+            high -= 1
+
+    return arr</pre></details>
+<p>The important part is not memorizing three cases. It is the invariant, and the question: <em>how does the current element allow me to shrink the unknown region?</em> Step through whole runs, including one with the bug of advancing <code>current</code> after a swap with <code>high</code>:</p>
+<div class="fig" id="dfW"></div>
+<h3>Why is this a two-pointer idea?</h3>
+<p>Technically we have <strong>three pointers</strong>, but conceptually this belongs to the same family. The important idea isn’t the number two. It is:</p>
+<blockquote><p>Use moving boundaries to maintain regions whose correctness is already known.</p></blockquote>
+<h3>Why not just use sorting?</h3>
+<p><code>arr.sort()</code> is much simpler, and in normal production code it may be the better choice. Here is the honest comparison:</p>
+<div class="fig scroll"><table class="tt"><tr><th></th><th>Library sort</th><th>Count, then rewrite</th><th>Dutch National Flag</th></tr><tr><td>Time</td><td>O(n log n)</td><td>O(n), two passes</td><td>O(n), one pass</td></tr><tr><td>Extra space</td><td>small</td><td>O(1): three counters</td><td>O(1)</td></tr><tr><td>Reasoning needed</td><td>none</td><td>easy</td><td>an invariant with three regions</td></tr><tr><td>Works for</td><td>anything</td><td>a few known values</td><td>a few known values, one pass, in place</td></tr></table></div>
+<blockquote><p>A theoretically better algorithm is not automatically the better piece of code.</p></blockquote>
+<p>Use the stronger algorithm when its constraints actually matter.</p>
+
+<h2 id="s2">2. Quadruple Sum to Target</h2>
+<p>Now let’s increase the number of elements. We want all quadruplets whose sum equals a target. For <code>[4, 1, 2, -1, 1, -3]</code> and target <code>1</code>, one answer is <code>[-3, 1, 1, 2]</code>, because <code>-3 + 1 + 1 + 2 = 1</code>. At first this looks like a completely new problem. But we already know how to solve <strong>two-sum with two pointers</strong> on a sorted array. So instead of inventing a new technique, ask:</p>
+<blockquote><p>Can we reduce this problem to a problem we already understand?</p></blockquote>
+<p>This is one of the most useful habits in DSA.</p>
+<h3>Start with the brute force</h3>
+<p>A quadruplet has four elements, so the naive approach is four nested loops. That is a huge amount of work. But look at what happens if we fix two elements. If <code>a + b + c + d = target</code> and we choose <code>a</code> and <code>b</code>, then <code>c + d = target − a − b</code>. We have turned 4-sum into 2-sum.</p>
+<div class="fig" id="flow2"></div>
+<blockquote><p>When a problem asks for a combination of many elements, try fixing some of them and reducing the remaining problem to something you already know how to solve.</p></blockquote>
+<h3>Why do two pointers work now?</h3>
+<p>Sorted, the array is <code>[-3, -1, 1, 1, 2, 4]</code>. Suppose we’ve fixed <code>-3</code> and <code>-1</code>. The remaining target is <code>1 − (−3) − (−1) = 5</code>. Place <code>left</code> on <code>1</code> and <code>right</code> on <code>4</code>: <code>1 + 4 = 5</code>, perfect. Had the pair summed to something too small, like <code>1 + 2 = 3</code>, moving <code>right</code> left would only shrink the sum further, so the only useful move is <code>left++</code>. If it were too large, <code>right--</code>. Sortedness gives us directional information, exactly as before. Blue cells are the two fixed elements, yellow is the pair under inspection, grey is eliminated:</p>
+<div class="fig" id="fqW"></div>
+<h3>Implementation</h3>
+<details open><summary>Python code (click to hide or show)</summary><pre>def four_sum(arr, target):
+    arr.sort()
+    result = []
+    n = len(arr)
+
+    for i in range(n - 3):
+        if i &gt; 0 and arr[i] == arr[i - 1]:
+            continue
+
+        for j in range(i + 1, n - 2):
+            if j &gt; i + 1 and arr[j] == arr[j - 1]:
+                continue
+
+            left = j + 1
+            right = n - 1
+
+            while left &lt; right:
+                total = arr[i] + arr[j] + arr[left] + arr[right]
+
+                if total == target:
+                    result.append(
+                        [arr[i], arr[j], arr[left], arr[right]]
+                    )
+
+                    left += 1
+                    right -= 1
+
+                    while left &lt; right and arr[left] == arr[left - 1]:
+                        left += 1
+
+                    while left &lt; right and arr[right] == arr[right + 1]:
+                        right -= 1
+
+                elif total &lt; target:
+                    left += 1
+
+                else:
+                    right -= 1
+
+    return result</pre></details>
+<p>The code looks considerably more complicated than two-sum, but conceptually it isn’t a new technique. It is <code>fix → fix → two pointers</code>.</p>
+<h3>Why skip duplicates?</h3>
+<p>Suppose we have <code>[-3, 1, 1, 1, 2]</code>. If the first <code>1</code> and the next <code>1</code> play the same role, starting from both produces the same quadruplet. So after using a value, we skip equal values at the same decision level (try the third preset above, where every element is 2). This is another advantage of sorting: it didn’t just help the pointer movement, it made duplicates adjacent and easy to recognize.</p>
+<h3>Why not four nested loops?</h3>
+<p>Because most of that work is unnecessary. Once two elements are fixed we don’t test every remaining pair independently, since the sorted structure eliminates many possibilities at once. The progression is: <em>check every quadruplet</em>, then <em>fix two and search the remaining two</em>, then <em>use sortedness to make that search two pointers</em>.</p>
+<div class="fig scroll" id="gr4"></div>
+<h3>The same idea for any k</h3>
+<p>Nothing special happened at 4. Fix <code>k − 2</code> elements with nested loops, then finish with two pointers. Slide to see how the work compares at <code>n = 100</code>:</p>
+<div class="fig"><label for="ksS">k = <strong id="ksO"></strong></label><input id="ksS" type="range" min="2" max="6" value="4"><div id="ksV"></div></div>
+<blockquote><p>Optimization often comes from reducing a large search problem into a smaller familiar problem.</p></blockquote>
+
+<h2 id="s3">3. Comparing Strings Containing Backspaces</h2>
+<p>Now a very different-looking problem. Take <code>s = "xy#z"</code> and <code>t = "xzz#"</code>. A <code>#</code> means <em>delete the character immediately before it</em>. So <code>"xy#z"</code> becomes <code>"xz"</code>, and <code>"xzz#"</code> also becomes <code>"xz"</code>. The strings are equal.</p>
+<h3>The obvious solution</h3>
+<p>Build each final string with a stack, then compare:</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def process(s):
+    stack = []
+
+    for char in s:
+        if char == "#":
+            if stack:
+                stack.pop()
+        else:
+            stack.append(char)
+
+    return "".join(stack)
+
+# process(s) == process(t)</pre></details>
+<p>This is simple and perfectly valid. But notice that the <code>#</code> affects the character <strong>before it</strong>. The string has a natural direction for reasoning: start from the end.</p>
+<h3>Why move backward?</h3>
+<p>Take <code>a b # c</code>. Scanning left to right, when we meet <code>b</code> we don’t yet know it will be deleted, so we must remember it. Scanning from the right, we meet the <code>#</code> <em>before</em> reaching <code>b</code>, keep a counter <code>backspaces = 1</code>, and when we reach <code>b</code> we know it’s deleted. We never store it. Compare what we must remember in each direction:</p>
+<div class="fig" id="dirW"></div>
+<h3>Two pointers</h3>
+<p>Put one pointer at the end of each string and move backward. Every <code>#</code> increases the number of pending deletions. Every normal character met while a deletion is pending is skipped. Eventually each pointer stops at the next character that actually survives, and we compare those. Grey cells are deleted (or are backspaces), green cells were compared and matched, yellow are the survivors being compared:</p>
+<div class="fig" id="bcW"></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>def backspace_compare(s, t):
+    i = len(s) - 1
+    j = len(t) - 1
+
+    skip_s = 0
+    skip_t = 0
+
+    while i &gt;= 0 or j &gt;= 0:
+
+        while i &gt;= 0:
+            if s[i] == "#":
+                skip_s += 1
+                i -= 1
+            elif skip_s &gt; 0:
+                skip_s -= 1
+                i -= 1
+            else:
+                break
+
+        while j &gt;= 0:
+            if t[j] == "#":
+                skip_t += 1
+                j -= 1
+            elif skip_t &gt; 0:
+                skip_t -= 1
+                j -= 1
+            else:
+                break
+
+        if i &lt; 0 or j &lt; 0:
+            return i == j
+
+        if s[i] != t[j]:
+            return False
+
+        i -= 1
+        j -= 1
+
+    return True</pre></details>
+<h3>The important invariant</h3>
+<p>At every comparison, <code>s[i]</code> and <code>t[j]</code> are the next characters that would actually appear in the final strings. Characters that have been logically deleted are jumped over. This is a beautiful example of a broader idea:</p>
+<blockquote><p>Sometimes you don’t need to transform the data into its final form. You can reason about what the final form would be while traversing the original data.</p></blockquote>
+<h3>Why not just use a stack?</h3>
+<p>The stack solution is arguably easier to understand. The backward-pointer solution uses <code>O(1)</code> extra space, while the stack needs space proportional to the input.</p>
+<div class="fig scroll"><table class="tt"><tr><th></th><th>Stack</th><th>Two pointers</th></tr><tr><td>Reasoning</td><td>simpler</td><td>more complicated</td></tr><tr><td>Extra memory</td><td>O(n)</td><td>O(1)</td></tr><tr><td>Time</td><td>O(n + m)</td><td>O(n + m)</td></tr></table></div>
+<p>The lesson isn’t “two pointers are better.” It is: <strong>understand the trade-off and choose the technique according to the constraints.</strong></p>
+
+<h2 id="s4">4. Minimum Window Sort</h2>
+<p>Now a problem where the pointers don’t directly construct the answer. Take <code>[1, 4, 6, 5, 2, 3, 7]</code>. The array is almost sorted. We want the <strong>smallest subarray</strong> which, if sorted, makes the entire array sorted. Here that is <code>[4, 6, 5, 2, 3]</code>: sorting it gives <code>[1, 2, 3, 4, 5, 6, 7]</code>.</p>
+<h3>The naive approach</h3>
+<p>Try every possible subarray, sort it, and check whether the whole array becomes sorted. That is a lot of unnecessary work. Instead ask: <em>what does an unsorted array reveal about where the problem starts and ends?</em></p>
+<h3>Find where order first breaks</h3>
+<p>A sorted array satisfies <code>arr[i] &lt;= arr[i + 1]</code>. Scan from the left for the first violation: here <code>6 &gt; 5</code>, so <code>low = 2</code>. Scan from the right for the last violation: scanning backward, <code>2 &lt; 5</code> breaks the ordering, so <code>high = 4</code>. We have a candidate window <code>[6, 5, 2]</code>. But is it enough? Not necessarily.</p>
+<h3>Why might we need to expand the window?</h3>
+<p>The window’s minimum is <code>2</code> and its maximum is <code>6</code>. Look at the element just outside on the left: <code>4 &gt; 2</code>. If we leave it outside, sorting only the window puts <code>2</code> after it and breaks the order. The element on the right, <code>3</code>, is smaller than the maximum <code>6</code>, so it would also end up out of order. Both must join the window. Switch between the two choices:</p>
+<div class="fig" id="mwF"></div>
+<h3>The deeper idea</h3>
+<p>The initial disorder tells us that somewhere between <code>low</code> and <code>high</code> something is wrong. But the values inside that region can affect elements just outside it. So we find the minimum and the maximum inside the window, then ask on each side:</p>
+<ul>
+<li><strong>Left:</strong> is the element just before the window greater than the window’s minimum? If yes, expand left, because after sorting the window that element would be out of order.</li>
+<li><strong>Right:</strong> is the element just after the window smaller than the window’s maximum? If yes, expand right, for the same reason.</li>
+</ul>
+<p>We keep expanding until neither side needs to participate. Green cells are verified in place, yellow is the suspect window, blue cells were pulled in by an expansion:</p>
+<div class="fig" id="mwW"></div>
+<h3>Implementation</h3>
+<details open><summary>Python code (click to hide or show)</summary><pre>def minimum_window_sort(arr):
+    n = len(arr)
+
+    low = 0
+
+    while low &lt; n - 1 and arr[low] &lt;= arr[low + 1]:
+        low += 1
+
+    if low == n - 1:
+        return 0
+
+    high = n - 1
+
+    while high &gt; 0 and arr[high] &gt;= arr[high - 1]:
+        high -= 1
+
+    window_min = min(arr[low:high + 1])
+    window_max = max(arr[low:high + 1])
+
+    while low &gt; 0 and arr[low - 1] &gt; window_min:
+        low -= 1
+
+    while high &lt; n - 1 and arr[high + 1] &lt; window_max:
+        high += 1
+
+    return high - low + 1</pre></details>
+<p>The slicing in the <code>min</code>/<code>max</code> lines creates a temporary list in Python. If we care about strict constant auxiliary space, compute them with a loop instead, which keeps the reasoning closer to the theoretical in-place algorithm:</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>window_min = window_max = arr[low]
+
+for i in range(low + 1, high + 1):
+    window_min = min(window_min, arr[i])
+    window_max = max(window_max, arr[i])</pre></details>
+<h3>Is this really a two-pointer problem?</h3>
+<p>This one is worth thinking about carefully. It doesn’t look like the classic <code>left → ← right</code> pattern. The pointers first identify the boundaries of disorder and then expand them. So I would not treat <em>“Minimum Window Sort = two pointers”</em> as something to memorize. A better description:</p>
+<blockquote><p>Use two moving boundaries to identify the smallest region whose internal disorder affects the rest of the array.</p></blockquote>
+<p>The pointer technique is a consequence of that reasoning, and the distinction matters.</p>
+
+<h2 id="s5">5. What these four problems taught us</h2>
+<p>At the beginning we might have thought: <em>two pointers = left and right moving toward each other</em>. That is only one form. Pick one to see how the pointers behaved in each problem:</p>
+<div class="fig" id="formW"></div>
+
+<h2 id="s6">6. The bigger pattern</h2>
+<p>This is the real reason two pointers shouldn’t be learned as a collection of patterns. The name “two pointers” describes the implementation. It does not describe the underlying idea:</p>
+<blockquote><p>Can I represent a large search space using a small number of moving boundaries, and can I prove that everything outside those boundaries is already irrelevant?</p></blockquote>
+<p>That question leads to very different algorithms: <code>left → ← right</code>, or <code>[correct] [unknown] [correct]</code>, or <code>fix → fix → two pointers</code>, or a single <code>← pointer</code>, or <code>[ unaffected | window | unaffected ]</code>. The pointers are merely the mechanism. The real algorithm is the <strong>reasoning that makes pointer movement safe</strong>.</p>
+
+<h2 id="s7">7. A useful way to recognize these problems</h2>
+<p>Instead of asking <em>“is this a two-pointer problem?”</em>, ask a better set of questions:</p>
+<ol>
+<li><strong>Is there some structure in the data?</strong> Sorted order, known categories, logical deletions, nearly sorted structure.</li>
+<li><strong>Can two positions tell me something about an entire region?</strong> “Everything before this pointer is already correct, everything after that pointer is already correct.”</li>
+<li><strong>Can I permanently eliminate part of the search space?</strong> This is the most important question. If yes, ask <em>why can I safely throw that part away?</em> That “why” is usually the heart of the algorithm.</li>
+<li><strong>What invariant am I maintaining?</strong> “Everything before <code>low</code> is 0 and everything after <code>high</code> is 2.” Or “<code>arr[:write]</code> contains unique values.” Or “the current pointers point to the next surviving characters.” The invariant tells us what the pointers actually mean.</li>
+</ol>
+
+<h2 id="s8">8. The evolution of the idea</h2>
+<p>Across these problems, the idea has gradually expanded:</p>
+<div class="fig scroll"><table class="tt"><tr><th>Problem</th><th>What the pointers do</th></tr><tr><td>Pair Sum</td><td>Use two ends to eliminate impossible pairs</td></tr><tr><td>Remove Duplicates</td><td>Use read/write positions to separate useful data</td></tr><tr><td>Dutch National Flag</td><td>Use pointers as region boundaries</td></tr><tr><td>Quadruple Sum</td><td>Reduce a larger problem until two pointers become applicable</td></tr><tr><td>Backspace Compare</td><td>Choose pointer direction based on the problem’s meaning</td></tr><tr><td>Minimum Window Sort</td><td>Use boundaries to identify the smallest relevant region</td></tr></table></div>
+<p>That is why learning algorithms through intuition is more useful than memorizing patterns. The goal isn’t to look at <code>left</code> and <code>right</code> and immediately say <em>“Two pointers!”</em> The goal is to look at a problem and notice:</p>
+<blockquote><p>There is a lot of work here that I don’t actually need to do.</p></blockquote>
+<p>Then ask <em>“what structure lets me prove that?”</em> That is where the algorithm comes from.</p>
+<div class="article-nav">
+  <a href="problems%20on%20two%20pointers%201.html">
+    <span class="an-sub">Previous Essay · 05</span>
+    <span class="an-title">← Two Pointers: Problems (Part 1)</span>
+  </a>
+  <a href="../index.html" style="text-align:right">
+    <span class="an-sub">Series Complete</span>
+    <span class="an-title">Back to Table of Contents →</span>
+  </a>
+</div>
+</main>
+<script>
+var $=function(i){return document.getElementById(i)};
+var L=function(v){return v.toLocaleString('en-US')};
+var num=function(x,y){return x-y};
+var sg=function(x){return x<0?'('+x+')':''+x};
+function expr(a){return a.map(sg).join(' + ')+' = '+a.reduce(function(s,x){return s+x},0)}
+function isSorted(a){for(var i=1;i<a.length;i++)if(a[i-1]>a[i])return false;return true}
+function cells(a,o){o=o||{};var c=o.c||{};return '<div class="row">'+a.map(function(v,i){var g=v===''||v===null;return '<div class="cw"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="cell'+(g?' gap':'')+' '+(c[i]||'')+'">'+(g?'&nbsp;':v)+'</div><span class="ix">'+(o.noix?'':i)+'</span></div>'}).join('')+'</div>'}
+function widget(id,opts,build){
+  var el=$(id),i=0,st=[];
+  el.innerHTML=(opts.length>1?'<div class="row" style="align-items:center">'+opts.map(function(o,k){return '<button data-k="'+k+'">'+o[0]+'</button>'}).join('')+'</div>':'')+'<div class="scroll v"></div><p class="note" aria-live="polite"></p><div class="ctl"><button class="pv">Previous</button><span class="pos"></span><button class="nx">Next</button></div>';
+  var v=el.querySelector('.v'),n=el.querySelector('.note'),p=el.querySelector('.pos'),pv=el.querySelector('.pv'),nx=el.querySelector('.nx');
+  function r(){v.innerHTML=st[i].h;n.textContent=st[i].n;p.textContent='Step '+(i+1)+' of '+st.length;pv.disabled=i===0;nx.disabled=i===st.length-1}
+  function pick(k){st=build(opts[k][1]);i=0;[].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.k===k))});r()}
+  [].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.onclick=function(){pick(+b.dataset.k)}});
+  pv.onclick=function(){if(i>0){i--;r()}};nx.onclick=function(){if(i<st.length-1){i++;r()}};pick(0);
+}
+function tabs(id,labels,fn){var el=$(id);el.innerHTML='<div class="row" style="align-items:center"></div><div class="tv"></div>';var bar=el.firstChild,tv=el.lastChild;
+  labels.forEach(function(t,k){var b=document.createElement('button');b.textContent=t;b.onclick=function(){[].forEach.call(bar.children,function(x){x.setAttribute('aria-pressed',String(x===b))});tv.innerHTML=fn(k)};b.setAttribute('aria-pressed',String(k===0));bar.appendChild(b)});tv.innerHTML=fn(0)}
+function growth(id,ns,bf,tp,h1,h2){$(id).innerHTML='<table><tr><th>n</th><th>'+h1+'</th><th>'+h2+'</th></tr>'+ns.map(function(n){var b=bf(n),t=tp(n);return '<tr><td>'+L(n)+'</td><td>'+L(b)+'<div class="bar r" style="width:'+Math.max(1,Math.log10(b)/12*100)+'%;margin-left:auto"></div></td><td>'+L(t)+'<div class="bar g" style="width:'+Math.max(1,Math.log10(t)/12*100)+'%;margin-left:auto"></div></td></tr>'}).join('')+'</table><p class="cap">Bars use a log scale, otherwise the second column would be invisible.</p>'}
+function flow(a){return '<div class="flow">'+a.map(function(x){return '<div class="cell">'+x+'</div>'}).join('<span>↓</span>')+'</div>'}
+
+// ---------- Dutch National Flag ----------
+function dview(a,low,cur,high,fin){var n=a.length,c={},sub={},j,ad=function(i,s){if(i>=0&&i<n)sub[i]=sub[i]?sub[i]+' '+s:s};
+  for(j=0;j<n;j++)c[j]=fin?(a[j]===0?'ok':a[j]===1?'mv':'dim'):(j<low?'ok':j<cur?'mv':j>high?'dim':'');
+  if(!fin){if(cur<=high&&cur<n)c[cur]='now';ad(low,'L');ad(cur,'C');ad(high,'H')}
+  return cells(a,{c:c,sub:sub})}
+$('c0a').innerHTML=dview([0,1,1,0,1,2],1,3,5)+'<p class="cap">current sees a 0.</p>';
+$('c0b').innerHTML=dview([0,0,1,1,1,2],2,4,5)+'<p class="cap">After the swap, low++ and current++.</p>';
+$('c2a').innerHTML=dview([0,1,2,1,0,2],1,2,4)+'<p class="cap">current sees a 2. The last unknown cell holds a 0.</p>';
+$('c2b').innerHTML=dview([0,1,0,1,2,2],1,2,3)+'<p class="cap">After the swap, only high--. A 0 just arrived at current, still unexamined.</p>';
+
+var dd={a:[],low:0,cur:0,high:0,msg:'',sw:0,k:0},ddE=$('ddW'),DDS=[[2,0,2,1,1,0],[1,2,0],[2,2,1,0,0]];
+function ddReset(k){dd.k=k;dd.a=DDS[k].slice();dd.low=0;dd.cur=0;dd.high=dd.a.length-1;dd.msg='';dd.sw=0;ddR()}
+function ddR(){var a=dd.a,done=dd.cur>dd.high,v=a[dd.cur],st;
+  st=done?'No unknown region is left. The array is '+(isSorted(a)?'sorted':'not sorted')+', after '+dd.sw+' swaps.':'current is index '+dd.cur+', and its value is '+v+'. What should we do?';
+  ddE.innerHTML='<div class="row" style="align-items:center">'+DDS.map(function(s,k){return '<button data-s="'+k+'" aria-pressed="'+(k===dd.k)+'">['+s.join(',')+']</button>'}).join('')+'</div>'+dview(a,dd.low,dd.cur,dd.high,done)+'<p class="note" aria-live="polite"><strong>'+st+'</strong></p><div class="ctl"><button data-c="A"'+(done?' disabled':'')+'>Swap with low; low++, current++</button><button data-c="B"'+(done?' disabled':'')+'>current++</button><button data-c="C"'+(done?' disabled':'')+'>Swap with high; high--</button><button data-c="D"'+(done?' disabled':'')+'>Swap with high; high--, current++</button></div><p class="note" aria-live="polite">'+dd.msg+'</p>';
+  [].forEach.call(ddE.querySelectorAll('button[data-s]'),function(b){b.onclick=function(){ddReset(+b.dataset.s)}});
+  [].forEach.call(ddE.querySelectorAll('button[data-c]'),function(b){b.onclick=function(){ddMv(b.dataset.c)}})}
+function ddMv(c){var a=dd.a,v=a[dd.cur],need=v===0?'A':v===1?'B':'C',t,hint={0:'A 0 belongs right after the 0s: swap it with low (the first cell of the 1s region) and grow both regions.',1:'A 1 is already between the 0s and 2s. Nothing to move: just current++.',2:'A 2 belongs at the end: swap it with high, then high--. current stays.'};
+  if(c==='D'&&v===2){dd.msg='Tempting, but no. The value arriving from high is '+a[dd.high]+', and it has never been examined. If it is a 0 or a 1 it still has to be placed, so current must stay and look at it again.';ddR();return}
+  if(c!==need){dd.msg='Not quite. current holds '+v+'. '+hint[v];ddR();return}
+  if(c==='A'){t=a[dd.low];a[dd.low]=a[dd.cur];a[dd.cur]=t;dd.low++;dd.cur++;dd.sw++;dd.msg='Right. Both the 0s and the 1s regions grew.'}
+  else if(c==='B'){dd.cur++;dd.msg='Right. The 1 is classified.'}
+  else{t=a[dd.cur];a[dd.cur]=a[dd.high];a[dd.high]=t;dd.high--;dd.sw++;dd.msg='Right. The 2s region grew, and current stays to examine the value that just arrived ('+a[dd.cur]+').'}
+  ddR()}
+ddReset(0);
+
+widget('dfW',[['[2,0,2,1,1,0]',[[2,0,2,1,1,0],false]],['[1,0,2]',[[1,0,2],false]],['[2,2,1,0,0]',[[2,2,1,0,0],false]],['[1,2,0] with the bug',[[1,2,0],true]],['[1,2,0] correct',[[1,2,0],false]]],function(p){
+  var a=p[0].slice(),bug=p[1],n=a.length,low=0,cur=0,high=n-1,s=[],sw=0,m,t,v,x;
+  while(cur<=high){v=a[cur];
+    if(v===0){m='arr[current] = 0 belongs at the end of the 0s. Swap it with arr[low]'+(low===cur?' (the same cell, so nothing moves)':' = '+a[low]+' (that 1 moves to current)')+'. Both regions grew: low++ and current++.';s.push({h:dview(a,low,cur,high),n:m});t=a[low];a[low]=a[cur];a[cur]=t;low++;cur++;sw++}
+    else if(v===1){m='arr[current] = 1 already belongs between the 0s and 2s. It is classified. current++.';s.push({h:dview(a,low,cur,high),n:m});cur++}
+    else{x=a[high];m='arr[current] = 2 belongs at the end. Swap it with arr[high] = '+x+', then high--.'+(bug?' BUG: current++ moves on without examining the value that just arrived from high ('+x+').':' current stays: the value that arrived from high ('+x+') has not been examined yet.');
+      s.push({h:dview(a,low,cur,high),n:m});a[cur]=x;a[high]=2;high--;sw++;if(bug)cur++}}
+  s.push({h:dview(a,low,cur,high,true),n:isSorted(a)?'Done: current passed high, so no unknown region is left. Sorted in '+sw+' swap'+(sw===1?'':'s')+', one pass, no extra memory.':'Done, but the result ['+a.join(', ')+'] is NOT sorted. The skipped value was never placed. This is why current must stay.'});
+  return s});
+
+// ---------- Quadruple sum ----------
+$('flow2').innerHTML=flow(['4-sum','fix one element','fix another element','2-sum','two pointers']);
+widget('fqW',[['[4,1,2,-1,1,-3], target 1',[[4,1,2,-1,1,-3],1]],['[1,0,-1,0,-2,2], target 0',[[1,0,-1,0,-2,2],0]],['[2,2,2,2,2], target 8 (duplicates)',[[2,2,2,2,2],8]]],function(p){
+  var a=p[0].slice().sort(num),t=p[1],n=a.length,s=[],found=[],i,j,l,r;
+  function fl(){return '<div class="lbl">Found so far: '+(found.length?found.map(function(q){return '['+q.join(', ')+']'}).join(' '):'none yet')+'</div>'}
+  function view(i,j,l,r,skip){var c={},sub={},x;
+    for(x=0;x<n;x++){
+      if(skip){c[x]=x<i?'dim':'';continue}
+      c[x]=(x===i||x===j)?'mv':(x<j?'dim':(l<r?((x<l||x>r)?'dim':''):'dim'))}
+    if(skip){c[i]='dim';sub[i]=j<0?'i: repeat':'i'; if(j>=0){c[j]='dim';sub[j]='j: repeat'}}
+    else{sub[i]='i';sub[j]='j';if(l<r){c[l]='now';c[r]='now';sub[l]='L';sub[r]='R'}}
+    return cells(a,{c:c,sub:sub})+fl()}
+  s.push({h:cells(a,{})+fl(),n:'Sorted: ['+a.join(', ')+'], target '+t+'. Fix i, fix j, then run the pair-sum pointers on everything right of j.'});
+  for(i=0;i<n-3;i++){
+    if(i>0&&a[i]===a[i-1]){s.push({h:view(i,-1,0,-1,true),n:'a['+i+'] = '+a[i]+' equals the previous i. Every quadruplet starting here was already found, so skip it.'});continue}
+    for(j=i+1;j<n-2;j++){
+      if(j>i+1&&a[j]===a[j-1]){s.push({h:view(i,j,0,-1,true),n:'a['+j+'] = '+a[j]+' equals the previous j at this level. Skip it.'});continue}
+      l=j+1;r=n-1;var need=t-a[i]-a[j];
+      while(l<r){var tot=a[i]+a[j]+a[l]+a[r],m='Fixed '+a[i]+' and '+a[j]+', so the pair must sum to '+need+'. '+expr([a[i],a[j],a[l],a[r]])+' vs target '+t+'. ';
+        if(tot===t){found.push([a[i],a[j],a[l],a[r]]);var nl=l+1,nr=r-1,sk;
+          while(nl<nr&&a[nl]===a[nl-1])nl++;while(nl<nr&&a[nr]===a[nr+1])nr--;sk=(nl-(l+1))+((r-1)-nr);
+          m+='Found a quadruplet. Move both pointers inward.'+(sk>0?' Then skip '+sk+' repeated value'+(sk>1?'s':'')+'.':'');
+          s.push({h:view(i,j,l,r),n:m});l=nl;r=nr}
+        else if(tot<t){s.push({h:view(i,j,l,r),n:m+'Too small, so left++.'});l++}
+        else{s.push({h:view(i,j,l,r),n:m+'Too big, so right--.'});r--}}}}
+  s.push({h:cells(a,{})+fl(),n:'Every (i, j) has been tried. Quadruplets: '+(found.length?found.map(function(q){return '['+q.join(', ')+']'}).join(' '):'none')+'.'});
+  return s});
+function C(n,r){var x=1,i;for(i=1;i<=r;i++)x=x*(n-r+i)/i;return Math.round(x)}
+function tp4(n){var s=0,j;for(j=1;j<=n-3;j++)s+=j*(n-j-2);return s}
+growth('gr4',[10,50,100,1000],function(n){return C(n,4)},tp4,'Brute force: n(n−1)(n−2)(n−3)/24','Fix i, j + pointers (comparisons)');
+function ksU(){var k=+$('ksS').value,n=100,bf=C(n,k),tp=C(n,k-2)*n,loops=k-2,txt;$('ksO').textContent=k;
+  var steps=['<code>'+k+'-sum</code>'];for(var q=0;q<loops;q++)steps.push('fix element '+(q+1));steps.push('2-sum','two pointers');
+  $('ksV').innerHTML=flow(steps)+'<div class="lbl">Brute force at n = 100: '+L(bf)+' combinations</div><div class="bar r" style="width:'+Math.max(1,Math.log10(bf)/10*100)+'%"></div><div class="lbl">Fix '+loops+' + pointers: about '+L(tp)+' steps</div><div class="bar g" style="width:'+Math.max(1,Math.log10(tp)/10*100)+'%"></div><p class="cap">Brute force is O(n^'+k+'). Fixing '+loops+' elements and scanning with pointers is O(n^'+(k-1)+'). Bars use a log scale.</p>'}
+$('ksS').oninput=ksU;ksU();
+
+// ---------- Backspace compare ----------
+widget('dirW',[['Left to right: "ab#c"',['ab#c',false]],['Right to left: "ab#c"',['ab#c',true]],['Left to right: "abc##d"',['abc##d',false]],['Right to left: "abc##d"',['abc##d',true]]],function(p){
+  var S=p[0],rt=p[1],ch=S.split(''),n=ch.length,s=[],i,stack=[],k=0,surv=[],mx=0;
+  function view(i,mem,done){var c={},x;for(x=0;x<n;x++)c[x]=rt?(x>i?'dim':''):(x<i?'dim':'');if(i>=0&&i<n)c[i]='now';return cells(ch,{c:c,noix:true})+'<div class="lbl">'+mem+'</div>'}
+  if(!rt){
+    s.push({h:view(-1,'stack: [ ]'),n:'Read left to right and keep a stack of characters that might survive.'});
+    for(i=0;i<n;i++){var x=ch[i],m;
+      if(x==='#'){var g=stack.pop();m='# deletes the character before it: pop '+(g===undefined?'(nothing to pop)':g)+'.'}
+      else{stack.push(x);mx=Math.max(mx,stack.length);m=x+' is read. We cannot know yet whether a later # will delete it, so it must be stored.'}
+      s.push({h:view(i,'stack: ['+stack.join(', ')+']'),n:m})}
+    s.push({h:view(-1,'final: "'+stack.join('')+'"'),n:'Done. The stack held up to '+mx+' character'+(mx===1?'':'s')+' at once. In the worst case (no backspaces) memory grows with the input.'});
+  }else{
+    s.push({h:view(n,'pending backspaces: 0'),n:'Read right to left. We only need a counter of pending backspaces.'});
+    for(i=n-1;i>=0;i--){var y=ch[i],m2;
+      if(y==='#'){k++;m2='# arrives before the character it deletes. Pending backspaces = '+k+'.'}
+      else if(k>0){k--;m2=y+' meets a pending backspace: it is deleted. We skip it without storing anything. Pending = '+k+'.'}
+      else{surv.unshift(y);m2=y+' meets no pending backspace: it survives.'}
+      s.push({h:view(i,'pending backspaces: '+k+' &nbsp;|&nbsp; survivors seen: '+(surv.length?surv.join(''):'none')),n:m2})}
+    s.push({h:view(-1,'survivors: "'+surv.join('')+'"'),n:'Done. One integer was enough to decide. (The survivors line is only for illustration: the real algorithm compares them immediately instead of storing them.)'});
+  }
+  return s});
+
+widget('bcW',[['"xy#z" vs "xzz#"',['xy#z','xzz#']],['"xy#z" vs "xyz#"',['xy#z','xyz#']],['"a##c" vs "#a#c"',['a##c','#a#c']],['"a#c" vs "b"',['a#c','b']],['"ab##" vs "c#d#"',['ab##','c#d#']]],function(p){
+  var S=p[0],T=p[1],i=S.length-1,j=T.length-1,ks=0,kt=0,s=[],dS={},dT={},oS={},oT={},res=null,rs;
+  function row(str,d,o,idx,nm){var arr=str.split(''),c={},sub={},x;for(x=0;x<arr.length;x++)c[x]=o[x]?'ok':d[x]?'dim':'';if(idx>=0){c[idx]='now'}sub[idx]=nm;return '<div class="lbl"><strong>'+(nm==='i'?'s':'t')+'</strong></div>'+cells(arr,{c:c,sub:sub})}
+  function view(i,j){return row(S,dS,oS,i,'i')+row(T,dT,oT,j,'j')}
+  s.push({h:view(i,j),n:'Start with i and j at the last character of each string.'});
+  while(i>=0||j>=0){var a1=0,a2=0;
+    while(i>=0){if(S[i]==='#'){ks++;dS[i]=1;i--;a1++}else if(ks>0){ks--;dS[i]=1;i--;a1++}else break}
+    while(j>=0){if(T[j]==='#'){kt++;dT[j]=1;j--;a2++}else if(kt>0){kt--;dT[j]=1;j--;a2++}else break}
+    var sk='Skipped '+a1+' position'+(a1===1?'':'s')+' in s and '+a2+' in t (backspaces and the characters they delete). ';
+    if(i<0||j<0){res=(i===j);s.push({h:view(i,j),n:sk+(res?'Both strings have no surviving characters left at the same time: equal.':'One string still has a surviving character while the other has none: not equal.')});break}
+    if(S[i]!==T[j]){res=false;s.push({h:view(i,j),n:sk+'The next surviving characters are s[i] = '+S[i]+' and t[j] = '+T[j]+'. They differ: not equal.'});break}
+    s.push({h:view(i,j),n:sk+'The next surviving characters are s[i] = '+S[i]+' and t[j] = '+T[j]+'. They match. Move both pointers left.'});
+    oS[i]=1;oT[j]=1;i--;j--}
+  if(res===null)s.push({h:view(-1,-1),n:'Both pointers ran off the front together. Every surviving character matched: equal.'});
+  return s});
+
+// ---------- Minimum window sort ----------
+widget('mwW',[['[1,4,6,5,2,3,7]',[1,4,6,5,2,3,7]],['[1,2,5,3,7,10,9,12]',[1,2,5,3,7,10,9,12]],['[1,3,2,0,-1,7,10]',[1,3,2,0,-1,7,10]],['[1,2,3] (sorted)',[1,2,3]],['[3,2,1]',[3,2,1]]],function(a){
+  var n=a.length,s=[],low=0,high=n-1,oL,oH,wmin,wmax,q;
+  function view(ph,low,high,oL,oH,info){var c={},sub={},j;
+    for(j=0;j<n;j++){
+      if(ph==='L')c[j]=j<low?'ok':j===low?'now':'';
+      else if(ph==='R')c[j]=j<low?'ok':j===low?'now':(j>high?'ok':j===high?'now':'');
+      else c[j]=(j<low||j>high)?'ok':((j<oL||j>oH)?'mv':'now')}
+    sub[low]='low';if(ph!=='L')sub[high]=(sub[high]?sub[high]+' ':'')+'high';
+    return cells(a,{c:c,sub:sub})+(info?'<div class="lbl">'+info+'</div>':'')}
+  s.push({h:view('L',0,0),n:'Scan from the left while arr[low] ≤ arr[low + 1]. The first violation marks where the disorder starts.'});
+  while(low<n-1&&a[low]<=a[low+1]){s.push({h:view('L',low,0),n:'arr['+low+'] = '+a[low]+' ≤ arr['+(low+1)+'] = '+a[low+1]+': still in order. low++.'});low++}
+  if(low===n-1){s.push({h:view('L',low,0),n:'low reached the last index: the whole array is already sorted. The window has length 0.'});return s}
+  s.push({h:view('L',low,0),n:'arr['+low+'] = '+a[low]+' > arr['+(low+1)+'] = '+a[low+1]+': the first violation. low = '+low+'.'});
+  while(high>0&&a[high]>=a[high-1]){s.push({h:view('R',low,high),n:'Scanning from the right: arr['+high+'] = '+a[high]+' ≥ arr['+(high-1)+'] = '+a[high-1]+': in order. high--.'});high--}
+  s.push({h:view('R',low,high),n:'arr['+high+'] = '+a[high]+' < arr['+(high-1)+'] = '+a[high-1]+': the last violation. high = '+high+'.'});
+  wmin=a[low];wmax=a[low];for(q=low+1;q<=high;q++){wmin=Math.min(wmin,a[q]);wmax=Math.max(wmax,a[q])}
+  oL=low;oH=high;
+  s.push({h:view('W',low,high,oL,oH,'window min = '+wmin+', window max = '+wmax),n:'Candidate window [low..high] = ['+a.slice(low,high+1).join(', ')+']. Its minimum is '+wmin+' and its maximum is '+wmax+'. Now check the neighbours.'});
+  while(low>0&&a[low-1]>wmin){s.push({h:view('W',low,high,oL,oH,'window min = '+wmin+', window max = '+wmax),n:'Left neighbour arr['+(low-1)+'] = '+a[low-1]+' > window min '+wmin+': after sorting the window it would be out of order. Include it. low--.'});low--;s.push({h:view('W',low,high,oL,oH,'window min = '+wmin+', window max = '+wmax),n:'The window now starts at index '+low+'.'})}
+  s.push({h:view('W',low,high,oL,oH,'window min = '+wmin+', window max = '+wmax),n:low>0?'Left neighbour arr['+(low-1)+'] = '+a[low-1]+' ≤ window min '+wmin+': it can stay outside.':'The window already starts at index 0.'});
+  while(high<n-1&&a[high+1]<wmax){s.push({h:view('W',low,high,oL,oH,'window min = '+wmin+', window max = '+wmax),n:'Right neighbour arr['+(high+1)+'] = '+a[high+1]+' < window max '+wmax+': after sorting the window it would be out of order. Include it. high++.'});high++;s.push({h:view('W',low,high,oL,oH,'window min = '+wmin+', window max = '+wmax),n:'The window now ends at index '+high+'.'})}
+  s.push({h:view('W',low,high,oL,oH,'window min = '+wmin+', window max = '+wmax),n:high<n-1?'Right neighbour arr['+(high+1)+'] = '+a[high+1]+' ≥ window max '+wmax+': it can stay outside.':'The window already ends at the last index.'});
+  s.push({h:view('W',low,high,oL,oH,'answer = high − low + 1 = '+(high-low+1)),n:'Done. Sorting indices '+low+' to '+high+' sorts the whole array. The minimum window has length '+(high-low+1)+'.'});
+  return s});
+
+tabs('mwF',['Sort only the candidate [6, 5, 2]','Sort the expanded window [4, 6, 5, 2, 3]'],function(k){
+  var a=[1,4,6,5,2,3,7],lo=k?1:2,hi=k?5:4,b=a.slice(),mid=b.slice(lo,hi+1).sort(num),j,c={},c2={},bad=[];
+  for(j=lo;j<=hi;j++){c[j]='now';b[j]=mid[j-lo]}
+  for(j=0;j<b.length;j++)c2[j]=(j>=lo&&j<=hi)?'now':'';
+  for(j=0;j+1<b.length;j++)if(b[j]>b[j+1]){bad.push(j);c2[j]='dim';c2[j+1]='dim'}
+  return '<div class="lbl">Before: the window is yellow</div>'+cells(a,{c:c,noix:true})+'<div class="lbl">After sorting only the window</div>'+cells(b,{c:c2,noix:true})+'<p class="note"><strong>'+(bad.length?'Still unsorted: '+bad.map(function(x){return b[x]+' &gt; '+b[x+1]}).join(' and ')+' (grey cells). The neighbours outside the window were affected.':'Sorted. Nothing outside the window was affected.')+'</strong></p>'});
+
+// ---------- four forms ----------
+var FM=[
+ ['Pointers as boundaries',function(){return '<div class="zones"><div style="flex:2;background:var(--ok)">0s</div><div style="flex:2;background:var(--mv)">1s</div><div style="flex:3">unknown</div><div style="flex:2;background:var(--dim)">2s</div></div><div class="zones" style="border:0;margin-top:2px;font-weight:600"><div style="flex:2"></div><div style="flex:2;text-align:left;padding:4px">↑ low</div><div style="flex:3;text-align:left;padding:4px">↑ current</div><div style="flex:2;text-align:left;padding:4px">↑ high</div></div>'},'In Dutch National Flag the pointers define regions. The goal isn’t to find a pair. It is to maintain an invariant about what each region contains.'],
+ ['Pointers as a reduction tool',function(){return flow(['4-sum','fix one','fix another','2-sum','two pointers'])},'In Quadruple Sum the two pointers are hidden inside a larger algorithm. The important idea is problem reduction.'],
+ ['Pointers can move backward',function(){return cells(['x','y','#','z'],{c:{3:'now'},sub:{3:'← R'},noix:true})},'In Backspace Compare the direction comes from the problem’s semantics. A backspace affects the character before it, so traversing backward lets us understand deletions naturally. There is nothing magical about left-to-right.'],
+ ['Pointers discover boundaries',function(){return cells([1,4,6,5,2,3,7],{c:{0:'ok',1:'mv',2:'now',3:'now',4:'now',5:'mv',6:'ok'},sub:{1:'low',5:'high'},noix:true})},'In Minimum Window Sort the pointers don’t rearrange anything. They help us discover which part of the array matters.']];
+tabs('formW',FM.map(function(d){return d[0]}),function(k){return '<div class="lbl" style="margin-top:10px">'+FM[k][0]+'</div>'+FM[k][1]()+'<p class="note">'+FM[k][2]+'</p>'});
+
+// code toggle and theme
+var cb=$('codeBtn'),hid=false;
+cb.onclick=function(){hid=!hid;[].forEach.call(document.querySelectorAll('details'),function(d){d.open=!hid});cb.textContent=hid?'Show code':'Hide code'};
+var root=document.documentElement,tb=$('theme');
+function setTheme(t){root.setAttribute('data-theme',t);tb.textContent=t==='dark'?'Light':'Dark'}
+try{var sv=localStorage.getItem('theme');if(sv==='dark'||sv==='light')setTheme(sv)}catch(e){}
+tb.onclick=function(){var t=root.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);try{localStorage.setItem('theme',t)}catch(e){}};
+</script>
+</body>
+</html>

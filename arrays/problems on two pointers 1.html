@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Two Pointers, From First Principles</title>
+<style>
+:root{--bg:#fff;--ink:#111;--mut:#555;--line:#ccc;--acc:#1f4e8c;--hi:#fff3b0;--hib:#c9a227;--ok:#dcf0dc;--okb:#3a8a3a;--mv:#e6edf7;--dim:#eee;--card:#fafafa;--red:#b5342b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#121212;--ink:#eee;--mut:#aaa;--line:#3a3a3a;--acc:#8ab4f8;--hi:#4a4220;--hib:#c9a227;--ok:#1d3a22;--okb:#5cb85c;--mv:#1c2a40;--dim:#2a2a2a;--card:#1a1a1a;--red:#ff7b72;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Roman",Times,serif}
+main{max-width:720px;margin:0 auto;padding:40px 20px 80px}
+h1,h2,h3{font-family:inherit;line-height:1.25}
+h1{font-size:2.1rem;margin:.2em 0 .6em}
+h2{font-size:1.5rem;margin:2.6em 0 .6em;padding-top:1.2em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin:1.6em 0 .4em}
+blockquote{margin:1.2em 0;padding:.4em 1em;border-left:4px solid var(--acc);font-size:1.12rem}
+blockquote p{margin:.3em 0}
+code{font:inherit;background:var(--card);padding:1px 5px;border-radius:4px}
+a{color:var(--acc)}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:1.2em 0}
+.cap{font-size:.9rem;color:var(--mut);margin:.6em 0 0}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:flex-end}
+.cw{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ix{font-size:.8rem;color:var(--mut);min-height:1.1em;font-weight:600}
+.cell{min-width:54px;padding:7px 6px;text-align:center;border:2px solid var(--line);background:var(--bg);border-radius:6px;font-weight:600;transition:background .2s}
+.gap{border-style:dashed;background:transparent}
+.ok{background:var(--ok);border-color:var(--okb)}
+.now{background:var(--hi);border-color:var(--hib)}
+.dim{background:var(--dim);color:var(--mut);border-color:var(--dim)}
+.mv{background:var(--mv);border-color:var(--acc)}
+.mx{display:grid;gap:3px;margin:8px 0}
+.mh{font-size:.8rem;color:var(--mut);text-align:center;align-self:center}
+.mx .cell{min-width:0;padding:3px 0;font-size:.8rem}
+button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
+button:hover:not(:disabled){background:var(--mv)}
+button:disabled{opacity:.4;cursor:default}
+button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--hib);outline-offset:2px}
+.tools{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5;display:flex;gap:8px}
+.ctl{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.pos{color:var(--mut);font-size:.9rem}
+.note{min-height:3em;margin:.4em 0 0;font-weight:500}
+.lbl{font-size:.9rem;margin:8px 0 3px}
+.bar{height:14px;border-radius:4px;background:var(--acc);min-width:3px}
+.bar.g{background:var(--okb)}.bar.r{background:var(--red)}
+input[type=range]{width:100%}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--dim)}
+details{margin:1em 0;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+summary{cursor:pointer;padding:8px 12px;font-size:.95rem;color:var(--acc)}
+pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,Menlo,Consolas,monospace}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.two{grid-template-columns:1fr}}
+.flow{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;font-size:.95rem}
+.flow .cell{min-width:140px}
+.zones{display:flex;border:2px solid var(--line);border-radius:6px;overflow:hidden;text-align:center;font-size:.85rem}
+.zones div{padding:10px 6px}
+.flag{font-size:.9rem;color:var(--mut)}
+.vl{display:flex;gap:10px;align-items:flex-end;height:130px;margin:8px 0}
+.vl div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-size:.8rem;color:var(--mut)}
+.vl i{display:block;width:100%;max-width:60px;background:var(--acc);border-radius:4px 4px 0 0;min-height:3px}
+.tt td:first-child{font-weight:600}
+.tt td{text-align:left}
+.top-nav{display:flex;align-items:center;gap:8px;font-size:.95rem;margin-bottom:20px;color:var(--mut)}
+.top-nav a{color:var(--acc);text-decoration:none}
+.top-nav a:hover{text-decoration:underline}
+.nav-sep{color:var(--line)}
+.nav-current{color:var(--mut)}
+.article-nav{display:flex;justify-content:space-between;gap:16px;margin-top:48px;padding-top:24px;border-top:1px solid var(--line);flex-wrap:wrap}
+.article-nav a{display:flex;flex-direction:column;padding:12px 16px;border:1px solid var(--line);border-radius:6px;background:var(--card);text-decoration:none;color:var(--ink);transition:border-color .15s,background .15s;flex:1;min-width:200px}
+.article-nav a:hover{border-color:var(--acc);background:var(--mv)}
+.article-nav .an-sub{font-size:.8rem;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.article-nav .an-title{font-weight:600;color:var(--acc)}
+</style>
+</head>
+<body>
+<div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
+<main>
+<nav class="top-nav"><a href="../index.html">← DSA from First Principles</a> <span class="nav-sep">/</span> <span class="nav-current">Essay 05 · Two Pointers: Problems (Part 1)</span></nav>
+<h1>Two Pointers, From First Principles</h1>
+<p>Two pointers is often taught as a pattern: <em>“Keep one pointer at the beginning, another at the end, and move them according to some condition.”</em> That description is technically correct, but it misses the important part. It doesn’t explain <strong>why</strong> two pointers work. And it doesn’t explain how you would recognize a two-pointer problem if nobody told you the pattern beforehand.</p>
+<p>The real idea is much simpler:</p>
+<blockquote><p>Two pointers are useful when we can use two positions to eliminate large parts of the search space without ever needing to reconsider them.</p></blockquote>
+<p>The pointers are not the clever part. The clever part is the <strong>reasoning that allows us to throw possibilities away</strong>. Let’s build that reasoning from scratch, on seven problems. Every one of them has a stepper you can click through. Code blocks can be hidden with the button at the top, or one at a time.</p>
+<ol>
+<li><a href="#s2">Pair With Target Sum</a></li>
+<li><a href="#s3">Rearrange 0s and 1s</a></li>
+<li><a href="#s4">Remove Duplicates</a></li>
+<li><a href="#s5">Squaring a Sorted Array</a></li>
+<li><a href="#s6">Triplet Sum to Zero</a></li>
+<li><a href="#s7">Triplet Sum Close to Target</a></li>
+<li><a href="#s8">Triplets With Smaller Sum</a></li>
+</ol>
+
+<h2 id="s1">1. Why do we need two pointers?</h2>
+<p>Take the array <code>[1, 2, 3, 4, 6]</code>. We want two numbers whose sum is <code>6</code>. The obvious approach is to try pairs: <code>1 + 2</code>, <code>1 + 3</code>, <code>1 + 4</code>, <code>1 + 6</code>, <code>2 + 3</code>, and so on.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def pair_brute_force(arr, target):
+    for i in range(len(arr)):
+        for j in range(i + 1, len(arr)):
+            if arr[i] + arr[j] == target:
+                return [i, j]
+    return [-1, -1]</pre></details>
+<p>This works. But notice something frustrating. Every check teaches us something, and brute force immediately forgets it. Compare the two ends of the array:</p>
+<div class="fig"><div id="s1A"></div><p class="cap">1 + 6 = 7, but our target is 6. Too large.</p></div>
+<p>The array is sorted, and <code>1</code> is the <em>smallest</em> possible partner for <code>6</code>. If even the smallest partner makes the sum too large, then every other partner makes it larger still:</p>
+<div class="fig scroll"><table><tr><th>Pair with 6</th><th>Sum</th><th>vs target 6</th></tr><tr><td>1 + 6</td><td>7</td><td>too big (what we checked)</td></tr><tr><td>2 + 6</td><td>8</td><td>too big, because 2 &gt; 1</td></tr><tr><td>3 + 6</td><td>9</td><td>too big, because 3 &gt; 1</td></tr><tr><td>4 + 6</td><td>10</td><td>too big, because 4 &gt; 1</td></tr></table></div>
+<p>So <strong>6 cannot be part of any valid pair</strong>. One comparison ruled out four pairs, and we never tested three of them. That is the beginning of the two-pointer idea. The question that starts it is not “can we make this faster?” but:</p>
+<blockquote><p>Are we doing work that we could have avoided?</p></blockquote>
+
+<h2 id="s2">2. Pair With Target Sum</h2>
+<p>Instead of starting with arbitrary pairs, ask: <em>which two candidates give us the most information?</em> The smallest and the largest. They are the two ends of the sorted array, so we put one pointer on each. Their sum is too large or too small, and that tells us which pointer to move.</p>
+<h3>Try it: which pointer should move?</h3>
+<p>Before reading the explanation, make the decision yourself. The array is sorted. Pick a move; you’ll be told why it is, or isn’t, safe.</p>
+<div class="fig" id="pdW"></div>
+<h3>Why exactly are the movements valid?</h3>
+<p>This is the part that should never be skipped. If <code>arr[left] + arr[right] &lt; target</code>, we need a larger sum. Keeping <code>left</code> and moving <code>right</code> left would only make the sum smaller, and <code>right</code> is already the biggest partner <code>left</code> has left. So <code>arr[left]</code> is too small for <em>every</em> remaining partner, and the only useful move is <code>left++</code>.</p>
+<p>Symmetrically, if the sum is <code>&gt; target</code>, even the smallest remaining partner for <code>arr[right]</code> overshoots, so <code>right--</code>. We aren’t following a memorized rule. The rule follows directly from the ordering of the data.</p>
+<h3>Watch the search space shrink</h3>
+<p>The grid shows <em>every pair</em> and its sum. <span style="background:var(--hi);padding:0 4px">Yellow</span> is the pair being compared, <span style="background:var(--mv);padding:0 4px">blue</span> is what this comparison just ruled out, grey was ruled out earlier, <span style="background:var(--ok);padding:0 4px">green</span> is the answer. A single comparison wipes out a whole row or a whole column.</p>
+<div class="fig" id="tsW"></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>def pair_with_target_sum(arr, target):
+    left = 0
+    right = len(arr) - 1
+
+    while left &lt; right:
+        total = arr[left] + arr[right]
+
+        if total == target:
+            return [left, right]
+
+        if total &lt; target:
+            left += 1       # arr[left] is too small for any partner
+        else:
+            right -= 1      # arr[right] is too big for any partner
+
+    return [-1, -1]</pre></details>
+<p>For <code>[1, 2, 3, 4, 6]</code> and target 6 this returns <code>[1, 3]</code>, because <code>2 + 4 = 6</code>.</p>
+<h3>Why not brute force?</h3>
+<p>Brute force is perfectly reasonable for a small input. But with <code>n</code> elements there are <code>n(n−1)/2</code> pairs, so the work is <code>O(n²)</code>. The pointers start <code>n − 1</code> apart, and every comparison either finishes or shrinks that gap by exactly 1, so they make at most <code>n − 1</code> comparisons: <code>O(n)</code>, with <code>O(1)</code> extra space.</p>
+<div class="fig scroll" id="gr2"></div>
+<blockquote><p>Two pointers gets its efficiency by exploiting structure.</p></blockquote>
+<p>If the array isn’t sorted, we cannot automatically use this reasoning. We could sort it first, but sorting costs <code>O(n log n)</code>, which then dominates, and it destroys the original indices unless we keep track of them.</p>
+
+<h2 id="s3">3. But two pointers don’t require a sorted array</h2>
+<p>This is an important misconception, and the next problem shows why. Take <code>[0, 1, 0, 1, 1, 0, 0]</code>. We want all <code>0</code>s on the left and all <code>1</code>s on the right: <code>[0, 0, 0, 0, 1, 1, 1]</code>. There is no target sum. There isn’t even a sorted array. So why might two pointers help?</p>
+<p>Because we know something else: <strong>0 belongs on the left and 1 belongs on the right.</strong> That gives us two boundaries, and the array splits into three regions:</p>
+<div class="fig"><div class="zones"><div style="flex:3;background:var(--ok)">correct 0s</div><div style="flex:3">unknown region</div><div style="flex:3;background:var(--mv)">correct 1s</div></div><div class="zones" style="border:0;margin-top:2px;font-weight:600"><div style="flex:3;text-align:right;padding:4px">left ↑</div><div style="flex:3"></div><div style="flex:3;text-align:left;padding:4px">↑ right</div></div></div>
+<p>Inspect the two ends. If <code>arr[left] == 0</code>, it is already in the correct region, so move <code>left</code>. If <code>arr[right] == 1</code>, it is already correct, so move <code>right</code>. Eventually we get <code>arr[left] == 1</code> and <code>arr[right] == 0</code>: both are on the wrong side, so <strong>swap</strong> them. Green is a finished 0, blue is a finished 1, yellow is being inspected:</p>
+<div class="fig" id="zoW"></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>def rearrange_zeros_and_ones(arr):
+    left = 0
+    right = len(arr) - 1
+
+    while left &lt; right:
+        if arr[left] == 0:
+            left += 1
+        elif arr[right] == 1:
+            right -= 1
+        else:
+            arr[left], arr[right] = arr[right], arr[left]
+            left += 1
+            right -= 1
+
+    return arr</pre></details>
+<h3>Why not just sort?</h3>
+<p>For this particular problem, <code>arr.sort()</code> is probably the simplest practical solution, and that is an important trade-off to admit. The two-pointer version is interesting because it shows a more general idea: <strong>we don’t need a general-purpose sort when the problem gives us much simpler structure.</strong> There are only two possible values, and we know exactly where each belongs, so we can partition directly, in place, in one pass. The price is slightly trickier logic than a library call.</p>
+<blockquote><p>The theoretically interesting solution isn’t always the best production solution.</p></blockquote>
+<p>We’re learning two pointers to understand the reasoning, not because every problem should avoid sorting.</p>
+
+<h2 id="s4">4. Remove Duplicates</h2>
+<p>Now take <code>[2, 3, 3, 3, 6, 9, 9]</code>. We want <code>[2, 3, 6, 9]</code>. The array is sorted, so duplicates sit next to each other, and the problem isn’t really “find every duplicate.” It is: <em>keep the first occurrence of each value and ignore the rest.</em></p>
+<p>But suppose we must modify the array <strong>in place</strong>. Now there are two different jobs: one position needs to <em>read</em> the array, and another needs to say <em>“this is where the next unique value should be written.”</em> Two jobs, so two pointers. They both travel left to right, at different speeds.</p>
+<div class="fig" id="rdW"></div>
+<h3>The key invariant</h3>
+<p>At every point, <code>arr[:write]</code> holds the unique values discovered so far. <code>read</code> explores; <code>write</code> maintains the useful portion. When <code>read</code> meets a value different from the last unique value, we copy it to <code>write</code>.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def remove_duplicates(arr):
+    if not arr:
+        return 0
+
+    write = 1
+
+    for read in range(1, len(arr)):
+        if arr[read] != arr[write - 1]:
+            arr[write] = arr[read]
+            write += 1
+
+    return write
+
+arr = [2, 3, 3, 3, 6, 9, 9]
+length = remove_duplicates(arr)
+print(arr[:length])   # [2, 3, 6, 9]</pre></details>
+<h3>Why not use a set?</h3>
+<p><code>list(set(arr))</code> is a natural Python answer, but it changes the problem. It uses extra memory, and it may not preserve ordering. Building a second list keeps the order and is easier to understand, but it also costs <code>O(n)</code> extra space.</p>
+<div class="fig scroll"><table class="tt"><tr><th></th><th>Simpler approach</th><th>Two pointers</th></tr><tr><td>Effort</td><td>easier to write</td><td>more careful reasoning</td></tr><tr><td>Extra space</td><td>O(n)</td><td>O(1)</td></tr><tr><td>Modifies input</td><td>no</td><td>yes, in place</td></tr></table></div>
+<p>The technique is buying us something: <strong>reuse the existing array and compress the useful information into its front.</strong></p>
+
+<h2 id="s5">5. Squaring a Sorted Array</h2>
+<p>Take <code>[-4, -1, 0, 3, 10]</code>. We want the squares in sorted order: <code>[0, 1, 9, 16, 100]</code>. The obvious approach is <code>sorted(x * x for x in arr)</code>. It is simple, so why look further? Because the input has structure that lets us skip the second sort.</p>
+<h3>What squaring breaks, and what survives</h3>
+<p>The input is sorted: <code>-4 &lt; -1 &lt; 0 &lt; 3 &lt; 10</code>. After squaring we get <code>16, 1, 0, 9, 100</code>, and the order is destroyed, because negatives flip: <code>-4 &lt; -1</code> but <code>(-4)² &gt; (-1)²</code>. Something survives, though. Look at the shape of the squares:</p>
+<div class="fig"><div id="vlW"></div><p class="cap">The squares form a valley. The largest one is always at one of the two ends.</p></div>
+<p>The <strong>largest absolute value must be at one of the two ends</strong>, so the largest remaining square can always be found there. That is exactly the kind of structure two pointers can exploit.</p>
+<h3>Build the answer from the back</h3>
+<p>If we’re finding the largest remaining square, it belongs at the <em>end</em> of the result. So we also get a write position that moves backward. Compare the two absolute values, put the bigger square at <code>write</code>, and move whichever pointer produced it:</p>
+<div class="fig" id="sqW"></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>def sorted_squares(arr):
+    result = [0] * len(arr)
+
+    left = 0
+    right = len(arr) - 1
+
+    for write in range(len(arr) - 1, -1, -1):
+        if abs(arr[left]) &gt; abs(arr[right]):
+            result[write] = arr[left] ** 2
+            left += 1
+        else:
+            result[write] = arr[right] ** 2
+            right -= 1
+
+    return result</pre></details>
+<h3>Why not just square and sort?</h3>
+<p>Again, the trade-off matters. <code>sorted(x * x for x in arr)</code> is very readable. The two-pointer version uses the existing order to avoid sorting the squares again, so we exchange <em>more reasoning and code</em> for <em>better asymptotic performance</em>: <code>O(n)</code> instead of <code>O(n log n)</code>. The lesson isn’t “never use sorting.” It is:</p>
+<blockquote><p>Before doing another expensive operation, ask whether the input’s existing structure already gives you the information you need.</p></blockquote>
+
+<h2 id="s6">6. Triplet Sum to Zero</h2>
+<p>Now things become more interesting. Take <code>[-3, -1, 0, 1, 2]</code> and find all triplets that sum to zero. The naive approach chooses <code>i</code>, <code>j</code> and <code>k</code> and checks every combination: three dimensions of search. Can we reduce the problem?</p>
+<p>Yes. <strong>Fix one number.</strong> Suppose we choose <code>-3</code>. Then <code>-3 + x + y = 0</code>, so <code>x + y = 3</code>. We have turned a three-number problem into a two-number problem, and we already know how to solve that on sorted data.</p>
+<div class="fig" id="flow6"></div>
+<p>So: sort first, fix <code>i</code>, put <code>left = i + 1</code> and <code>right = n − 1</code>, and run the pair-sum logic. Blue is the fixed <code>i</code>, yellow is the pair under inspection, grey is eliminated for this <code>i</code>:</p>
+<div class="fig" id="t3W"></div>
+<h3>Handling duplicates</h3>
+<p>Take <code>[-2, 0, 0, 2, 2]</code>. There are several ways to pick the same values, but we don’t want <code>[-2, 0, 2]</code> reported three times. Sorting makes duplicates adjacent. If <code>arr[i] == arr[i − 1]</code>, we skip this <code>i</code>. After finding a valid triplet, we similarly skip repeated values at <code>left</code> and <code>right</code>. Try the third preset above to watch it happen.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def three_sum(arr):
+    arr.sort()
+    result = []
+
+    for i in range(len(arr) - 2):
+        if i &gt; 0 and arr[i] == arr[i - 1]:
+            continue
+
+        left = i + 1
+        right = len(arr) - 1
+
+        while left &lt; right:
+            total = arr[i] + arr[left] + arr[right]
+
+            if total == 0:
+                result.append([arr[i], arr[left], arr[right]])
+
+                left += 1
+                right -= 1
+
+                while left &lt; right and arr[left] == arr[left - 1]:
+                    left += 1
+
+                while left &lt; right and arr[right] == arr[right + 1]:
+                    right -= 1
+
+            elif total &lt; 0:
+                left += 1
+            else:
+                right -= 1
+
+    return result</pre></details>
+<h3>How much did the reduction buy us?</h3>
+<p>Brute force examines <code>n(n−1)(n−2)/6</code> triplets: <code>O(n³)</code>. For each fixed <code>i</code> the pointers make at most <code>n − i − 2</code> comparisons, and adding those up over every <code>i</code> gives <code>(n−1)(n−2)/2</code>: <code>O(n²)</code>. (Sorting adds only <code>O(n log n)</code>, which is dominated.)</p>
+<div class="fig scroll" id="gr6"></div>
+<h3>Why not use a hash set?</h3>
+<p>That is another legitimate approach: for every fixed <code>i</code>, look up the needed complement in a hash set. It also reaches <code>O(n²)</code>. So why use two pointers? Because sorting gives us more structure: constant extra space for the search itself, directional reasoning, and an easy way to avoid duplicate triplets. The cost is that sorting takes time and reorders the array unless we copy it. This isn’t about one universally superior technique. It’s about the constraints, and what structure we want to exploit.</p>
+
+<h2 id="s7">7. Triplet Sum Close to Target</h2>
+<p>Slightly change the question. Instead of “find a triplet whose sum is exactly the target,” ask for the triplet whose sum is <strong>closest</strong> to it. For <code>[-2, 0, 1, 2]</code> and target <code>2</code>, we could try every triplet. But the same reduction works: fix one element, then solve a two-pointer problem on the rest. The difference is that we aren’t looking for <code>sum == target</code>. We measure <code>abs(target − sum)</code> and remember the best we’ve seen.</p>
+<div class="fig" id="clW"></div>
+<h3>Why can we still move the pointers intelligently?</h3>
+<p>If <code>current_sum &lt; target</code> we are below, we want a larger sum, and <code>left++</code> is the useful move. If it’s above, <code>right--</code>. The objective changed from equality to minimum distance, but <strong>the monotonic relationship between pointer movement and the sum did not change</strong>. That is why the same structure survives. And if <code>current_sum == target</code>, the distance is zero and nothing can be closer, so we stop immediately (try the third preset).</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def triplet_sum_closest(arr, target):
+    arr.sort()
+
+    closest = arr[0] + arr[1] + arr[2]
+
+    for i in range(len(arr) - 2):
+        left = i + 1
+        right = len(arr) - 1
+
+        while left &lt; right:
+            total = arr[i] + arr[left] + arr[right]
+
+            if abs(target - total) &lt; abs(target - closest):
+                closest = total
+
+            if total &lt; target:
+                left += 1
+            elif total &gt; target:
+                right -= 1
+            else:
+                return total
+
+    return closest</pre></details>
+<h3>Why not brute force?</h3>
+<p>Brute force is perfectly valid and easier to reason about at first, but it checks every triplet. Sort + two pointers is more complicated and needs sorting, yet it exploits the order to dramatically reduce the search. It works because sorting tells us <em>which direction can improve the current candidate</em>.</p>
+
+<h2 id="s8">8. Triplets With Smaller Sum</h2>
+<p>This problem teaches perhaps the most powerful idea in the whole group. Given <code>[-1, 0, 2, 3]</code> and target <code>3</code>, count the triplets whose sum is less than <code>3</code>. The valid ones are <code>[-1, 0, 2]</code> (sum 1) and <code>[-1, 0, 3]</code> (sum 2), so the answer is <code>2</code>. The naive approach examines every triplet. We can do much better.</p>
+<p>Fix <code>i = 0</code> (the <code>-1</code>), so <code>left = 1</code> and <code>right = 3</code>. The sum is <code>-1 + 0 + 3 = 2</code>, which is below 3, so this triplet is valid. Now look at the sorted array. If we replace <code>3</code> with <code>2</code>, the sum gets even smaller, so that triplet is valid too. We don’t have to test them one by one: there are <code>right − left</code> valid choices, here <code>3 − 1 = 2</code>, so we add 2 to the count at once.</p>
+<p>In the stepper, the <span style="background:var(--ok);padding:0 4px">green</span> block is every partner that is proven valid by a single comparison:</p>
+<div class="fig" id="smW"></div>
+<h3>Why does this counting trick work?</h3>
+<p>Suppose <code>arr[i] + arr[left] + arr[right] &lt; target</code>. Because the array is sorted, <code>arr[left] ≤ arr[left+1] ≤ … ≤ arr[right]</code>. Replacing <code>arr[right]</code> with any smaller element cannot make the sum larger, so <code>arr[i] + arr[left] + arr[k] &lt; target</code> for every <code>left &lt; k ≤ right</code>. We have proven an entire group of solutions at once. We’re no longer merely using the array to decide which pointer moves. We’re using it to <strong>count many possibilities without inspecting them individually</strong>.</p>
+<p>And if the sum is <code>≥ target</code>? Even the largest candidate is too large, so we have no guaranteed group. We need a smaller value: <code>right--</code>.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def triplets_with_smaller_sum(arr, target):
+    arr.sort()
+    count = 0
+
+    for i in range(len(arr) - 2):
+        left = i + 1
+        right = len(arr) - 1
+
+        while left &lt; right:
+            total = arr[i] + arr[left] + arr[right]
+
+            if total &lt; target:
+                count += right - left
+                left += 1
+            else:
+                right -= 1
+
+    return count</pre></details>
+<h3>Why this problem is more interesting than it looks</h3>
+<div class="fig two"><div><div class="lbl"><strong>Situation A: sum ≥ target</strong></div><div id="sitA"></div>We know only that <strong>this combination doesn’t work</strong>. So we move <code>right</code>.</div>
+<div><div class="lbl"><strong>Situation B: sum &lt; target</strong></div><div id="sitB"></div>We know much more: this combination works, <strong>and every smaller choice on the right works too</strong>. We count the whole block, <code>right − left</code>, in one go.</div></div>
+<p>This is a beautiful example of how algorithms become faster not by doing the same work faster, but by <strong>proving that a lot of work doesn’t need to be done at all</strong>.</p>
+
+<h2 id="s9">9. The common thread across all seven</h2>
+<p>At first these problems don’t look very related:</p>
+<div class="fig scroll"><table class="tt"><tr><th>Problem</th><th>What we’re doing</th></tr><tr><td>Pair With Target Sum</td><td>Find a pair</td></tr><tr><td>Rearrange 0 and 1</td><td>Partition values</td></tr><tr><td>Remove Duplicates</td><td>Compress useful values</td></tr><tr><td>Squaring a Sorted Array</td><td>Merge two possible extremes</td></tr><tr><td>Triplet Sum to Zero</td><td>Reduce 3-sum to 2-sum</td></tr><tr><td>Triplet Sum Close to Target</td><td>Optimize a 3-sum</td></tr><tr><td>Triplets With Smaller Sum</td><td>Count a whole region of solutions</td></tr></table></div>
+<p>Yet the same idea keeps appearing. Suppose we have <code>[left ———— right]</code>. At every step we want to learn something that lets us shrink this region. <em>Sum too large</em> tells us <code>right</code> can never be part of a solution with this <code>left</code>, so <code>right--</code>. <em>Sum too small</em> tells us <code>left</code> is too small, so <code>left++</code>. <em>Current arrangement is correct</em> lets us step past an element. <em>This entire range produces valid triplets</em> lets us count them all at once.</p>
+<blockquote><p>Maintain a small set of boundaries and use information to permanently remove possibilities from consideration.</p></blockquote>
+<h3>The invariant is the real algorithm</h3>
+<p>A pointer movement should never be <em>“it seems like we should move left here.”</em> There should be a reason. A useful question is: <strong>what do I now know that I didn’t know before?</strong> Pick a problem to see the regions it maintains and the statement that is always true:</p>
+<div class="fig" id="ivW"></div>
+<p>These statements are the real algorithm. The code merely expresses them.</p>
+
+<h2 id="s10">10. Why sorting appears so often, and what it costs</h2>
+<p>A large number of these problems begin with <code>arr.sort()</code>. Why? Because sorting gives us <strong>direction</strong>.</p>
+<div class="fig" id="dirF"></div>
+<p>After sorting, <code>left++</code> means the value cannot decrease and <code>right--</code> means it cannot increase. That predictability is what allows us to eliminate possibilities. Sorting isn’t just preparation. It is what makes the pointer movement <em>logically safe</em>.</p>
+<p>But it has a cost. If the original array isn’t sorted we have two options. We can <strong>not sort</strong> and use brute force, hashing or another data structure, preserving the original arrangement. Or we can <strong>sort</strong>, pay for it, and gain ordering, which gives predictable movement, which eliminates possibilities, which gives a faster search. So an algorithm isn’t simply “faster.” It is <em>faster because I’m willing to exploit this structure and accept its associated cost or constraint.</em></p>
+<h3>The trade-off isn’t always “time for space”</h3>
+<p>Two pointers may involve a sorting cost, mutation of the input, more complicated code than a library call, and stronger constraints: sorted data, only certain values present, an invariant we can maintain, the ability to discard possibilities permanently. Choose a problem and compare the approaches:</p>
+<div class="fig scroll" id="toW"></div>
+<p>A good algorithm isn’t simply the one with the smallest Big-O. It is the one whose <strong>assumptions and trade-offs fit the problem</strong>.</p>
+<h3>Two pointers vs brute force</h3>
+<p>Brute force has an important place. It is usually the first thing we should be able to imagine, because it shows us the search space. Then we can ask, <em>“Am I repeatedly considering possibilities that I could have ruled out earlier?”</em> That question leads naturally to optimization:</p>
+<div class="fig" id="flow10"></div>
+<p>That is far more valuable than memorizing a solution.</p>
+
+<h2 id="s11">11. Recognizing a two-pointer problem</h2>
+<p>After working through these problems, we can start spotting the opportunity. Instead of memorizing “sorted array → two pointers,” ask:</p>
+<ol>
+<li><strong>Is there useful ordering?</strong> Maybe the array is already sorted, or sorting would expose useful structure.</li>
+<li><strong>Can I describe two positions as boundaries?</strong> <code>left ———— right</code>, or <code>write ← read</code>.</li>
+<li><strong>Does moving a pointer have a predictable effect?</strong> <code>left++</code> makes the sum increase, <code>right--</code> makes it decrease.</li>
+<li><strong>Can I permanently eliminate what I leave behind?</strong> This is the most important question. If moving a pointer means <em>“this part can never help anymore,”</em> two pointers may be appropriate.</li>
+</ol>
+
+<h2 id="s12">12. The most important lesson</h2>
+<p>If there is one thing to take away, it shouldn’t be <em>“when you see an array, try two pointers.”</em> It should be:</p>
+<blockquote><p>When solving a problem, look for a way to prove that some possibilities no longer matter.</p></blockquote>
+<p>That’s the beginning of algorithmic thinking. Brute force says <em>“let me check everything.”</em> Optimization asks <em>“do I really need to check everything?”</em> Two pointers gives one particularly elegant answer: <em>“if I know enough about the structure of the data, I can move a boundary and prove that an entire part of the search space is finished.”</em></p>
+<p>The magic isn’t in the two variables called <code>left</code> and <code>right</code>. The magic is in the <strong>proof that lets them move forward without looking back</strong>.</p>
+<div class="article-nav">
+  <a href="two%20pointers%20intuition.html">
+    <span class="an-sub">Previous Essay · 04</span>
+    <span class="an-title">← Two Pointers: Intuition</span>
+  </a>
+  <a href="problems%20on%20two%20pointers%202.html" style="text-align:right">
+    <span class="an-sub">Next Essay · 06</span>
+    <span class="an-title">Two Pointers: Beyond the Pattern (Part 2) →</span>
+  </a>
+</div>
+</main>
+<script>
+var $=function(i){return document.getElementById(i)};
+var L=function(v){return v.toLocaleString('en-US')};
+var num=function(x,y){return x-y};
+var sg=function(x){return x<0?'('+x+')':''+x};
+function expr(a){return a.map(sg).join(' + ')+' = '+a.reduce(function(s,x){return s+x},0)}
+function cells(a,o){o=o||{};var c=o.c||{};return '<div class="row">'+a.map(function(v,i){var g=v===''||v===null;return '<div class="cw"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="cell'+(g?' gap':'')+' '+(c[i]||'')+'">'+(g?'&nbsp;':v)+'</div><span class="ix">'+(o.noix?'':i)+'</span></div>'}).join('')+'</div>'}
+function matrix(a,st,nosum){var n=a.length,h='<div class="mx" style="grid-template-columns:repeat('+(n+1)+',minmax(28px,40px))"><div></div>',i,j;
+  for(j=0;j<n;j++)h+='<div class="mh">'+a[j]+'</div>';
+  for(i=0;i<n;i++){h+='<div class="mh">'+a[i]+'</div>';for(j=0;j<n;j++)h+=j>i?'<div class="cell '+(st[i*n+j]||'')+'">'+(nosum?'&nbsp;':a[i]+a[j])+'</div>':'<div></div>'}
+  return h+'</div>'}
+function widget(id,opts,build){
+  var el=$(id),i=0,st=[];
+  el.innerHTML=(opts.length>1?'<div class="row" style="align-items:center">'+opts.map(function(o,k){return '<button data-k="'+k+'">'+o[0]+'</button>'}).join('')+'</div>':'')+'<div class="scroll v"></div><p class="note" aria-live="polite"></p><div class="ctl"><button class="pv">Previous</button><span class="pos"></span><button class="nx">Next</button></div>';
+  var v=el.querySelector('.v'),n=el.querySelector('.note'),p=el.querySelector('.pos'),pv=el.querySelector('.pv'),nx=el.querySelector('.nx');
+  function r(){v.innerHTML=st[i].h;n.textContent=st[i].n;p.textContent='Step '+(i+1)+' of '+st.length;pv.disabled=i===0;nx.disabled=i===st.length-1}
+  function pick(k){st=build(opts[k][1]);i=0;[].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.k===k))});r()}
+  [].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.onclick=function(){pick(+b.dataset.k)}});
+  pv.onclick=function(){if(i>0){i--;r()}};nx.onclick=function(){if(i<st.length-1){i++;r()}};pick(0);
+}
+function tabs(id,labels,fn){var el=$(id);el.innerHTML='<div class="row" style="align-items:center"></div><div class="tv"></div>';var bar=el.firstChild,tv=el.lastChild;
+  labels.forEach(function(t,k){var b=document.createElement('button');b.textContent=t;b.onclick=function(){[].forEach.call(bar.children,function(x){x.setAttribute('aria-pressed',String(x===b))});tv.innerHTML=fn(k)};b.setAttribute('aria-pressed',String(k===0));bar.appendChild(b)});tv.innerHTML=fn(0)}
+function growth(id,ns,bf,tp,h1,h2){$(id).innerHTML='<table><tr><th>n</th><th>'+h1+'</th><th>'+h2+'</th></tr>'+ns.map(function(n){var b=bf(n),t=tp(n);return '<tr><td>'+L(n)+'</td><td>'+L(b)+'<div class="bar r" style="width:'+Math.max(1,Math.log10(b)/12*100)+'%;margin-left:auto"></div></td><td>'+L(t)+'<div class="bar g" style="width:'+Math.max(1,Math.log10(t)/12*100)+'%;margin-left:auto"></div></td></tr>'}).join('')+'</table><p class="cap">Bars use a log scale, otherwise the second column would be invisible.</p>'}
+function flow(a){return '<div class="flow">'+a.map(function(x){return '<div class="cell">'+x+'</div>'}).join('<span>↓</span>')+'</div>'}
+
+// section 1 static
+$('s1A').innerHTML=cells([1,2,3,4,6],{c:{0:'now',4:'now'},sub:{0:'L',4:'R'},noix:true});
+
+// predict the move
+var pd={a:[1,3,4,6,9,11],t:13,l:0,r:5,msg:'',cmp:0},pdE=$('pdW');
+function pdR(){var a=pd.a,n=a.length,c={},sub={},j,tot,st,act=pd.l<pd.r;
+  for(j=0;j<n;j++)c[j]=(j<pd.l||j>pd.r)?'dim':'';
+  if(act){c[pd.l]='now';c[pd.r]='now';sub[pd.l]='L';sub[pd.r]='R';tot=a[pd.l]+a[pd.r]}
+  if(act&&tot===pd.t){c[pd.l]='ok';c[pd.r]='ok';st='Found: '+a[pd.l]+' + '+a[pd.r]+' = '+tot+', after '+(pd.cmp+1)+' comparisons.';act=false}
+  else if(!act)st='The pointers met. No pair sums to '+pd.t+'.';
+  else st='L + R = '+a[pd.l]+' + '+a[pd.r]+' = '+tot+'. Target is '+pd.t+'. Which pointer should move?';
+  pdE.innerHTML='<div class="row" style="align-items:center">'+[13,7,100].map(function(t){return '<button data-t="'+t+'" aria-pressed="'+(t===pd.t)+'">target '+t+'</button>'}).join('')+'</div>'+cells(a,{c:c,sub:sub})+'<p class="note" aria-live="polite"><strong>'+st+'</strong></p><div class="ctl"><button id="pdL"'+(act?'':' disabled')+'>Move left →</button><button id="pdRt"'+(act?'':' disabled')+'>← Move right</button></div><p class="note" aria-live="polite">'+pd.msg+'</p>';
+  [].forEach.call(pdE.querySelectorAll('button[data-t]'),function(b){b.onclick=function(){pd.t=+b.dataset.t;pd.l=0;pd.r=n-1;pd.msg='';pd.cmp=0;pdR()}});
+  if(act){$('pdL').onclick=function(){pdMv('L',tot)};$('pdRt').onclick=function(){pdMv('R',tot)}}}
+function pdMv(d,tot){var a=pd.a,need=tot<pd.t?'L':'R';
+  if(d!==need){pd.msg=d==='L'?'Not that one. The sum is already too big ('+tot+' &gt; '+pd.t+'). Moving left up only makes it bigger.':'Not that one. The sum is already too small ('+tot+' &lt; '+pd.t+'). Moving right down only makes it smaller.';pdR();return}
+  if(d==='L'){pd.msg='Right. Even paired with the largest remaining value, '+a[pd.l]+' is too small, so it is in no pair. It is eliminated.';pd.l++}
+  else{pd.msg='Right. Even paired with the smallest remaining value, '+a[pd.r]+' is too big, so it is in no pair. It is eliminated.';pd.r--}
+  pd.cmp++;pdR()}
+pdR();
+
+// pair-sum grid (elimination)
+var B8=[1,2,4,7,9,12,15,20];
+widget('tsW',[['[1,2,3,4,6], target 6',[[1,2,3,4,6],6]],['[1,2,3,4,6], target 10',[[1,2,3,4,6],10]],['8 numbers, target 19',[B8,19]],['8 numbers, no pair (100)',[B8,100]]],function(p){
+  var a=p[0],t=p[1],n=a.length,l=0,r=n-1,tot=n*(n-1)/2,old={},s=[],cmp=0,ruled=0;
+  function view(cur,found,nw,pl,pr,all){var st={},k,c={},sub={},j;
+    for(k in old)st[k]='dim';for(k in nw)st[k]='mv';if(cur!==null)st[cur]=found?'ok':'now';
+    for(j=0;j<n;j++){c[j]=(all||j<pl||j>pr)?'dim':'';sub[j]=''}
+    if(!all){sub[pl]='L';sub[pr]=(sub[pr]||'')+(pl===pr?'':'R')}
+    if(found){c[pl]='ok';c[pr]='ok'}else if(!all){c[pl]='now';c[pr]='now'}
+    return cells(a,{c:c,sub:sub,noix:true})+matrix(a,st)}
+  s.push({h:view(null,false,{},0,n-1).replace(/cell now/g,'cell '),n:'Target '+t+'. All '+tot+' pairs are still possible. Compare the two ends.'});
+  while(l<r){var sum=a[l]+a[r],cur=l*n+r,nw={},j,i;cmp++;
+    if(sum===t){s.push({h:view(cur,true,{},l,r),n:a[l]+' + '+a[r]+' = '+sum+'. Found! '+cmp+' comparison'+(cmp>1?'s':'')+' instead of up to '+tot+' pairs.'});return s}
+    if(sum<t){for(j=l+1;j<=r;j++)nw[l*n+j]=1;ruled+=r-l;
+      s.push({h:view(cur,false,nw,l,r),n:a[l]+' + '+a[r]+' = '+sum+' < '+t+'. Even with the largest remaining partner, '+a[l]+' is too small, so it is in no pair. Its whole row ('+(r-l)+' pairs) is ruled out. Move left right. Ruled out so far: '+ruled+' of '+tot+'.'});
+      for(j in nw)old[j]=1;l++}
+    else{for(i=l;i<r;i++)nw[i*n+r]=1;ruled+=r-l;
+      s.push({h:view(cur,false,nw,l,r),n:a[l]+' + '+a[r]+' = '+sum+' > '+t+'. Even with the smallest remaining partner, '+a[r]+' is too big, so it is in no pair. Its whole column ('+(r-l)+' pairs) is ruled out. Move right left. Ruled out so far: '+ruled+' of '+tot+'.'});
+      for(j in nw)old[j]=1;r--}}
+  s.push({h:view(null,false,{},0,0,true),n:'Pointers met. Nothing is left to search: no two elements sum to '+t+'. Only '+cmp+' comparisons were needed to prove it.'});return s});
+
+growth('gr2',[10,100,1000,1000000],function(n){return n*(n-1)/2},function(n){return n-1},'Brute force: n(n−1)/2 pairs','Two pointers: ≤ n−1');
+
+// zeros and ones
+widget('zoW',[['[0,1,0,1,1,0,0]',[0,1,0,1,1,0,0]],['[1,1,1,0,0,0]',[1,1,1,0,0,0]],['[0,0,1,1] (already done)',[0,0,1,1]],['[1,0]',[1,0]]],function(p){
+  var a=p.slice(),n=a.length,l=0,r=n-1,s=[],sw=0,m;
+  function view(fin){var c={},sub={},j;
+    for(j=0;j<n;j++)c[j]=fin?(a[j]===0?'ok':'mv'):(j<l?'ok':j>r?'mv':'');
+    if(!fin&&l<r){c[l]='now';c[r]='now';sub[l]='L';sub[r]='R'}
+    return cells(a,{c:c,sub:sub})}
+  while(l<r){
+    if(a[l]===0){m='arr[left] = 0 belongs on the left, so it is already correct. left++.';s.push({h:view(false),n:m});l++}
+    else if(a[r]===1){m='arr[left] = 1 is unsure yet, but arr[right] = 1 belongs on the right, so it is already correct. right--.';s.push({h:view(false),n:m});r--}
+    else{m='arr[left] = 1 and arr[right] = 0: both are on the wrong side. Swap them, then left++ and right--.';s.push({h:view(false),n:m});var t=a[l];a[l]=a[r];a[r]=t;sw++;l++;r--}}
+  s.push({h:view(true),n:'Pointers met. Everything left of them is 0 and everything right is 1. '+sw+' swap'+(sw===1?'':'s')+', one pass, no extra memory.'});
+  return s});
+
+// remove duplicates
+widget('rdW',[['[2,3,3,3,6,9,9]',[2,3,3,3,6,9,9]],['[1,1,1,1]',[1,1,1,1]],['[1,2,3] (all unique)',[1,2,3]],['[0,0,1,1,1,2,2,3,3,4]',[0,0,1,1,1,2,2,3,3,4]]],function(p){
+  var a=p.slice(),n=a.length,w=1,s=[],rd;
+  function view(rd,fin,init){var c={},sub={},j;
+    for(j=0;j<n;j++)c[j]=fin?(j<w?'ok':'dim'):init?(j<1?'ok':''):(j<w?'ok':(j<=rd?'dim':''));
+    if(fin){if(w<n)sub[w]='W = k'}
+    else if(init){if(n>1)sub[1]='W R'}
+    else{if(w<n)sub[w]='W';sub[rd]=sub[rd]?sub[rd]+' R':'R'}
+    return cells(a,{c:c,sub:sub})}
+  s.push({h:view(0,false,true),n:'The first element is always kept, so write = 1. read starts at index 1.'});
+  for(rd=1;rd<n;rd++){var x=a[rd],last=a[w-1],m;
+    if(x!==last){a[w]=x;m='nums['+rd+'] = '+x+' differs from the last unique value ('+last+'): copy it to nums['+w+']. write = '+(w+1)+'.';w++}
+    else m='nums['+rd+'] = '+x+' equals the last unique value ('+last+'): skip it. write stays at '+w+'.';
+    s.push({h:view(rd,false,false),n:m})}
+  s.push({h:view(0,true),n:'Done. Return write = '+w+'. The first '+w+' element'+(w===1?'':'s')+' are the unique values; whatever sits after that doesn’t matter.'});return s});
+
+// valley
+tabs('vlW',['[-4,-1,0,3,10]','[-7,-3,2,3,11]','[-5,-4,-3]'],function(k){var a=[[-4,-1,0,3,10],[-7,-3,2,3,11],[-5,-4,-3]][k],sq=a.map(function(x){return x*x}),mx=Math.max.apply(null,sq);
+  return '<div class="vl">'+sq.map(function(v,i){return '<div><span>'+v+'</span><i style="height:'+(v/mx*90)+'px"></i><span>'+a[i]+'²</span></div>'}).join('')+'</div>'});
+
+// squares
+widget('sqW',[['[-4,-1,0,3,10]',[-4,-1,0,3,10]],['[-7,-3,2,3,11]',[-7,-3,2,3,11]],['[1,2,3] (no negatives)',[1,2,3]],['[-5,-4,-3] (all negative)',[-5,-4,-3]]],function(a){
+  var n=a.length,l=0,r=n-1,res=[],w,j,s=[];for(j=0;j<n;j++)res.push('');
+  function view(w,fin){var c={},sub={},rc={},rs={};
+    for(j=0;j<n;j++){c[j]=(fin||j<l||j>r)?'dim':'';rc[j]=j>w?'ok':''}
+    if(!fin){c[l]='now';c[r]='now';sub[l]='L';sub[r]=l===r?'L = R':'R';rc[w]='mv';rs[w]='W'}
+    return cells(a,{c:c,sub:sub,noix:true})+'<div class="lbl">result</div>'+cells(res,{c:rc,sub:rs})}
+  for(w=n-1;w>=0;w--){var al=Math.abs(a[l]),ar=Math.abs(a[r]),m;
+    if(al>ar){m='|'+a[l]+'| = '+al+' > |'+a[r]+'| = '+ar+': the left end is bigger. Put '+a[l]+'² = '+(a[l]*a[l])+' at result['+w+']. left++.';s.push({h:view(w,false),n:m});res[w]=a[l]*a[l];l++}
+    else{m='|'+a[l]+'| = '+al+' ≤ |'+a[r]+'| = '+ar+': the right end is at least as big. Put '+a[r]+'² = '+(a[r]*a[r])+' at result['+w+']. right--.';s.push({h:view(w,false),n:m});res[w]=a[r]*a[r];r--}}
+  s.push({h:view(-1,true),n:'Done. Each square was written once, largest first, from the back. No second sort was needed.'});return s});
+
+// 3sum
+function mk3(a,t,mode){}
+widget('t3W',[['[-3,-1,0,1,2]',[-3,-1,0,1,2]],['[-1,0,1,2,-1,-4]',[-1,0,1,2,-1,-4]],['[-2,0,0,2,2] (duplicates)',[-2,0,0,2,2]]],function(p){
+  var a=p.slice().sort(num),n=a.length,s=[],found=[],i,l,r;
+  function fl(){return '<div class="lbl">Found so far: '+(found.length?found.map(function(t){return '['+t.join(', ')+']'}).join(' '):'none yet')+'</div>'}
+  function view(i,l,r,skip){var c={},sub={},j;
+    for(j=0;j<n;j++){c[j]=j<i?'dim':j===i?'mv':(l<r?((j<l||j>r)?'dim':''):'dim')}
+    if(skip){c[i]='dim';sub[i]='i: repeat'}
+    else{if(i<n)sub[i]='i';if(l<r){c[l]='now';c[r]='now';sub[l]='L';sub[r]='R'}}
+    return cells(a,{c:c,sub:sub})+fl()}
+  s.push({h:view(-1,0,-1),n:'Sorted: ['+a.join(', ')+']. Fix i, then run the pair-sum pointers on everything to its right.'});
+  s[0].h=cells(a,{noix:false})+fl();
+  for(i=0;i<n-2;i++){
+    if(i>0&&a[i]===a[i-1]){s.push({h:view(i,0,-1,true),n:'a['+i+'] = '+a[i]+' equals the previous i. Every triplet starting here was already found, so skip it.'});continue}
+    l=i+1;r=n-1;
+    while(l<r){var t=a[i]+a[l]+a[r],m,ex=expr([a[i],a[l],a[r]]);
+      if(t===0){found.push([a[i],a[l],a[r]]);var nl=l+1,nr=r-1,sk;
+        while(nl<nr&&a[nl]===a[nl-1])nl++;while(nl<nr&&a[nr]===a[nr+1])nr--;sk=(nl-(l+1))+((r-1)-nr);
+        m=ex+'. Found a triplet. Move both pointers inward.'+(sk>0?' Then skip '+sk+' repeated value'+(sk>1?'s':'')+' so the same triplet isn’t reported twice.':'');
+        s.push({h:view(i,l,r),n:m});l=nl;r=nr}
+      else if(t<0){s.push({h:view(i,l,r),n:ex+' is below 0. Too small, so left++.'});l++}
+      else{s.push({h:view(i,l,r),n:ex+' is above 0. Too big, so right--.'});r--}}
+  }
+  s.push({h:view(n,0,-1),n:'Every i has been tried. Triplets: '+(found.length?found.map(function(t){return '['+t.join(', ')+']'}).join(' '):'none')+'.'});
+  return s});
+$('flow6').innerHTML='<div class="fig" style="margin:0">'+flow(['Triplet sum','Fix one element','Two Sum on the rest','Two pointers'])+'</div>';
+growth('gr6',[10,100,1000,10000],function(n){return n*(n-1)*(n-2)/6},function(n){return (n-1)*(n-2)/2},'Brute force: n(n−1)(n−2)/6 triplets','Fix i + pointers: ≤ (n−1)(n−2)/2');
+
+// closest
+widget('clW',[['[-1,2,1,-4], target 1',[[-1,2,1,-4],1]],['[-2,0,1,2], target 2',[[-2,0,1,2],2]],['[1,2,4,8,16], target 7 (exact)',[[1,2,4,8,16],7]]],function(p){
+  var a=p[0].slice().sort(num),t=p[1],n=a.length,s=[],best=a[0]+a[1]+a[2],i,l,r;
+  function info(){return '<div class="lbl">target = '+t+' &nbsp;|&nbsp; closest sum so far = '+best+' (distance '+Math.abs(t-best)+')</div>'}
+  function view(i,l,r){var c={},sub={},j;
+    for(j=0;j<n;j++)c[j]=j<i?'dim':j===i?'mv':((j<l||j>r)?'dim':'');
+    sub[i]='i';c[l]='now';c[r]='now';sub[l]='L';sub[r]='R';return cells(a,{c:c,sub:sub})+info()}
+  s.push({h:cells(a,{})+info(),n:'Sorted: ['+a.join(', ')+']. Start with the first three as our best guess: '+best+'.'});
+  for(i=0;i<n-2;i++){l=i+1;r=n-1;
+    while(l<r){var tot=a[i]+a[l]+a[r],d=Math.abs(t-tot),old=best,m=expr([a[i],a[l],a[r]])+'. Distance to target: '+d+'. ';
+      if(d<Math.abs(t-best)){best=tot;m+='Closer than '+old+', so the new closest is '+tot+'. '}else m+='Not closer than '+best+', so keep it. ';
+      if(tot===t){m+='This hits the target exactly. Nothing can be closer, so stop immediately.';s.push({h:view(i,l,r),n:m});return s}
+      if(tot<t){m+='Below target, so left++.';s.push({h:view(i,l,r),n:m});l++}
+      else{m+='Above target, so right--.';s.push({h:view(i,l,r),n:m});r--}}}
+  s.push({h:cells(a,{})+info(),n:'Done. The closest sum is '+best+'.'});return s});
+
+// smaller sum
+widget('smW',[['[-1,0,2,3], target 3',[[-1,0,2,3],3]],['[-1,4,2,1,3], target 5',[[-1,4,2,1,3],5]],['[-2,0,1,3], target 2',[[-2,0,1,3],2]]],function(p){
+  var a=p[0].slice().sort(num),t=p[1],n=a.length,s=[],cnt=0,i,l,r;
+  function view(i,l,r,blk){var c={},sub={},j;
+    for(j=0;j<n;j++)c[j]=j<i?'dim':j===i?'mv':((j<l||j>r)?'dim':'');
+    if(blk)for(j=l+1;j<=r;j++)c[j]='ok';
+    c[l]='now';sub[i]='i';sub[l]='L';sub[r]='R';
+    return cells(a,{c:c,sub:sub})+'<div class="lbl">target = '+t+' &nbsp;|&nbsp; count so far = '+cnt+'</div>'}
+  s.push({h:cells(a,{})+'<div class="lbl">target = '+t+' &nbsp;|&nbsp; count so far = 0</div>',n:'Sorted: ['+a.join(', ')+']. Count triplets whose sum is less than '+t+'.'});
+  for(i=0;i<n-2;i++){l=i+1;r=n-1;
+    while(l<r){var tot=a[i]+a[l]+a[r],m=expr([a[i],a[l],a[r]]);
+      if(tot<t){var k=r-l,lst=[],q;cnt+=k;for(q=l+1;q<=r;q++)lst.push('['+a[i]+', '+a[l]+', '+a[q]+']');
+        m+=' < '+t+'. Valid, and because the array is sorted, so is every smaller partner for the last slot. That is right − left = '+k+' triplet'+(k>1?'s':'')+' at once'+(k<=4?': '+lst.join(' ')+'.':'.')+' Count is now '+cnt+'. left++.';
+        s.push({h:view(i,l,r,true),n:m});l++}
+      else{m+=' ≥ '+t+'. Even the largest candidate is too big, so right--.';s.push({h:view(i,l,r,false),n:m});r--}}}
+  s.push({h:cells(a,{})+'<div class="lbl">target = '+t+' &nbsp;|&nbsp; count = '+cnt+'</div>',n:'Done. '+cnt+' triplet'+(cnt===1?'':'s')+' with a sum less than '+t+'.'});return s});
+$('sitA').innerHTML=cells([-1,0,2,3],{c:{0:'mv',1:'now',3:'now',2:''},sub:{0:'i',1:'L',3:'R'},noix:true})+'<p class="cap">e.g. 5 ≥ target</p>';
+$('sitB').innerHTML=cells([-1,0,2,3],{c:{0:'mv',1:'now',2:'ok',3:'ok'},sub:{0:'i',1:'L',3:'R'},noix:true})+'<p class="cap">e.g. 2 &lt; target: green = all valid</p>';
+
+// invariant explorer
+var IVD=[
+ ['Pair sum',[[1,'var(--dim)','too small, eliminated'],[3,'','still possible: [left, right]'],[1,'var(--dim)','too big, eliminated']],'Every pair involving an element outside [left, right] has been proven useless for this target.'],
+ ['Rearrange 0/1',[[3,'var(--ok)','all 0s (done)'],[3,'','unknown'],[3,'var(--mv)','all 1s (done)']],'Everything before left is a correctly placed 0, and everything after right is a correctly placed 1.'],
+ ['Remove duplicates',[[3,'var(--ok)','unique values so far'],[2,'var(--dim)','processed, free to overwrite'],[4,'','not processed yet']],'Everything before write contains the unique values found so far.'],
+ ['Squares',[[4,'','not placed yet: the largest square is at one of the ends'],[3,'var(--ok)','placed: largest squares, in final position']],'Everything after write is final, and the next largest square is at left or right.'],
+ ['Triplet sum / closest',[[2,'var(--mv)','i is fixed'],[4,'','[left, right] still to search'],[2,'var(--dim)','eliminated']],'For the current i, everything outside [left, right] has been eliminated from consideration.'],
+ ['Smaller sum',[[1,'var(--mv)','i'],[3,'var(--ok)','counted: all partners work'],[2,'var(--dim)','too big']],'If the largest candidate is already below the target, every smaller candidate is also valid.']];
+tabs('ivW',IVD.map(function(d){return d[0]}),function(k){var d=IVD[k];return '<div class="lbl">The regions the pointers maintain:</div><div class="zones">'+d[1].map(function(z){return '<div style="flex:'+z[0]+(z[1]?';background:'+z[1]:'')+'">'+z[2]+'</div>'}).join('')+'</div><blockquote><p>'+d[2]+'</p></blockquote>'});
+
+// direction
+$('dirF').innerHTML='<div class="two"><div><div class="lbl"><strong>Before sorting</strong></div>'+cells([7,1,9,3,2],{c:{0:'now'},sub:{0:'L'},noix:true})+'<p class="cap">Move left right: is the next value bigger or smaller? No way to know (7 → 1 falls, 1 → 9 rises).</p></div><div><div class="lbl"><strong>After sorting</strong></div>'+cells([1,2,3,7,9],{c:{0:'now'},sub:{0:'L'},noix:true})+'<p class="cap">left++ means the value cannot decrease. right-- means it cannot increase. Now a pointer move carries information.</p></div></div>';
+
+// trade-off explorer
+var TOD=[
+ ['Pair sum',['Check every pair, or use a hash set','Sorted array + two pointers'],['O(n²), or O(n) with a hash set','O(n) if already sorted; O(n log n) if we must sort'],['O(1), or O(n) for the set','O(1)'],['no','no, unless we have to sort (that reorders indices)'],'The input is already sorted, or sorting is acceptable.'],
+ ['Rearrange 0/1',['arr.sort()','Partition with left and right'],['O(n log n)','O(n)'],['small','O(1)'],['yes, in place','yes, in place'],'Library sort is clearer. Pointers show the partition idea and are faster.'],
+ ['Remove duplicates',['list(set(arr)) or build a new list','Read / write pointers'],['O(n)','O(n)'],['O(n) extra','O(1) extra'],['no (and a set may lose order)','yes, in place'],'We are required to work in place, or memory matters.'],
+ ['Squares of sorted array',['Square, then sort','Pointers at both ends, fill from the back'],['O(n log n)','O(n)'],['O(n) output','O(n) output'],['no','no'],'The input is sorted and we want to avoid a second sort.'],
+ ['Triplet sum',['Three nested loops, or a hash set per i','Sort, fix i, then two pointers'],['O(n³), or O(n²) with a hash set','O(n²) after an O(n log n) sort'],['O(1), or O(n) for the set','O(1) for the search'],['no','sorting reorders the input'],'We want duplicates handled easily and constant extra space.']];
+tabs('toW',TOD.map(function(d){return d[0]}),function(k){var d=TOD[k];return '<table class="tt"><tr><th></th><th>Simpler approach</th><th>Two pointers</th></tr><tr><td>Approach</td><td>'+d[1][0]+'</td><td>'+d[1][1]+'</td></tr><tr><td>Time</td><td>'+d[2][0]+'</td><td>'+d[2][1]+'</td></tr><tr><td>Extra space</td><td>'+d[3][0]+'</td><td>'+d[3][1]+'</td></tr><tr><td>Modifies input</td><td>'+d[4][0]+'</td><td>'+d[4][1]+'</td></tr><tr><td>Reach for two pointers when</td><td colspan="2">'+d[5]+'</td></tr></table>'});
+
+$('flow10').innerHTML=flow(['Brute force','Understand the search space','Find repeated or unnecessary work','Find structure that lets us eliminate it','Use two pointers']);
+
+// code toggle and theme
+var cb=$('codeBtn'),hid=false;
+cb.onclick=function(){hid=!hid;[].forEach.call(document.querySelectorAll('details'),function(d){d.open=!hid});cb.textContent=hid?'Show code':'Hide code'};
+var root=document.documentElement,tb=$('theme');
+function setTheme(t){root.setAttribute('data-theme',t);tb.textContent=t==='dark'?'Light':'Dark'}
+try{var sv=localStorage.getItem('theme');if(sv==='dark'||sv==='light')setTheme(sv)}catch(e){}
+tb.onclick=function(){var t=root.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);try{localStorage.setItem('theme',t)}catch(e){}};
+</script>
+</body>
+</html>

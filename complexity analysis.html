@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Complexity Analysis from First Principles</title>
+<style>
+:root{--bg:#fff;--ink:#111;--mut:#555;--line:#ccc;--acc:#1f4e8c;--hi:#fff3b0;--hib:#c9a227;--ok:#dcf0dc;--okb:#3a8a3a;--mv:#e6edf7;--dim:#eee;--card:#fafafa;--red:#b5342b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#121212;--ink:#eee;--mut:#aaa;--line:#3a3a3a;--acc:#8ab4f8;--hi:#4a4220;--hib:#c9a227;--ok:#1d3a22;--okb:#5cb85c;--mv:#1c2a40;--dim:#2a2a2a;--card:#1a1a1a;--red:#ff7b72;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Roman",Times,serif}
+main{max-width:720px;margin:0 auto;padding:32px 20px 80px}
+h1,h2,h3{font-family:inherit;line-height:1.25}
+h1{font-size:2.1rem;margin:.2em 0 .6em}
+h2{font-size:1.5rem;margin:2.6em 0 .6em;padding-top:1.2em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin:1.6em 0 .4em}
+blockquote{margin:1.2em 0;padding:.4em 1em;border-left:4px solid var(--acc);font-size:1.12rem}
+blockquote p{margin:.3em 0}
+code{font:inherit;background:var(--card);padding:1px 5px;border-radius:4px}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:1.2em 0}
+.cap{font-size:.9rem;color:var(--mut);margin:.6em 0 0}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:center}
+.cell{min-width:54px;padding:7px 6px;text-align:center;border:2px solid var(--line);background:var(--bg);border-radius:6px;font-weight:600}
+.ok{background:var(--ok);border-color:var(--okb)}
+.now{background:var(--hi);border-color:var(--hib)}
+.dim{background:var(--dim);color:var(--mut);border-color:var(--dim)}
+.mv{background:var(--mv);border-color:var(--acc)}
+button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
+button:hover{background:var(--mv)}
+button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--hib);outline-offset:2px}
+.theme{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5}
+.bar{height:20px;border-radius:4px;background:var(--acc);min-width:4px;transition:width .2s}
+.bar.g{background:var(--okb)}.bar.r{background:var(--red)}
+.lbl{font-size:.9rem;margin:8px 0 3px}
+input[type=range]{width:100%}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--dim)}
+svg text{fill:var(--ink);font:15px "Times New Roman",Times,serif}
+svg line{stroke:var(--mut);stroke-width:2}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:.9rem;margin-top:6px}
+.legend i{display:inline-block;width:18px;height:4px;margin-right:5px;vertical-align:middle;border-radius:2px}
+.seg{display:flex;height:22px;border:1px solid var(--line);border-radius:4px;overflow:hidden}
+.flow{display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center}
+.flow .cell{min-width:150px}
+.pair{display:flex;gap:30px;justify-content:center;flex-wrap:wrap}
+.mem .cell{min-width:26px;padding:3px;font-size:.8rem}
+.mem{gap:4px}
+.flag{font-size:.9rem;color:var(--mut)}
+.top-nav{display:flex;align-items:center;gap:8px;font-size:.95rem;margin-bottom:20px;color:var(--mut)}
+.top-nav a{color:var(--acc);text-decoration:none}
+.top-nav a:hover{text-decoration:underline}
+.nav-sep{color:var(--line)}
+.nav-current{color:var(--mut)}
+.article-nav{display:flex;justify-content:space-between;gap:16px;margin-top:48px;padding-top:24px;border-top:1px solid var(--line);flex-wrap:wrap}
+.article-nav a{display:flex;flex-direction:column;padding:12px 16px;border:1px solid var(--line);border-radius:6px;background:var(--card);text-decoration:none;color:var(--ink);transition:border-color .15s,background .15s;flex:1;min-width:200px}
+.article-nav a:hover{border-color:var(--acc);background:var(--mv)}
+.article-nav .an-sub{font-size:.8rem;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.article-nav .an-title{font-weight:600;color:var(--acc)}
+</style>
+</head>
+<body>
+<button class="theme" id="theme" aria-label="Switch colour theme">Dark</button>
+<main>
+<nav class="top-nav"><a href="index.html">← DSA from First Principles</a> <span class="nav-sep">/</span> <span class="nav-current">Essay 02 · Complexity Analysis</span></nav>
+<h1>Complexity Analysis from First Principles</h1>
+<p>In the previous article we looked at DSA from the ground up, starting with one idea:</p>
+<blockquote><p>Data structures are ways of organizing information so that the operations we care about become easier.</p></blockquote>
+<p>Now the next question. Suppose we have found an algorithm that solves our problem. <strong>How do we know whether it is a good algorithm?</strong> And more importantly: <strong>what happens when the problem becomes much bigger?</strong> That is where <strong>complexity analysis</strong> comes in.</p>
+
+<h2>Why do we need complexity analysis?</h2>
+<p>Back to our college. With 100 students, we find a particular student by checking them one by one. Suppose it takes 50 checks for today’s input. Fine. But the college grows: 10,000 students, then 1,000,000, then perhaps 10,000,000.</p>
+<p>The important question is no longer “How many checks did my program make today?” It is:</p>
+<blockquote><p>How does the amount of work grow as the number of students grows?</p></blockquote>
+<p>That is the fundamental question behind complexity analysis.</p>
+<h3>What are we actually spending?</h3>
+<p>Every time an algorithm runs, it uses up two basic resources:</p>
+<div class="fig scroll"><table><tr><th>Resource</th><th>What it measures</th><th>When it runs short</th></tr>
+<tr><td>Time</td><td>how many steps the algorithm performs</td><td>the program is too slow to be useful</td></tr>
+<tr><td>Space</td><td>how much memory the algorithm needs while it runs</td><td>the data no longer fits, or the program is forced to work far more slowly</td></tr></table></div>
+<p>Why do we bother analyzing them? Because:</p>
+<ul>
+<li><strong>Both are limited.</strong> A user won’t wait an hour for a student search, and a machine can only hold so much in memory.</li>
+<li><strong>We can’t just try it at full size.</strong> We don’t have 10,000,000 students on day one. We need to predict what will happen when the college grows.</li>
+<li><strong>Resources cost money.</strong> At large scale, more time and more memory mean more hardware, more waiting, and a bigger bill.</li>
+<li><strong>They give us a fair way to compare.</strong> Two algorithms can solve the same problem while using very different amounts of time and space.</li>
+<li><strong>They often pull against each other.</strong> Spending extra memory can save time, and the reverse. We can only choose wisely if we can measure both.</li>
+</ul>
+<p>Most of this article studies time, because the ideas are easiest to see there. Space gets its own section later, and it turns out to use the same tools.</p>
+
+<h2>Complexity analysis is about scalability</h2>
+<p>Imagine two algorithms. On a small input, A does 100 operations and B does 1,000. A looks better. But now suppose their behavior as the input grows is:</p>
+<div class="fig scroll"><table><tr><th></th><th>n = 10</th><th>n = 100</th><th>n = 10,000</th></tr>
+<tr><td>Algorithm A: 10n</td><td>100</td><td>1,000</td><td>100,000</td></tr>
+<tr><td>Algorithm B: n²</td><td>100</td><td>10,000</td><td>100,000,000</td></tr></table>
+<p class="cap">Here <code>n</code> is the input size, such as the number of students.</p></div>
+<p>Plot the same two algorithms and watch where they cross:</p>
+<div class="fig" id="c1"></div>
+<p>Below n = 10, B is actually cheaper. At n = 10 they tie. After that, B pulls away and never comes back. So complexity analysis lets us ask: <strong>if the problem grows, how badly does the work grow?</strong> That is more useful than measuring how long the program takes on today’s input.</p>
+
+<h2>Why don’t we just measure the time?</h2>
+<p>The same algorithm takes 0.1 seconds on my laptop, 0.2 seconds on yours, and 0.03 seconds on a powerful server.</p>
+<div class="fig"><div class="lbl">My laptop: 0.1 s</div><div class="bar" style="width:33%"></div><div class="lbl">Your laptop: 0.2 s</div><div class="bar" style="width:67%"></div><div class="lbl">Server: 0.03 s</div><div class="bar" style="width:10%"></div></div>
+<p>Which is the true running time? There isn’t one universal answer. It depends on CPU, RAM, programming language, compiler or interpreter, operating system, implementation, system load, and input. So we ask something more fundamental: <strong>how does the amount of work grow as the input grows?</strong> That lets us reason about the algorithm independently of a particular machine.</p>
+
+<h2>What exactly are we measuring?</h2>
+<p>With <code>n</code> students, we can think of the work as a function of <code>n</code>, written <code>T(n)</code>: the amount of work, or running time, as a function of input size.</p>
+<ul><li>Check every student once: <code>T(n) = n</code>.</li><li>Compare every student with every other student: <code>T(n) = n²</code>.</li></ul>
+<p>The exact formula isn’t always literally the number of CPU instructions. It represents how the work grows with input size. Now we can study <code>T(n)</code>.</p>
+
+<h2>The real thing we care about is growth</h2>
+<p>Take <code>T(n) = n</code> and <code>T(n) = n²</code> side by side, and make the input 10 times larger each row:</p>
+<div class="fig scroll"><table><tr><th>Input n</th><th>T(n) = n</th><th>T(n) = n²</th></tr>
+<tr><td>10</td><td>10</td><td>100</td></tr><tr><td>100</td><td>100</td><td>10,000</td></tr><tr><td>1,000</td><td>1,000</td><td>1,000,000</td></tr><tr><td>10,000</td><td>10,000</td><td>100,000,000</td></tr></table>
+<p class="cap">Input ×10 → left column work ×10, right column work ×100.</p></div>
+<p>When input grows 10× and the work grows roughly 10×, that’s <strong>linear growth</strong>, written <code>O(n)</code>. Don’t think of it as a mysterious label. Think: <em>when my input becomes 10 times larger, my work becomes roughly 10 times larger.</em></p>
+<p>Comparing every student with every other: 5 students → 5 × 5 = 25 comparisons; 100 → 10,000; 1,000 → 1,000,000. When the input becomes 10× larger, the work becomes roughly 100× larger. That’s <code>O(n²)</code>. The important thing isn’t that there are “two loops.” It’s that <strong>the work grows roughly as the input multiplied by itself.</strong> This is why growth matters: the difference between the 10n and n² algorithms isn’t a slightly faster start, it’s a fundamentally different growth pattern.</p>
+
+<h2>But now we have a problem</h2>
+<p>Suppose we get <code>T(n) = 3n + 7</code>. For understanding how it scales on very large inputs, do we care about the 7, or the exact multiplier 3? Probably not much. See how the 7 fades:</p>
+<div class="fig"><label for="s1">n = <strong id="s1o"></strong></label><input id="s1" type="range" min="0" max="5" value="0"><div id="s1t"></div></div>
+<p>We want a way to describe the <strong>shape of the growth</strong> without carrying every small detail. That is where <strong>asymptotic notation</strong> comes in.</p>
+
+<h2>What does “asymptotic” mean?</h2>
+<blockquote><p>Asymptotic analysis is concerned with what happens as the input becomes very large.</p></blockquote>
+<p>We care about <code>n → very large</code>, not about <code>n = 5</code> or <code>n = 10</code>. Algorithms that look similar on small inputs can behave completely differently at scale, so we focus on long-term growth behavior.</p>
+
+<h2>Why do we need bounds?</h2>
+<p>For <code>T(n) = 3n + 7</code> we could say “the work is no more than n².” True for large n. Or “no more than n³.” Also true. Or “no more than 2ⁿ.” Also true. But these are <strong>too loose</strong>. They are correct, yet hide the actual growth. We want bounds that are meaningful.</p>
+
+<h2>Big-O: the upper bound</h2>
+<p>Big-O describes an <strong>asymptotic upper bound</strong>. <code>T(n) = O(n)</code> means, intuitively: once the input is large enough, the work does not grow faster than a constant multiple of <code>n</code>. It is a ceiling on growth. Is 3n + 7 under a ceiling of 4n? Check:</p>
+<div class="fig" id="c2"></div>
+<p>From n = 7 onward, 3n + 7 stays under 4n, so <code>3n + 7 = O(n)</code>. (<code>O(n²)</code> would also be true, but it’s far less informative.)</p>
+<h3>Why not pick an arbitrarily large bound?</h3>
+<p>“The algorithm never takes more than one trillion operations” may be technically true, but says nothing about scaling. “It is O(n¹⁰⁰)” is the same problem if the real growth is linear. Many upper bounds can be correct. We care about the <strong>tightest meaningful</strong> one, the one that tells us the most about the actual growth.</p>
+
+<h2>Lower bounds: Big-Ω</h2>
+<p>Instead of “How much can the work grow?” ask “How little can the work possibly grow?” That is a lower bound, written with Ω. <code>T(n) = Ω(n)</code> means: for large enough inputs, the work grows at least as fast as some constant multiple of <code>n</code>.</p>
+<p>For <code>3n + 7</code> it is true that Ω(1), Ω(log n) and Ω(n). Again, the useful one is the tightest: <code>Ω(n)</code>. In the chart above, 3n + 7 never drops below 2n.</p>
+
+<h2>Think of bounds like a box</h2>
+<div class="fig"><div class="pair"><div class="flow"><div class="cell now">Upper bound O(…)</div>“won’t grow beyond this rate”</div><div class="flow"><div class="cell mv">T(n)</div>the actual work</div><div class="flow"><div class="cell now">Lower bound Ω(…)</div>“can’t grow below this rate”</div></div>
+<p class="cap">If both bounds have the same growth rate, we’ve captured the true asymptotic behavior.</p></div>
+
+<h2>Big-Θ: the tight bound</h2>
+<p>For <code>T(n) = 3n + 7</code>, for large enough n: <code>2n ≤ T(n) ≤ 4n</code>. That is exactly the band in the chart above, squeezed between two linear functions. The exact constants aren’t important. What matters is that both sides grow like <code>n</code>. So <code>T(n) = Θ(n)</code>: the function grows at the same rate as <code>n</code>.</p>
+<h3>The three notations in plain English</h3>
+<div class="fig scroll"><table><tr><th>Notation</th><th>Meaning</th></tr><tr><td>O(f(n))</td><td>asymptotic upper bound</td></tr><tr><td>Ω(f(n))</td><td>asymptotic lower bound</td></tr><tr><td>Θ(f(n))</td><td>tight bound: upper and lower match in growth</td></tr></table></div>
+
+<h2>Big-O does NOT mean worst case</h2>
+<p>“Big-O is the worst case” is a useful beginner shortcut, but technically wrong. <strong>Big-O means upper bound.</strong> Worst-case analysis is a separate idea. Take linear search for Priya:</p>
+<div class="fig">
+<div class="lbl">Best case: Priya is first → 1 check</div><div class="row"><div class="cell ok">Priya</div><div class="cell">…</div><div class="cell">…</div><div class="cell">…</div></div>
+<div class="lbl">Worst case: Priya is last → n checks</div><div class="row"><div class="cell dim">…</div><div class="cell dim">…</div><div class="cell dim">…</div><div class="cell ok">Priya</div></div></div>
+<p>We might say best case → O(1), worst case → O(n). But Big-O didn’t mean “worst case.” We simply applied it to the function describing worst-case behavior.</p>
+
+<h2>Big-Ω does NOT automatically mean best case</h2>
+<p>Memorizing “O → worst, Ω → best” is also wrong. There are two separate questions:</p>
+<div class="fig scroll"><table><tr><th>Which behavior?</th><th>O (upper)</th><th>Ω (lower)</th><th>Θ (tight)</th></tr>
+<tr><td>Best case: T(n) = 1</td><td>O(1)</td><td>Ω(1)</td><td>Θ(1)</td></tr>
+<tr><td>Worst case: T(n) = n</td><td>O(n)</td><td>Ω(n)</td><td>Θ(n)</td></tr></table>
+<p class="cap">Pick a row (which behavior), pick a column (what kind of bound). Any combination is a valid question for linear search.</p></div>
+
+<h2>Why do we usually want the tightest bound?</h2>
+<p>For <code>3n + 7</code> we could write O(n), O(n²), O(n³) or O(2ⁿ). All are valid, but they carry different amounts of information. Say “O(2ⁿ)” and you’d reasonably worry the algorithm becomes unusable quickly, yet it is actually linear. The closer the bound is to the true behavior, the more useful it is. So when we can establish it, we want <code>Θ(n)</code>. The goal isn’t <em>any</em> bound; it’s a <strong>meaningful characterization of growth</strong>.</p>
+
+<h2>Why do we ignore constants?</h2>
+<p><code>T₁(n) = 3n</code> and <code>T₂(n) = 100n</code> aren’t identical; on a given input the second does far more work. But make the input 10× larger and both become 10× larger. Same growth pattern, so both are Θ(n).</p>
+<div class="fig" id="c3"></div>
+<p>Constants can matter in real systems. They just <strong>don’t change the asymptotic growth class.</strong></p>
+
+<h2>Why do we ignore lower-order terms?</h2>
+<p>Take <code>T(n) = n² + n + 100</code>. For small inputs all three terms matter. As n grows, see which one dominates:</p>
+<div class="fig"><label for="s2">n = <strong id="s2o"></strong></label><input id="s2" type="range" min="0" max="4" value="0"><div class="seg" id="s2b"></div><div id="s2t" class="cap"></div></div>
+<p>The smaller terms haven’t magically disappeared. We’ve just recognized they don’t determine the long-term growth. So <code>T(n) = Θ(n²)</code>.</p>
+
+<h2>This is what asymptotic analysis is really doing</h2>
+<p>Start with something detailed like <code>7n² + 4n + 19</code>. Ask: <em>what determines the growth when n becomes huge?</em> The answer is <code>n²</code>, so we summarize it as <code>Θ(n²)</code>. We deliberately throw away information, but information that is <strong>not relevant to the question we’re asking</strong>.</p>
+
+<h2>Growth of functions</h2>
+<p>Complexity classes are just a short list of growth patterns. From slowest to fastest:</p>
+<blockquote><p>1 &lt; log n &lt; n &lt; n log n &lt; n² &lt; n³ &lt; 2ⁿ &lt; n!</p></blockquote>
+<p>Here are five of them drawn together. On a linear scale, the fast-growing ones leave the others flat on the floor. Switch to a log scale on the vertical axis to see the shapes of the slow ones too.</p>
+<div class="fig"><div class="row"><button id="lin" aria-pressed="true">Linear scale</button><button id="log" aria-pressed="false">Log scale</button></div><div id="c4"></div></div>
+<h3>Turning the problem-size knob</h3>
+<p>Slowly increase the problem size and watch the work:</p>
+<div class="fig scroll" id="gt"></div>
+<ul><li><strong>O(1):</strong> the work barely changes.</li><li><strong>O(log n):</strong> grows very slowly.</li><li><strong>O(n):</strong> grows proportionally.</li><li><strong>O(n²):</strong> grows much faster.</li><li><strong>O(2ⁿ):</strong> explodes.</li></ul>
+<h3>What happens if the input doubles?</h3>
+<div class="fig scroll"><table><tr><th>Class</th><th>Work after n → 2n</th></tr><tr><td>O(1)</td><td>same</td></tr><tr><td>O(log n)</td><td>one more step</td></tr><tr><td>O(n)</td><td>2× as much</td></tr><tr><td>O(n²)</td><td>4× as much</td></tr><tr><td>O(n³)</td><td>8× as much</td></tr><tr><td>O(2ⁿ)</td><td>squared (2ⁿ × 2ⁿ)</td></tr></table></div>
+
+<h2>Why is O(log n) so powerful?</h2>
+<p>Suppose student IDs are organized so binary search works. Instead of one by one, we repeatedly eliminate half the possibilities. Pick a size and see how many halvings it takes:</p>
+<div class="fig"><label for="s3">Students: <strong id="s3o"></strong></label><input id="s3" type="range" min="0" max="3" value="3"><div id="s3b"></div><p class="cap" id="s3t"></p></div>
+<p>Whenever you see logarithmic complexity, look for this idea: <strong>can I use information to throw away a large portion of the remaining problem at every step?</strong></p>
+
+<h2>Space complexity: how much memory?</h2>
+<p>So far we’ve asked how the <em>work</em> grows with <code>n</code>. We can ask the same question about <em>memory</em>: how much memory does the algorithm need as the input grows? Call it <code>S(n)</code>. The same tools apply. We ignore constants and lower-order terms, and we describe growth with O, Ω and Θ.</p>
+<h3>A first example: the highest mark</h3>
+<p>Recall finding the highest of <code>n</code> marks. One method scans once and remembers a single value, <code>best</code>. Another first copies all the marks into a new list, then works on the copy. Both give the right answer. Drag the slider and compare the <strong>extra</strong> memory each needs:</p>
+<div class="fig"><label for="s4">n = <strong id="s4o"></strong></label><input id="s4" type="range" min="1" max="20" value="6"><div id="s4b"></div></div>
+<p>Method 1 needs the same one extra cell no matter how big <code>n</code> gets: <code>O(1)</code> extra space. Method 2 needs one extra cell per mark: <code>O(n)</code> extra space. Notice that both read the same input. What differs is the memory the algorithm itself asks for on top of it.</p>
+<h3>When memory grows like n²</h3>
+<p>Suppose we compare every student with every other student and want to remember each result. That needs a table with one entry per pair. Here is <code>n = 4</code>:</p>
+<div class="fig"><div id="pg"></div><p class="cap">4 × 4 = 16 cells. With 1,000 students the table would have 1,000,000 cells. The memory grows as the input multiplied by itself, just like the work did earlier.</p></div>
+<div class="fig scroll"><table><tr><th>What the algorithm keeps</th><th>Extra space</th></tr><tr><td>one variable</td><td>O(1)</td></tr><tr><td>a copy of the input</td><td>O(n)</td></tr><tr><td>a result for every pair</td><td>O(n²)</td></tr></table></div>
+<h3>Trading space for time</h3>
+<p>Back to the first article. Organizing students around IDs made lookups cheap, but the organization itself takes memory. In general, we often spend extra space to save time, for example by keeping an index of <code>n</code> entries so we don’t have to scan. Sometimes the trade goes the other way. This is why we measure <strong>both</strong> resources: improving one can cost us the other.</p>
+<p class="flag">Note: books differ on whether “space” includes the input itself. Here we count the extra memory the algorithm needs. Always check which one is meant.</p>
+
+<h2>Complexity connects back to data structures</h2>
+<p>Data structures ask: <em>how should I organize my information?</em> Complexity analysis asks: <em>how does the work required by that organization grow as the data grows?</em> One organization gives “find student → O(n)”, another gives “find student → O(1)”. With 10 students the difference may be irrelevant. With 10 million it can change the whole system. A data structure determines which operations are easy; complexity analysis tells us <strong>how well those operations scale</strong>.</p>
+
+<h2>The complete picture</h2>
+<div class="fig"><div class="flow"><div class="cell">Problem: find a student</div>↓<div class="cell">Input: n students</div>↓<div class="cell">Algorithm does T(n) work</div>↓<div class="cell">How does T(n) grow as n gets large?</div>↓<div class="cell ok">O upper · Ω lower · Θ tight</div></div></div>
+<p>We ignore machine-specific times, constants and insignificant details, and study asymptotic growth. When several bounds are possible, we prefer the <strong>tightest meaningful</strong> one.</p>
+
+<h2>The deepest mental model</h2>
+<blockquote><p>Complexity analysis is not really about counting operations. It is about understanding scalability.</p></blockquote>
+<p>Mentally grow the problem: 10, 100, 1,000, 10,000, 100,000, 1,000,000… and ask, <strong>“How does the work grow?”</strong> Asymptotic notation is the language for that.</p>
+<ul><li><strong>Big-O:</strong> how fast can the work grow?</li><li><strong>Big-Ω:</strong> how slowly can the work grow?</li><li><strong>Big-Θ:</strong> what is the actual asymptotic growth, when upper and lower bounds match?</li></ul>
+<p>Once you think this way, O(n), O(log n), O(n²), Ω(n) and Θ(n) stop being mysterious symbols. They become a language for describing <strong>how algorithms grow</strong>.</p>
+<div class="article-nav">
+  <a href="introduction.html">
+    <span class="an-sub">Previous Essay · 01</span>
+    <span class="an-title">← DSA from First Principles</span>
+  </a>
+  <a href="arrays/arrays%20introduction%20and%20basics.html" style="text-align:right">
+    <span class="an-sub">Next Essay · 03</span>
+    <span class="an-title">Arrays from First Principles →</span>
+  </a>
+</div>
+</main>
+<script>
+var $=function(i){return document.getElementById(i)};
+function fmt(v){return v>=1e6?v/1e6+'M':v>=1000?v/1000+'k':String(+v.toFixed(2))}
+function chart(el,o){
+  var W=640,H=300,L=54,R=14,T=12,B=40,pw=W-L-R,ph=H-T-B,lg=o.log,id=el.id+'c';
+  function X(x){return L+(x-o.x0)/(o.x1-o.x0)*pw}
+  function Y(v){var t=lg?Math.log10(Math.max(v,1))/Math.log10(o.ymax):v/o.ymax;return T+ph-t*ph}
+  var s='<svg viewBox="0 0 '+W+' '+H+'" width="100%" role="img" aria-label="'+o.label+'"><defs><clipPath id="'+id+'"><rect x="'+L+'" y="'+T+'" width="'+pw+'" height="'+ph+'"/></clipPath></defs>',yt=[],i;
+  if(lg){for(i=0;Math.pow(10,i)<=o.ymax;i++)yt.push(Math.pow(10,i))}else{for(i=0;i<=4;i++)yt.push(o.ymax*i/4)}
+  yt.forEach(function(v){var y=Y(v);s+='<line x1="'+L+'" x2="'+(W-R)+'" y1="'+y+'" y2="'+y+'" style="stroke:var(--line);stroke-width:1"/><text x="'+(L-6)+'" y="'+(y+5)+'" text-anchor="end" style="font-size:13px">'+fmt(v)+'</text>'});
+  o.xt.forEach(function(x){s+='<text x="'+X(x)+'" y="'+(H-18)+'" text-anchor="middle" style="font-size:13px">'+x+'</text>'});
+  s+='<text x="'+(L+pw/2)+'" y="'+(H-2)+'" text-anchor="middle" style="font-size:13px">input size n</text>';
+  if(o.vx){s+='<line x1="'+X(o.vx)+'" x2="'+X(o.vx)+'" y1="'+T+'" y2="'+(T+ph)+'" style="stroke:var(--hib);stroke-dasharray:5 4;stroke-width:2"/><text x="'+(X(o.vx)+5)+'" y="'+(T+14)+'" style="font-size:13px">n = '+o.vx+'</text>'}
+  o.s.forEach(function(d){var p=[],x;for(x=o.x0;x<=o.x1+1e-9;x+=(o.x1-o.x0)/240){var y=Y(d.f(x));if(isFinite(y))p.push(X(x).toFixed(1)+','+Math.max(-9000,Math.min(9000,y)).toFixed(1))}
+    s+='<polyline points="'+p.join(' ')+'" fill="none" clip-path="url(#'+id+')" style="stroke:'+d.c+';stroke-width:2.5"/>'});
+  el.innerHTML=s+'</svg><div class="legend">'+o.s.map(function(d){return '<span><i style="background:'+d.c+'"></i>'+d.n+'</span>'}).join('')+'</div>';
+}
+chart($('c1'),{label:'Lines 10n and n squared cross at n equals 10',x0:0,x1:20,xt:[0,5,10,15,20],ymax:400,vx:10,s:[{n:'A: 10n',c:'var(--acc)',f:function(n){return 10*n}},{n:'B: n²',c:'var(--red)',f:function(n){return n*n}}]});
+chart($('c2'),{label:'3n plus 7 stays between 2n and 4n from n equals 7',x0:0,x1:20,xt:[0,5,10,15,20],ymax:80,vx:7,s:[{n:'4n (upper)',c:'var(--red)',f:function(n){return 4*n}},{n:'3n + 7 = T(n)',c:'var(--ink)',f:function(n){return 3*n+7}},{n:'2n (lower)',c:'var(--okb)',f:function(n){return 2*n}}]});
+chart($('c3'),{label:'3n and 100n are both straight lines',x0:0,x1:20,xt:[0,5,10,15,20],ymax:2000,s:[{n:'100n',c:'var(--red)',f:function(n){return 100*n}},{n:'3n',c:'var(--acc)',f:function(n){return 3*n}}]});
+var G=[{n:'1',c:'var(--mut)',f:function(){return 1}},{n:'log n',c:'var(--okb)',f:function(n){return Math.log2(n)}},{n:'n',c:'var(--acc)',f:function(n){return n}},{n:'n log n',c:'var(--hib)',f:function(n){return n*Math.log2(n)}},{n:'n²',c:'var(--ink)',f:function(n){return n*n}},{n:'2ⁿ',c:'var(--red)',f:function(n){return Math.pow(2,n)}}];
+function g4(lg){$('lin').setAttribute('aria-pressed',String(!lg));$('log').setAttribute('aria-pressed',String(lg));chart($('c4'),{label:'Growth of 1, log n, n, n log n, n squared and 2 to the n',x0:1,x1:20,xt:[1,5,10,15,20],ymax:lg?1e7:400,log:lg,s:G})}
+$('lin').onclick=function(){g4(false)};$('log').onclick=function(){g4(true)};g4(false);
+// growth table
+var N=[10,100,1000,10000,100000,1000000],L=function(v){return v.toLocaleString('en-US')};
+var rows=[['O(1)',function(){return '1'}],['O(log n)',function(n){return '~'+Math.round(Math.log2(n))}],['O(n)',function(n){return L(n)}],['O(n log n)',function(n){return '~'+L(Math.round(n*Math.log2(n)))}],['O(n²)',function(n){return L(n*n)}],['O(2ⁿ)',function(n){return n<=40?L(Math.pow(2,n)):'≈ 10^'+Math.round(n*0.30103)}]];
+$('gt').innerHTML='<table><tr><th>Class \\ n</th>'+N.map(function(n){return '<th>'+L(n)+'</th>'}).join('')+'</tr>'+rows.map(function(r){return '<tr><td>'+r[0]+'</td>'+N.map(function(n){return '<td>'+r[1](n)+'</td>'}).join('')+'</tr>'}).join('')+'</table><p class="cap">Units of work. “≈ 10^k” means a number with about k digits. log is base 2 and rounded.</p>';
+// 3n+7 slider
+var A=[10,100,1000,10000,100000,1000000];
+function u1(){var n=A[$('s1').value];$('s1o').textContent=L(n);var a=3*n,t=3*n+7;$('s1t').innerHTML='<table><tr><th>3n</th><th>3n + 7</th><th>The 7 is</th></tr><tr><td>'+L(a)+'</td><td>'+L(t)+'</td><td>'+(7/t*100).toFixed(4)+'% of the total</td></tr></table>'}
+$('s1').oninput=u1;u1();
+// n²+n+100
+var B2=[10,100,1000,10000,100000];
+function u2(){var n=B2[$('s2').value],q=n*n,t=q+n+100;$('s2o').textContent=L(n);
+  $('s2b').innerHTML='<div style="width:'+Math.max(q/t*100,0)+'%;background:var(--red)"></div><div style="width:'+Math.max(n/t*100,.4)+'%;background:var(--acc);min-width:3px"></div><div style="width:'+Math.max(100/t*100,.4)+'%;background:var(--okb);min-width:3px"></div>';
+  $('s2t').textContent='n² = '+L(q)+' ('+(q/t*100).toFixed(2)+'%, red) · n = '+L(n)+' (blue) · 100 (green). Total = '+L(t)+'.'}
+$('s2').oninput=u2;u2();
+// halving
+var H=[10,100,1000,1000000];
+function u3(){var n=H[$('s3').value],m=n,sq=[];while(true){sq.push(m);if(m<=1)break;m=Math.floor(m/2)}
+  $('s3o').textContent=L(n);
+  var show=sq.length>12?sq.slice(0,6).concat([null],sq.slice(-3)):sq;
+  $('s3b').innerHTML=show.map(function(m){return m===null?'<div class="lbl">… halving continues …</div>':'<div class="lbl">'+L(m)+' remaining</div><div class="bar g" style="width:'+Math.max(m/n*100,1)+'%"></div>'}).join('');
+  $('s3t').textContent='Halvings until 1 is left: '+(sq.length-1)+'. About '+sq.length+' checks, versus up to '+L(n)+' one by one.'}
+$('s3').oninput=u3;u3();
+// space
+function blk(k,c){var s='';for(var i=0;i<k;i++)s+='<div class="cell '+c+'">&nbsp;</div>';return s}
+function u4(){var n=+$('s4').value;$('s4o').textContent=n;
+  $('s4b').innerHTML='<div class="lbl">Input: n marks</div><div class="row mem">'+blk(n,'mv')+'</div><div class="lbl">Method 1: scan, keep one variable “best” → 1 extra cell</div><div class="row mem">'+blk(1,'ok')+'</div><div class="lbl">Method 2: copy all marks into a new list first → '+n+' extra cell'+(n>1?'s':'')+'</div><div class="row mem">'+blk(n,'now')+'</div>'}
+$('s4').oninput=u4;u4();
+$('pg').innerHTML=[0,1,2,3].map(function(){return '<div class="row mem">'+blk(4,'now')+'</div>'}).join('');
+// theme
+var root=document.documentElement,tb=$('theme');
+function setTheme(t){root.setAttribute('data-theme',t);tb.textContent=t==='dark'?'Light':'Dark'}
+try{var st=localStorage.getItem('theme');if(st==='dark'||st==='light')setTheme(st)}catch(e){}
+tb.onclick=function(){var t=root.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);try{localStorage.setItem('theme',t)}catch(e){}};
+</script>
+</body>
+</html>

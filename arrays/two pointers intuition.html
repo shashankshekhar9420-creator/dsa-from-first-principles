@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Two Pointers: Understanding the Idea Before the Pattern</title>
+<style>
+:root{--bg:#fff;--ink:#111;--mut:#555;--line:#ccc;--acc:#1f4e8c;--hi:#fff3b0;--hib:#c9a227;--ok:#dcf0dc;--okb:#3a8a3a;--mv:#e6edf7;--dim:#eee;--card:#fafafa;--red:#b5342b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#121212;--ink:#eee;--mut:#aaa;--line:#3a3a3a;--acc:#8ab4f8;--hi:#4a4220;--hib:#c9a227;--ok:#1d3a22;--okb:#5cb85c;--mv:#1c2a40;--dim:#2a2a2a;--card:#1a1a1a;--red:#ff7b72;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Roman",Times,serif}
+main{max-width:720px;margin:0 auto;padding:40px 20px 80px}
+h1,h2,h3{font-family:inherit;line-height:1.25}
+h1{font-size:2.1rem;margin:.2em 0 .6em}
+h2{font-size:1.5rem;margin:2.6em 0 .6em;padding-top:1.2em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin:1.6em 0 .4em}
+blockquote{margin:1.2em 0;padding:.4em 1em;border-left:4px solid var(--acc);font-size:1.12rem}
+blockquote p{margin:.3em 0}
+code{font:inherit;background:var(--card);padding:1px 5px;border-radius:4px}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:1.2em 0}
+.cap{font-size:.9rem;color:var(--mut);margin:.6em 0 0}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:flex-end}
+.cw{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ix{font-size:.8rem;color:var(--mut);min-height:1.1em;font-weight:600}
+.cell{min-width:54px;padding:7px 6px;text-align:center;border:2px solid var(--line);background:var(--bg);border-radius:6px;font-weight:600;transition:background .2s}
+.gap{border-style:dashed;background:transparent}
+.ok{background:var(--ok);border-color:var(--okb)}
+.now{background:var(--hi);border-color:var(--hib)}
+.dim{background:var(--dim);color:var(--mut);border-color:var(--dim)}
+.mv{background:var(--mv);border-color:var(--acc)}
+.mx{display:grid;gap:3px;margin:8px 0}
+.mh{font-size:.8rem;color:var(--mut);text-align:center;align-self:center}
+.mx .cell{min-width:0;padding:3px 0;font-size:.8rem}
+button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
+button:hover:not(:disabled){background:var(--mv)}
+button:disabled{opacity:.4;cursor:default}
+button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--hib);outline-offset:2px}
+.tools{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5;display:flex;gap:8px}
+.ctl{display:flex;align-items:center;gap:12px;margin-top:10px}
+.pos{color:var(--mut);font-size:.9rem}
+.note{min-height:3em;margin:.4em 0 0;font-weight:500}
+.lbl{font-size:.9rem;margin:8px 0 3px}
+.bar{height:14px;border-radius:4px;background:var(--acc);min-width:3px}
+.bar.g{background:var(--okb)}.bar.r{background:var(--red)}
+input[type=range]{width:100%}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--dim)}
+details{margin:1em 0;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+summary{cursor:pointer;padding:8px 12px;font-size:.95rem;color:var(--acc)}
+pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,Menlo,Consolas,monospace}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.two{grid-template-columns:1fr}}
+.flow{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;font-size:.95rem}
+.flow .cell{min-width:140px}
+.zones{display:flex;border:2px solid var(--line);border-radius:6px;overflow:hidden;text-align:center;font-size:.85rem}
+.zones div{padding:10px 6px}
+.flag{font-size:.9rem;color:var(--mut)}
+.top-nav{display:flex;align-items:center;gap:8px;font-size:.95rem;margin-bottom:20px;color:var(--mut)}
+.top-nav a{color:var(--acc);text-decoration:none}
+.top-nav a:hover{text-decoration:underline}
+.nav-sep{color:var(--line)}
+.nav-current{color:var(--mut)}
+.article-nav{display:flex;justify-content:space-between;gap:16px;margin-top:48px;padding-top:24px;border-top:1px solid var(--line);flex-wrap:wrap}
+.article-nav a{display:flex;flex-direction:column;padding:12px 16px;border:1px solid var(--line);border-radius:6px;background:var(--card);text-decoration:none;color:var(--ink);transition:border-color .15s,background .15s;flex:1;min-width:200px}
+.article-nav a:hover{border-color:var(--acc);background:var(--mv)}
+.article-nav .an-sub{font-size:.8rem;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.article-nav .an-title{font-weight:600;color:var(--acc)}
+</style>
+</head>
+<body>
+<div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
+<main>
+<nav class="top-nav"><a href="../index.html">← DSA from First Principles</a> <span class="nav-sep">/</span> <span class="nav-current">Essay 04 · Two Pointers Intuition</span></nav>
+<h1>Two Pointers: Understanding the Idea Before the Pattern</h1>
+<p>When learning DSA, we are often taught techniques as patterns: <em>“If you see a sorted array, try two pointers.”</em> Or: <em>“Use <code>left</code> and <code>right</code>.”</em> That is useful for solving problems quickly, but it doesn’t answer the more important question:</p>
+<blockquote><p>Why do two pointers exist in the first place?</p></blockquote>
+<p>What problem are they solving? And why do we sometimes use two pointers even when the array isn’t sorted? Let’s forget the technique for a moment and build the idea from scratch. Code blocks can be hidden with the button at the top, or one at a time.</p>
+
+<h2>Start with a problem, not a technique</h2>
+<p>Take the array <code>[2, 7, 11, 15]</code>. We want two elements whose sum is <code>9</code>. A natural first thought: <em>“I’ll try every possible pair.”</em></p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def two_sum(arr, target):
+    for i in range(len(arr)):
+        for j in range(i + 1, len(arr)):
+            if arr[i] + arr[j] == target:
+                return i, j</pre></details>
+<p>This works. But notice what we’re doing: examining pairs one by one. How many pairs are there? Each cell below is one pair <code>(i, j)</code> with <code>i &lt; j</code>. Change the array size:</p>
+<div class="fig"><label for="pS">n = <strong id="pO"></strong> elements</label><input id="pS" type="range" min="2" max="14" value="4"><div class="scroll" id="pV"></div><p class="note" id="pN"></p></div>
+<h3>Deriving the count</h3>
+<p>The unit step is checking one pair. Element 0 can pair with the <code>n−1</code> elements after it. Element 1 with <code>n−2</code>. And so on, down to the second-to-last element, which has just 1 partner:</p>
+<blockquote><p>(n−1) + (n−2) + … + 1 = n(n−1)/2</p></blockquote>
+<p>To add those up, pair the first term with the last: <code>(n−1) + 1 = n</code>, then <code>(n−2) + 2 = n</code>, and so on. There are <code>(n−1)/2</code> such pairs of terms, each worth <code>n</code>, giving <code>n(n−1)/2</code>. That is roughly <code>n²/2</code>, so the work grows quadratically: <code>O(n²)</code>. Ten times more elements means about a hundred times more pairs.</p>
+<p>The important question is not simply “Can we make this faster?” It is:</p>
+<blockquote><p>Are we doing work that we could have avoided?</p></blockquote>
+<p>That question leads us toward two pointers.</p>
+
+<h2>The array contains information we’re not using</h2>
+<p>Look again at <code>[2, 7, 11, 15]</code>. It is <strong>sorted</strong>, and that ordering tells us something. Take the two ends:</p>
+<div class="fig"><div class="row"><div class="cw"><span class="ix">L</span><div class="cell now">2</div></div><div class="cw"><span class="ix">&nbsp;</span><div class="cell">7</div></div><div class="cw"><span class="ix">&nbsp;</span><div class="cell">11</div></div><div class="cw"><span class="ix">R</span><div class="cell now">15</div></div></div><p class="cap">2 + 15 = 17, but our target is 9. We’re too large.</p></div>
+<p>Now the important question: <strong>which pointer should move?</strong> We need a smaller sum. Because the array is sorted, moving the right pointer left gives a smaller number: <code>2 + 11 = 13</code>, still too large. Move again: <code>2 + 7 = 9</code>. Found it. But the interesting part isn’t that we found 9. It’s <strong>what we didn’t have to check</strong>.</p>
+<h3>Why is moving safe? Proof by elimination</h3>
+<p>We started with <code>2 + 15 = 17</code>, which is more than 9. Consider every pair containing 15:</p>
+<div class="fig scroll"><table><tr><th>Pair with 15</th><th>Sum</th><th>vs target 9</th></tr><tr><td>2 + 15</td><td>17</td><td>too big (what we checked)</td></tr><tr><td>7 + 15</td><td>22</td><td>too big, because 7 &gt; 2</td></tr><tr><td>11 + 15</td><td>26</td><td>too big, because 11 &gt; 2</td></tr></table></div>
+<p>Since <code>2 &lt; 7 &lt; 11</code>, if <code>2 + 15 &gt; target</code> then <code>7 + 15</code> and <code>11 + 15</code> are bigger still. So <strong>15 cannot be part of any valid pair.</strong> We didn’t test those pairs. We <em>proved</em> them impossible and eliminated them all with one comparison.</p>
+<blockquote><p>Two pointers allow us to use the structure of a problem to eliminate large parts of the search space instead of checking every possibility individually.</p></blockquote>
+
+<h2>Pointers are the boundaries of a shrinking search space</h2>
+<p>This is a better mental model than “two pointers means left and right.” Initially, the answer could be anywhere. The pointers define the boundaries. We inspect the situation at those boundaries, learn something, eliminate a region, shrink the search space, and repeat. The pointers aren’t magical. They are <strong>moving boundaries of a shrinking search space</strong>.</p>
+<p>Here is that, drawn properly. The grid shows <em>every pair</em> and its sum. Watch which cells get eliminated by each comparison: <span style="background:var(--hi);padding:0 4px">yellow</span> is the pair being compared, <span style="background:var(--mv);padding:0 4px">blue</span> is what this comparison just ruled out, grey is ruled out earlier, <span style="background:var(--ok);padding:0 4px">green</span> is the answer.</p>
+<div class="fig" id="tsW"></div>
+<p>Notice how a single comparison wipes out a whole column (when the sum is too big, that right element is useless) or a whole row (when the sum is too small, that left element is useless). We never visit most of the grid.</p>
+<h3>Why do we need <em>two</em> pointers?</h3>
+<p>Because the problem involves two positions simultaneously. We’re asking “which two elements together satisfy some condition?” So we track two candidates, one for each side of the pair, and move one of them depending on what we’ve learned.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def two_sum_sorted(arr, target):
+    left = 0
+    right = len(arr) - 1
+
+    while left &lt; right:
+        total = arr[left] + arr[right]
+
+        if total == target:
+            return left, right
+        if total &lt; target:
+            left += 1       # arr[left] is too small for any partner
+        else:
+            right -= 1      # arr[right] is too big for any partner
+
+    return None             # pointers met: no valid pair</pre></details>
+<p class="flag">This code is added to the script for clarity. It only works because the array is sorted.</p>
+
+<h2>How much did we improve?</h2>
+<p>Brute force can check up to <code>n(n−1)/2</code> pairs. How many comparisons can two pointers make? Look at the <strong>gap</strong> between the pointers, <code>right − left</code>. It starts at <code>n − 1</code>. Every comparison either finds the answer, or moves one pointer inward, which shrinks the gap by exactly 1. The loop stops when the gap reaches 0. So:</p>
+<blockquote><p>comparisons ≤ n − 1, so T(n) = O(n)</p></blockquote>
+<p>From quadratic to linear. And no extra memory is needed: just two index variables, <code>O(1)</code> space. See what that means as the array grows (bars use a log scale, otherwise the second one would be invisible):</p>
+<div class="fig scroll" id="imT"></div>
+<p>Be honest about the best case: for the script’s example with target 9, brute force happens to hit the answer on its very first pair, <code>2 + 7</code>. The improvement is about the <em>worst case</em>. In the second preset above (target 26), brute force checks all 6 pairs and the pointers need only 3 comparisons.</p>
+<p>The price: the array must be sorted. If it isn’t, sorting first costs about <code>O(n log n)</code> and moves elements, so we’d lose their original positions unless we track them. The improvement exists because we used a property of the problem.</p>
+
+<h2>A completely different problem: Remove Element</h2>
+<p>Consider LeetCode 27: <code>nums = [3, 2, 2, 3]</code>, <code>val = 3</code>. We want to remove every 3. Conceptually the answer is <code>[2, 2]</code>, but we don’t physically shrink the array. Instead, the first <code>k</code> positions must hold the elements we keep. So our real problem is:</p>
+<blockquote><p>How do we take all the elements we want to keep and pack them toward the beginning of the array?</p></blockquote>
+<p>The array isn’t sorted. There is no pair sum. Yet two pointers are still useful. Why?</p>
+<h3>There are two different jobs</h3>
+<p>Imagine scanning left to right. We must answer two different questions: <strong>what element am I currently looking at?</strong> and <strong>where should the next valid element go?</strong> Those are two different positions, so we naturally get two pointers: <code>read</code> explores, <code>write</code> constructs the answer. The reason isn’t sorting, or pair sums, or a special rule. <strong>The problem itself has two different positions that matter.</strong></p>
+<p>Choose an input and step through. <code>R</code> is read, <code>W</code> is write:</p>
+<div class="fig" id="rmW"></div>
+<ul><li>If <code>read</code> finds an unwanted element: <strong>read moves, write stays</strong>.</li><li>If <code>read</code> finds a wanted one: copy it to <code>write</code>, then <strong>both move</strong>.</li></ul>
+<p>So the pointers move at different speeds, and both go left to right. That is still two pointers. They don’t have to move toward each other.</p>
+<div class="fig two"><div><div class="lbl"><strong>Two Sum:</strong> toward each other</div><div class="row"><div class="cw"><span class="ix">L →</span><div class="cell now">&nbsp;</div></div><div class="cell gap">…</div><div class="cw"><span class="ix">← R</span><div class="cell now">&nbsp;</div></div></div></div><div><div class="lbl"><strong>Remove Element:</strong> same direction, different speeds</div><div class="row"><div class="cw"><span class="ix">W →</span><div class="cell ok">&nbsp;</div></div><div class="cell gap">…</div><div class="cw"><span class="ix">R → →</span><div class="cell now">&nbsp;</div></div></div></div></div>
+<h3>Why can’t one pointer do both?</h3>
+<p>Take <code>[3, 3, 3, 2, 5]</code>. When we reach the <code>2</code>, it must go to the front:</p>
+<div class="fig"><div class="row"><div class="cw"><span class="ix">W</span><div class="cell ok">3</div></div><div class="cw"><span class="ix">&nbsp;</span><div class="cell dim">3</div></div><div class="cw"><span class="ix">&nbsp;</span><div class="cell dim">3</div></div><div class="cw"><span class="ix">R</span><div class="cell now">2</div></div><div class="cw"><span class="ix">&nbsp;</span><div class="cell">5</div></div></div><p class="cap">read is at index 3. write is at index 0. “Where am I looking?” and “where does the next useful element belong?” are different facts. One pointer could hold only one of them.</p></div>
+
+<h2>The gap has meaning, and the invariant explains everything</h2>
+<p>After scanning some elements, there is a <strong>gap</strong> between <code>write</code> and <code>read</code>. It represents elements we’ve already examined and decided don’t belong in the answer. The array splits into three zones:</p>
+<div class="fig"><div class="zones"><div style="flex:3;background:var(--ok)">correctly built: elements we keep</div><div style="flex:2;background:var(--dim)">already processed; free to overwrite</div><div style="flex:4">not processed yet</div></div><div class="zones" style="border:0;margin-top:2px;font-weight:600"><div style="flex:3;text-align:right;padding:4px">write ↑</div><div style="flex:2;text-align:right;padding:4px">read ↑</div><div style="flex:4"></div></div></div>
+<blockquote><p>Everything before write is already a correctly packed collection of elements that should be kept.</p></blockquote>
+<p>This invariant also shows why the algorithm is safe. <code>write</code> can never get ahead of <code>read</code>, because it only advances after <code>read</code> has passed an element. So the cell at <code>write</code> has always been read already, and overwriting it never destroys an unread element.</p>
+<h3>The code becomes almost inevitable</h3>
+<details open><summary>Python code (click to hide or show)</summary><pre>def remove_element(nums, val):
+    write = 0
+
+    for read in range(len(nums)):
+        if nums[read] != val:
+            nums[write] = nums[read]
+            write += 1
+
+    return write</pre></details>
+<p>There isn’t a “two-pointer trick” hiding here. The code simply expresses two responsibilities: <code>read</code> says “let me inspect the next element,” and <code>write</code> says “let me put the next useful element here.”</p>
+
+<h2>How much did <em>this</em> improve things?</h2>
+<p>A tempting first approach: whenever we find <code>val</code>, delete it the way an array deletes, by shifting everything after it one place left. We derived that cost earlier: deleting at index <code>i</code> moves <code>n − i − 1</code> elements. If <em>every</em> element equals <code>val</code>, we delete from the front each time, and the moves add up to:</p>
+<blockquote><p>(n−1) + (n−2) + … + 0 = n(n−1)/2, so O(n²)</p></blockquote>
+<p>Two pointers: <code>read</code> visits each element exactly once (<code>n</code> reads) and <code>write</code> copies at most once per element (<code>≤ n</code> copies). Total at most <code>2n</code>, so <code>O(n)</code>. Compare the two on different inputs. The unit step is one read or one element moved or copied:</p>
+<div class="fig"><div class="row" id="nvB" style="align-items:center"></div><label for="nvS">n = <strong id="nvO"></strong></label><input id="nvS" type="range" min="2" max="40" value="12"><div id="nvV"></div></div>
+<p class="flag">The shifting approach is added to the script for comparison. Note that when nothing needs removing, the shifting approach is not worse: two pointers still do their <code>n</code> reads and <code>n</code> copies. The win is on the bad inputs.</p>
+
+<h2>Why carrying state forward makes things linear</h2>
+<p>This is the most important algorithmic lesson under the technique. Imagine processing an array without remembering anything. You repeatedly ask “where is the next useful element?” and start another search, then another. You redo work you’ve already done. Two pointers let us carry state forward: <em>“I’ve already processed everything before this position. I don’t need to reconsider it.”</em></p>
+<p>That is exactly why the totals are linear. Each pointer only ever moves in one direction and never goes back, so its total travel is bounded by <code>n</code>, and each move costs a constant number of steps:</p>
+<div class="fig scroll"><table><tr><th>Problem</th><th>How far can the pointers travel in total?</th><th>Steps</th></tr><tr><td>Two Sum (sorted)</td><td><code>left</code> only goes right, <code>right</code> only goes left, and together they close a gap of <code>n−1</code></td><td>≤ n − 1</td></tr><tr><td>Remove Element</td><td><code>read</code> goes right exactly <code>n</code> times; <code>write</code> goes right at most <code>n</code> times</td><td>≤ 2n</td></tr><tr><td>Restart every time</td><td>up to <code>n</code> restarts, each scanning up to <code>n</code></td><td>~ n²</td></tr></table></div>
+
+<h2>The common idea</h2>
+<div class="fig two"><div><div class="lbl"><strong>Two Sum</strong></div><div class="row"><div class="cw"><span class="ix">L</span><div class="cell now">1</div></div><div class="cell">3</div><div class="cell">5</div><div class="cell">7</div><div class="cw"><span class="ix">R</span><div class="cell now">9</div></div></div>Pointers are two <em>candidate positions</em>. Sortedness lets us eliminate possibilities. Question: <strong>“Which possibilities can I rule out?”</strong></div>
+<div><div class="lbl"><strong>Remove Element</strong></div><div class="row"><div class="cell ok">2</div><div class="cell ok">5</div><div class="cw"><span class="ix">W</span><div class="cell dim">&nbsp;</div></div><div class="cw"><span class="ix">R</span><div class="cell now">?</div></div><div class="cell">?</div></div>Pointers are two <em>jobs</em>: one explores, one constructs. Question: <strong>“What have I processed, and where should the useful result go?”</strong></div></div>
+<p>So two pointers does <strong>not</strong> fundamentally mean “use <code>left</code> and <code>right</code>,” or “the array must be sorted,” or “move two indices toward each other.” The deeper idea:</p>
+<blockquote><p>Maintain two positions in a sequence because those two positions allow you to carry useful information forward while processing the array.</p></blockquote>
+<p>The names don’t matter. The <strong>roles</strong> matter:</p>
+<div class="fig two">
+<div><div class="lbl">Left candidate / right candidate</div><div class="row"><div class="cw"><span class="ix">left</span><div class="cell mv">&nbsp;</div></div><div class="cell gap">…</div><div class="cw"><span class="ix">right</span><div class="cell mv">&nbsp;</div></div></div></div>
+<div><div class="lbl">Reader / writer</div><div class="row"><div class="cw"><span class="ix">write</span><div class="cell ok">&nbsp;</div></div><div class="cell gap">…</div><div class="cw"><span class="ix">read</span><div class="cell now">&nbsp;</div></div></div></div>
+<div><div class="lbl">Window start / window end</div><div class="row"><div class="cell">&nbsp;</div><div class="cw"><span class="ix">start</span><div class="cell mv">&nbsp;</div></div><div class="cell mv">&nbsp;</div><div class="cw"><span class="ix">end</span><div class="cell mv">&nbsp;</div></div><div class="cell">&nbsp;</div></div></div>
+<div><div class="lbl">Slow / fast</div><div class="row"><div class="cell">&nbsp;</div><div class="cw"><span class="ix">slow</span><div class="cell ok">&nbsp;</div></div><div class="cell">&nbsp;</div><div class="cw"><span class="ix">fast</span><div class="cell now">&nbsp;</div></div></div></div></div>
+<h3>Don’t throw away information</h3>
+<p>A brute-force approach says <em>“I don’t know, so I’ll try everything.”</em> An optimized approach asks <em>“What do I already know?”</em> and then <em>“Can I use that knowledge to avoid work?”</em> In sorted Two Sum, the ordering lets us eliminate possibilities. In Remove Element, the processed prefix lets us avoid repeatedly searching for where useful elements belong. Different techniques, same philosophy: <strong>don’t throw away information you’ve already gained.</strong></p>
+
+<h2>Recognizing two-pointer problems</h2>
+<p>Instead of memorizing “sorted array → two pointers,” ask:</p>
+<ol>
+<li><strong>Am I maintaining two meaningful positions in the array?</strong> Candidate + candidate, reader + writer, start + end.</li>
+<li><strong>Do these positions have different responsibilities?</strong> If yes, that’s a strong signal.</li>
+<li><strong>Can the pointers move without repeatedly reconsidering what they’ve already passed?</strong> If yes, even stronger.</li>
+<li><strong>Does every movement eliminate work or preserve information about what has been processed?</strong> That’s where the efficiency usually comes from.</li>
+</ol>
+
+<h2>The mental model to keep</h2>
+<p>Don’t memorize “two pointers = left and right.” Remember:</p>
+<blockquote><p>Two pointers = two positions carrying two pieces of useful state while we move through a sequence.</p></blockquote>
+<p>Then ask: <strong>why do I need those two pieces of state?</strong></p>
+<div class="fig scroll"><table><tr><th>Problem</th><th>The two pieces of state</th></tr><tr><td>Two Sum</td><td>Where is my lower candidate? Where is my higher candidate?</td></tr><tr><td>Remove Element</td><td>What am I currently examining? Where should the next useful element go?</td></tr><tr><td>Sliding window</td><td>Where does my region begin? Where does it end?</td></tr><tr><td>Slow / fast</td><td>How far has one notion of progress gone? How far has another gone?</td></tr></table></div>
+<h2>The core idea</h2>
+<blockquote><p>Two pointers are useful when keeping track of two moving positions lets us preserve information, eliminate unnecessary work, or maintain the structure of the answer as we move through an array.</p></blockquote>
+<p>The pointers themselves aren’t the clever part. <strong>Figuring out what each pointer should mean is the clever part.</strong> That is why learning two pointers as a template is less useful than learning to ask: <em>“What two positions do I actually need to keep track of, and why?”</em></p>
+<div class="article-nav">
+  <a href="arrays%20introduction%20and%20basics.html">
+    <span class="an-sub">Previous Essay · 03</span>
+    <span class="an-title">← Arrays from First Principles</span>
+  </a>
+  <a href="problems%20on%20two%20pointers%201.html" style="text-align:right">
+    <span class="an-sub">Next Essay · 05</span>
+    <span class="an-title">Two Pointers: Problems (Part 1) →</span>
+  </a>
+</div>
+</main>
+<script>
+var $=function(i){return document.getElementById(i)};
+var L=function(v){return v.toLocaleString('en-US')};
+function cells(a,o){o=o||{};var c=o.c||{};return '<div class="row">'+a.map(function(v,i){var g=v===''||v===null;return '<div class="cw"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="cell'+(g?' gap':'')+' '+(c[i]||'')+'">'+(g?'&nbsp;':v)+'</div><span class="ix">'+(o.noix?'':i)+'</span></div>'}).join('')+'</div>'}
+function matrix(a,st,nosum){var n=a.length,h='<div class="mx" style="grid-template-columns:repeat('+(n+1)+',minmax(28px,40px))"><div></div>',i,j;
+  for(j=0;j<n;j++)h+='<div class="mh">'+a[j]+'</div>';
+  for(i=0;i<n;i++){h+='<div class="mh">'+a[i]+'</div>';for(j=0;j<n;j++)h+=j>i?'<div class="cell '+(st[i*n+j]||'')+'">'+(nosum?'&nbsp;':a[i]+a[j])+'</div>':'<div></div>'}
+  return h+'</div>'}
+function widget(id,opts,build){
+  var el=$(id),i=0,st=[];
+  el.innerHTML=(opts.length>1?'<div class="row" style="align-items:center">'+opts.map(function(o,k){return '<button data-k="'+k+'">'+o[0]+'</button>'}).join('')+'</div>':'')+'<div class="scroll v"></div><p class="note" aria-live="polite"></p><div class="ctl"><button class="pv">Previous</button><span class="pos"></span><button class="nx">Next</button></div>';
+  var v=el.querySelector('.v'),n=el.querySelector('.note'),p=el.querySelector('.pos'),pv=el.querySelector('.pv'),nx=el.querySelector('.nx');
+  function r(){v.innerHTML=st[i].h;n.textContent=st[i].n;p.textContent='Step '+(i+1)+' of '+st.length;pv.disabled=i===0;nx.disabled=i===st.length-1}
+  function pick(k){st=build(opts[k][1]);i=0;[].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.k===k))});r()}
+  [].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.onclick=function(){pick(+b.dataset.k)}});
+  pv.onclick=function(){if(i>0){i--;r()}};nx.onclick=function(){if(i<st.length-1){i++;r()}};pick(0);
+}
+// pair counter
+function up(){var n=+$('pS').value,a=[],st={},i,j;$('pO').textContent=n;for(i=0;i<n;i++)a.push(i);
+  for(i=0;i<n;i++)for(j=i+1;j<n;j++)st[i*n+j]='mv';
+  $('pV').innerHTML=matrix(a,st,true);
+  $('pN').textContent='Each blue cell is one pair to check. n(n−1)/2 = '+n+' × '+(n-1)+' / 2 = '+(n*(n-1)/2)+' pairs.'}
+$('pS').oninput=up;up();
+// two-sum elimination
+var B8=[1,2,4,7,9,12,15,20];
+widget('tsW',[['[2,7,11,15], target 9',[[2,7,11,15],9]],['[2,7,11,15], target 26',[[2,7,11,15],26]],['8 numbers, target 19',[B8,19]],['8 numbers, target 3',[B8,3]],['8 numbers, no pair (100)',[B8,100]]],function(p){
+  var a=p[0],t=p[1],n=a.length,l=0,r=n-1,tot=n*(n-1)/2,old={},s=[],cmp=0,ruled=0;
+  function view(cur,found,nw,pl,pr,all){var st={},k,c={},sub={},j;
+    for(k in old)st[k]='dim';for(k in nw)st[k]='mv';if(cur!==null)st[cur]=found?'ok':'now';
+    for(j=0;j<n;j++){c[j]=(all||j<pl||j>pr)?'dim':'';sub[j]=''}
+    if(!all){sub[pl]='L';sub[pr]=(sub[pr]||'')+(pl===pr?'':'R')}
+    if(found){c[pl]='ok';c[pr]='ok'}else if(!all){c[pl]='now';c[pr]='now'}
+    return cells(a,{c:c,sub:sub,noix:true})+matrix(a,st)}
+  s.push({h:view(null,false,{},0,n-1).replace(/cell now/g,'cell '),n:'Target '+t+'. All '+tot+' pairs are still possible. Compare the two ends.'});
+  while(l<r){var sum=a[l]+a[r],cur=l*n+r,nw={},j,i;cmp++;
+    if(sum===t){s.push({h:view(cur,true,{},l,r),n:a[l]+' + '+a[r]+' = '+sum+'. Found! '+cmp+' comparison'+(cmp>1?'s':'')+' instead of up to '+tot+' pairs.'});return s}
+    if(sum<t){for(j=l+1;j<=r;j++)nw[l*n+j]=1;ruled+=r-l;
+      s.push({h:view(cur,false,nw,l,r),n:a[l]+' + '+a[r]+' = '+sum+' < '+t+'. Even with the largest remaining partner, '+a[l]+' is too small, so it is in no pair. Its whole row ('+(r-l)+' pairs) is ruled out. Move left right. Ruled out so far: '+ruled+' of '+tot+'.'});
+      for(j in nw)old[j]=1;l++}
+    else{for(i=l;i<r;i++)nw[i*n+r]=1;ruled+=r-l;
+      s.push({h:view(cur,false,nw,l,r),n:a[l]+' + '+a[r]+' = '+sum+' > '+t+'. Even with the smallest remaining partner, '+a[r]+' is too big, so it is in no pair. Its whole column ('+(r-l)+' pairs) is ruled out. Move right left. Ruled out so far: '+ruled+' of '+tot+'.'});
+      for(j in nw)old[j]=1;r--}}
+  s.push({h:view(null,false,{},0,0,true),n:'Pointers met. Nothing is left to search: no two elements sum to '+t+'. Only '+cmp+' comparisons were needed to prove it.'});return s});
+// improvement table
+var IM=[10,100,1000,1000000];
+$('imT').innerHTML='<table><tr><th>n</th><th>Brute force: n(n−1)/2 pairs</th><th>Two pointers: ≤ n−1</th></tr>'+IM.map(function(n){var b=n*(n-1)/2,t=n-1;return '<tr><td>'+L(n)+'</td><td>'+L(b)+'<div class="bar r" style="width:'+Math.log10(b)/12*100+'%;margin-left:auto"></div></td><td>'+L(t)+'<div class="bar g" style="width:'+Math.log10(t)/12*100+'%;margin-left:auto"></div></td></tr>'}).join('')+'</table>';
+// remove element
+widget('rmW',[['[3,2,2,3], val 3',[[3,2,2,3],3]],['[3,3,3,2,5], val 3',[[3,3,3,2,5],3]],['[0,1,2,2,3,0,4,2], val 2',[[0,1,2,2,3,0,4,2],2]],['[3,3,3], val 3 (all)',[[3,3,3],3]],['[1,2], val 3 (none)',[[1,2],3]]],function(p){
+  var a=p[0].slice(),v=p[1],n=a.length,w=0,s=[],r;
+  function view(rd,fin,pre){var c={},sub={},j;
+    for(j=0;j<n;j++){c[j]=fin?(j<w?'ok':'dim'):pre?'':(j<w?'ok':(j<=rd?'dim':''))}
+    if(fin){if(w<n)sub[w]='W = k'}else{if(w<n)sub[w]='W';sub[rd]=(sub[rd]||'')+(w===rd?'':'')+(sub[rd]?'+R':'R')}
+    return cells(a,{c:c,sub:sub})}
+  s.push({h:view(0,false,true),n:'val = '+v+'. write = 0: no kept elements yet. read starts at index 0.'});
+  for(r=0;r<n;r++){var x=a[r],m;
+    if(x!==v){a[w]=x;w++;m='nums['+r+'] = '+x+' ≠ '+v+': keep it. Copy to nums['+(w-1)+']. read and write both advance. write = '+w+'.'}
+    else m='nums['+r+'] = '+x+' = val: skip it. read advances, write stays at '+w+'.';
+    s.push({h:view(r,false,false),n:m})}
+  s.push({h:view(0,true),n:'Done. Return write = '+w+'. The first '+w+' element'+(w===1?'':'s')+' are the answer. Whatever sits after that doesn’t matter.'});return s});
+// naive vs pointers
+var nvM='all',nb=$('nvB');
+function naive(a,val){var b=a.slice(),i=0,len=b.length,mv=0,rd=0,j;while(i<len){rd++;if(b[i]===val){mv+=len-i-1;for(j=i;j<len-1;j++)b[j]=b[j+1];len--}else i++}return rd+mv}
+function un(){var n=+$('nvS').value,a=[],i;$('nvO').textContent=n;
+  for(i=0;i<n;i++)a.push(nvM==='all'?3:nvM==='alt'?(i%2?1:3):1);
+  var nv=naive(a,3),kept=a.filter(function(x){return x!==3}).length,tp=n+kept,mx=Math.max(nv,tp);
+  $('nvV').innerHTML='<div class="lbl">Shifting after each removal: '+nv+' steps ('+L(n)+' reads + moves)</div><div class="bar r" style="width:'+nv/mx*100+'%"></div><div class="lbl">Read / write pointers: '+tp+' steps ('+n+' reads + '+kept+' copies)</div><div class="bar g" style="width:'+tp/mx*100+'%"></div><p class="cap">For the “all equal” input, the shifting cost is n + n(n−1)/2. At n = 1,000 that is '+L(1000+1000*999/2)+' steps versus 1,000 reads and 0 copies for the pointers.</p>'}
+[['all','Every element equals val'],['alt','Alternating'],['none','None equal val']].forEach(function(o){var b=document.createElement('button');b.textContent=o[1];b.dataset.m=o[0];b.onclick=function(){nvM=o[0];[].forEach.call(nb.children,function(x){x.setAttribute('aria-pressed',String(x===b))});un()};b.setAttribute('aria-pressed',String(o[0]==='all'));nb.appendChild(b)});
+$('nvS').oninput=un;un();
+// code toggle and theme
+var cb=$('codeBtn'),hid=false;
+cb.onclick=function(){hid=!hid;[].forEach.call(document.querySelectorAll('details'),function(d){d.open=!hid});cb.textContent=hid?'Show code':'Hide code'};
+var root=document.documentElement,tb=$('theme');
+function setTheme(t){root.setAttribute('data-theme',t);tb.textContent=t==='dark'?'Light':'Dark'}
+try{var sv=localStorage.getItem('theme');if(sv==='dark'||sv==='light')setTheme(sv)}catch(e){}
+tb.onclick=function(){var t=root.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);try{localStorage.setItem('theme',t)}catch(e){}};
+</script>
+</body>
+</html>
