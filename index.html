@@ -12,7 +12,9 @@ body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Rom
 main{max-width:720px;margin:0 auto;padding:40px 20px 80px}
 h1{font-size:2.1rem;margin:.2em 0 1em}
 ol{padding-left:1.4em;margin:1em 0}
+ol ol{padding-left:1.4em;margin:.4em 0}
 li{margin:.8em 0}
+ol ol li{margin:.5em 0}
 a{color:var(--acc);text-decoration:none}
 a:hover{text-decoration:underline}
 button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
@@ -27,10 +29,15 @@ button:hover{background:var(--mv)}
 <ol>
   <li><a href="introduction.html">DSA from First Principles</a></li>
   <li><a href="complexity%20analysis.html">Complexity Analysis from First Principles</a></li>
-  <li><a href="arrays/arrays%20introduction%20and%20basics.html">Arrays from First Principles</a></li>
-  <li><a href="arrays/two%20pointers%20intuition.html">Two Pointers: Understanding the Idea Before the Pattern</a></li>
-  <li><a href="arrays/problems%20on%20two%20pointers%201.html">Two Pointers, From First Principles</a></li>
-  <li><a href="arrays/problems%20on%20two%20pointers%202.html">Two Pointers: Beyond the Basic Pattern</a></li>
+  <li>
+    Arrays
+    <ol>
+      <li><a href="arrays/arrays%20introduction%20and%20basics.html">Arrays from First Principles</a></li>
+      <li><a href="arrays/two%20pointers%20intuition.html">Two Pointers: Understanding the Idea Before the Pattern</a></li>
+      <li><a href="arrays/problems%20on%20two%20pointers%201.html">Two Pointers, From First Principles</a></li>
+      <li><a href="arrays/problems%20on%20two%20pointers%202.html">Two Pointers: Beyond the Basic Pattern</a></li>
+    </ol>
+  </li>
 </ol>
 </main>
 <script>
