@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Two Problems That Make Two Pointers Click: Container With Most Water and Trapping Rain Water</title>
+<style>
+:root{--bg:#fff;--ink:#111;--mut:#555;--line:#ccc;--acc:#1f4e8c;--hi:#fff3b0;--hib:#c9a227;--ok:#dcf0dc;--okb:#3a8a3a;--mv:#e6edf7;--dim:#eee;--card:#fafafa;--red:#b5342b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#121212;--ink:#eee;--mut:#aaa;--line:#3a3a3a;--acc:#8ab4f8;--hi:#4a4220;--hib:#c9a227;--ok:#1d3a22;--okb:#5cb85c;--mv:#1c2a40;--dim:#2a2a2a;--card:#1a1a1a;--red:#ff7b72;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Roman",Times,serif}
+main{max-width:720px;margin:0 auto;padding:40px 20px 80px}
+h1,h2,h3{font-family:inherit;line-height:1.25}
+h1{font-size:2.1rem;margin:.2em 0 .6em}
+h2{font-size:1.5rem;margin:2.6em 0 .6em;padding-top:1.2em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin:1.6em 0 .4em}
+blockquote{margin:1.2em 0;padding:.4em 1em;border-left:4px solid var(--acc);font-size:1.12rem}
+blockquote p{margin:.3em 0}
+code{font:inherit;background:var(--card);padding:1px 5px;border-radius:4px}
+a{color:var(--acc)}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:1.2em 0}
+.cap{font-size:.9rem;color:var(--mut);margin:.6em 0 0}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:flex-end}
+.cw{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ix{font-size:.8rem;color:var(--mut);min-height:1.1em;font-weight:600}
+.cell{min-width:54px;padding:7px 6px;text-align:center;border:2px solid var(--line);background:var(--bg);border-radius:6px;font-weight:600;transition:background .2s}
+.bars{display:flex;gap:2px;align-items:flex-end;margin:6px 0}
+.bc{display:flex;flex-direction:column;align-items:center;gap:2px;flex:none}
+.bp{position:relative;width:100%}
+.bb{position:absolute;bottom:0;left:0;width:100%;box-sizing:border-box;border:2px solid var(--line);background:var(--line);border-radius:3px 3px 0 0;transition:background .2s}
+.thin .bb{left:22%;width:56%}
+.ov{position:absolute;bottom:0;background:var(--acc);opacity:.3}
+.wt{position:absolute;left:0;width:100%;background:var(--acc);opacity:.4}
+.wt.cur{background:var(--hib);opacity:.7}
+.bv{font-size:.85rem;font-weight:600}
+.bc .ix{white-space:nowrap}
+.gap{border-style:dashed;background:transparent}
+.ok{background:var(--ok);border-color:var(--okb)}
+.now{background:var(--hi);border-color:var(--hib)}
+.dim{background:var(--dim);color:var(--mut);border-color:var(--dim)}
+.mv{background:var(--mv);border-color:var(--acc)}
+.mx{display:grid;gap:3px;margin:8px 0}
+.mh{font-size:.8rem;color:var(--mut);text-align:center;align-self:center}
+.mx .cell{min-width:0;padding:3px 0;font-size:.8rem}
+button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
+button:hover:not(:disabled){background:var(--mv)}
+button:disabled{opacity:.4;cursor:default}
+button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--hib);outline-offset:2px}
+.tools{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5;display:flex;gap:8px}
+.ctl{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.pos{color:var(--mut);font-size:.9rem}
+.note{min-height:3em;margin:.4em 0 0;font-weight:500}
+.lbl{font-size:.9rem;margin:8px 0 3px}
+.bar{height:14px;border-radius:4px;background:var(--acc);min-width:3px}
+.bar.g{background:var(--okb)}.bar.r{background:var(--red)}
+input[type=range]{width:100%}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--dim)}
+details{margin:1em 0;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+summary{cursor:pointer;padding:8px 12px;font-size:.95rem;color:var(--acc)}
+pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,Menlo,Consolas,monospace}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.two{grid-template-columns:1fr}}
+.flow{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;font-size:.95rem}
+.flow .cell{min-width:140px}
+.zones{display:flex;border:2px solid var(--line);border-radius:6px;overflow:hidden;text-align:center;font-size:.85rem}
+.zones div{padding:10px 6px}
+.flag{font-size:.9rem;color:var(--mut)}
+.tt td:first-child{font-weight:600}
+.tt td{text-align:left}
+.sl{display:flex;align-items:center;gap:10px;margin:6px 0}
+.sl label{min-width:150px;font-size:.95rem}
+.mini{display:flex;gap:18px;align-items:flex-end;height:110px;margin:8px 0;position:relative}
+.mini div.c{display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;font-size:.85rem;font-weight:600;width:70px}
+.mini i{display:block;width:100%;background:var(--line);border-radius:4px 4px 0 0}
+</style>
+</head>
+<body>
+<div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
+<main>
+<h1>Two Problems That Make Two Pointers Click: Container With Most Water and Trapping Rain Water</h1>
+<p>We have already seen the basic idea behind two pointers. But knowing that an algorithm uses two pointers is not the same as understanding <strong>why two pointers are possible</strong>. That distinction becomes especially important with two famous problems:</p>
+<ul>
+<li><a href="#s1">LeetCode 11: Container With Most Water</a></li>
+<li><a href="#s2">LeetCode 42: Trapping Rain Water</a></li>
+</ul>
+<p>They look similar. Both involve vertical bars. Both involve water. Both have elegant two-pointer solutions. And yet the reasoning behind the two solutions is slightly different, which makes them excellent problems for developing intuition. Instead of starting with <em>“This is a two-pointer problem. Where should I put the pointers?”</em> we’ll start with a better question:</p>
+<blockquote><p>What information does the problem give us, and what possibilities can we safely eliminate?</p></blockquote>
+<p>That is where the algorithms come from. As before, every section has something you can click, and code can be hidden with the button at the top.</p>
+
+<h2 id="s1">1. Container With Most Water</h2>
+<p>Consider <code>height = [1, 8, 6, 2, 5, 4, 8, 3, 7]</code>. Each number is the height of a vertical line. If we choose two lines, they form a container. The amount of water it can hold depends on two things: <strong>how far apart the lines are</strong>, and <strong>how tall the shorter line is</strong>.</p>
+<blockquote><p>area = (right − left) × min(height[left], height[right])</p></blockquote>
+<p>Why the shorter line? Because water cannot rise above it. If one wall is 10 tall and the other is 5, the container only holds water up to 5. <strong>The shorter wall is the bottleneck.</strong> Build a container yourself. Move the two sliders and watch the blue region, and what happens to the taller wall’s extra height:</p>
+<div class="fig" id="exW"></div>
+<p>The bottom line of that widget already hides the key idea. If we keep the shorter wall and move the other wall inward, the best we could possibly do is <code>(width − 1) × shorter</code>, which is always less than what we have. We will come back to this. First the obvious solution.</p>
+
+<h3>Start with the obvious solution</h3>
+<p>Try every pair of lines: for every <code>i</code>, pair it with every <code>j &gt; i</code>.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def max_area(height):
+    best = 0
+
+    for i in range(len(height)):
+        for j in range(i + 1, len(height)):
+            width = j - i
+            water_height = min(height[i], height[j])
+
+            best = max(best, width * water_height)
+
+    return best</pre></details>
+<p>There is nothing intellectually wrong with this solution. In fact it is useful because it exposes the real problem: <strong>do we actually need to examine every pair?</strong> With 10,000 lines there are 49,995,000 pairs. Most of them cannot possibly be the answer. The challenge is finding a way to <em>prove</em> that. Here is every pair for our nine lines, each cell holding that pair’s area:</p>
+<div class="fig scroll" id="allP"></div>
+
+<h3>Start with the widest possible container</h3>
+<p>The two outermost lines have something special: the <strong>largest possible width</strong>. No pair is farther apart. Suppose the heights there are <code>left = 8</code> and <code>right = 5</code>. The container’s height is 5, because the right wall is shorter. Now ask: <em>what happens if we keep the right wall and move the left wall inward?</em> The width gets smaller, and the right wall is still only 5, so the new container is at most <code>smaller_width × 5</code>. That is less than <code>old_width × 5</code>. There is no reason to examine that possibility, and we have eliminated a whole group of candidates at once.</p>
+<p>See it with numbers. The wall at the left is 8 and the wall at the right is 5. Every container that keeps the 5 and pulls the other wall inward is listed below, next to the container we already have:</p>
+<div class="fig" id="keW"></div>
+<h3>The first big insight</h3>
+<p>If the left wall is taller than the right wall, moving the <strong>taller</strong> wall inward is useless: the width decreases, the shorter wall remains the bottleneck, and the maximum possible height does not improve. So to find a better container we need to get rid of the <strong>shorter</strong> wall:</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>if height[left] &lt; height[right]:
+    left += 1
+else:
+    right -= 1</pre></details>
+<p>This isn’t a rule we memorized. It is a consequence of the geometry. Now make the decision yourself, on a real run. At each state, choose which wall to discard. If you pick the wrong one, you’ll see exactly what that choice throws away:</p>
+<div class="fig" id="pcW"></div>
+
+<h3>The trade-off is the algorithm</h3>
+<p>Every time we move a pointer inward, we knowingly sacrifice width. Why would we do that? Because we are searching for greater height: <em>move inward, lose width, hopefully gain height</em>. But which wall should we replace? The shorter one, because it is the one preventing a greater height. The taller wall is already tall enough. Here is the full run on the example. Watch the width fall by exactly 1 each step, and what the height has to do to compensate:</p>
+<div class="fig scroll" id="trT"></div>
+
+<h3>The two-pointer algorithm emerges naturally</h3>
+<p>Start at the widest possible pair. At each step: calculate the current container, record the best answer, look at the shorter wall, discard it, move inward.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def max_area(height):
+    left = 0
+    right = len(height) - 1
+    best = 0
+
+    while left &lt; right:
+        width = right - left
+        water_height = min(height[left], height[right])
+
+        best = max(best, width * water_height)
+
+        if height[left] &lt; height[right]:
+            left += 1
+        else:
+            right -= 1
+
+    return best</pre></details>
+<p>The important line is not the multiplication. It is the <code>if</code>. That line represents a proof: <em>once a wall is the shorter wall, every container using that wall with a narrower width cannot improve upon the current container</em>, so we eliminate it. Step through it, with the geometry drawn:</p>
+<div class="fig" id="cwS"></div>
+<h3>The search space, drawn properly</h3>
+<p>Here is the same run on the grid of all pairs. <span style="background:var(--hi);padding:0 4px">Yellow</span> is the pair being compared, <span style="background:var(--mv);padding:0 4px">blue</span> is what this comparison just ruled out, grey was ruled out earlier, <span style="background:var(--ok);padding:0 4px">green</span> is the best container. A discarded left wall wipes out a whole row; a discarded right wall wipes out a whole column:</p>
+<div class="fig" id="cgS"></div>
+<h3>How much did that buy?</h3>
+<p>The gap <code>right − left</code> starts at <code>n − 1</code> and shrinks by exactly 1 every step, so there are at most <code>n − 1</code> comparisons. That is <code>O(n)</code> time and <code>O(1)</code> space, against <code>n(n−1)/2</code> pairs:</p>
+<div class="fig scroll" id="grC"></div>
+
+<h3>Why starting from the outside is important</h3>
+<p>Why not start somewhere in the middle? Because we want to begin with the <strong>maximum possible width</strong>: <code>n − 1</code>. Every future move makes the width smaller, so moving inward is expensive. We’re giving up something valuable, so we only move inward when we have a reason: <em>the current shorter wall cannot help us anymore.</em> This is a useful general mindset:</p>
+<blockquote><p>When an operation sacrifices something, ask what makes the sacrifice safe.</p></blockquote>
+<h3>A subtle but important point</h3>
+<p>Notice that we are <em>not</em> saying “the shorter wall can never be part of the optimal answer.” That is too strong. The shorter wall might well be part of some optimal pair. What we are saying is more precise:</p>
+<blockquote><p>Given this particular pair and its width, every future pair that keeps this shorter wall has a smaller width, while its height cannot exceed the height of the other wall unless the shorter wall is replaced. So continuing with that wall is useless from this state.</p></blockquote>
+<p>Why is that enough? If the best pair uses the shorter wall, that pair was either already measured (when the pointers were at it), or it has a smaller width than the pair we hold and no more height, so it can’t beat the pair we hold. Good algorithms are built from precise statements like this rather than vague assumptions. And you don’t have to take my word for it:</p>
+<div class="fig" id="rtC"></div>
+<h3>Container With Most Water: the intuition</h3>
+<blockquote><p>Start with maximum width. The shorter wall is the bottleneck. Since moving inward always loses width, the only movement that can possibly compensate is replacing the shorter wall with something taller.</p></blockquote>
+<p>That is why the pointers move. Not because “container problems use two pointers.”</p>
+
+<h2 id="s2">2. Trapping Rain Water</h2>
+<p>Now the second problem. At first glance it looks almost identical. We again have vertical bars, <code>height = [0, 1, 0, 2, 1, 0, 1, 3, 2, 1, 2, 1]</code>, but we’re asking a different question. We’re not choosing two walls. We’re asking: <strong>how much water is trapped across the entire landscape?</strong> Rain falls, and water collects in the valleys:</p>
+<div class="fig"><div id="lsF"></div><p class="cap" id="lsC"></p></div>
+
+<h3>Start with one position</h3>
+<p>Forget the whole array for a moment and stand at one position <code>i</code>. How much water can sit above it? We need two things: the tallest wall to the left, <code>left_max</code>, and the tallest wall to the right, <code>right_max</code>. The water level is set by the shorter of those two boundaries, so</p>
+<blockquote><p>water[i] = min(left_max, right_max) − height[i]</p></blockquote>
+<p>(if positive; it is never negative because both maxima include <code>height[i]</code> itself). Why the minimum? Because water escapes over the shorter boundary. If the left boundary is 10 and the right is 6, the level only reaches 6, and the right wall is the bottleneck. Slide to any position. Blue bars are the two boundaries, the orange block is the water above this position:</p>
+<div class="fig" id="tpW"></div>
+
+<h3>The obvious solution</h3>
+<p>For every position, search for the highest wall on each side, then calculate the water:</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>water = 0
+
+for i in range(n):
+    left_max = max(height[:i + 1])
+    right_max = max(height[i:])
+
+    water += min(left_max, right_max) - height[i]</pre></details>
+<p>This works conceptually, but we’re repeatedly searching through the same data.</p>
+<h3>First improvement: remember what we’ve already discovered</h3>
+<p>Instead of recomputing the maximum on the left, maintain it. Likewise for the right. Every position can then be evaluated from the two running maximum rows:</p>
+<div class="fig scroll" id="pfT"></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>def trap_prefix_suffix(height):
+    n = len(height)
+    left_max = [0] * n
+    right_max = [0] * n
+
+    left_max[0] = height[0]
+    for i in range(1, n):
+        left_max[i] = max(left_max[i - 1], height[i])
+
+    right_max[n - 1] = height[n - 1]
+    for i in range(n - 2, -1, -1):
+        right_max[i] = max(right_max[i + 1], height[i])
+
+    return sum(min(left_max[i], right_max[i]) - height[i] for i in range(n))</pre></details>
+<p>This is already a useful optimization, from <code>O(n²)</code> to <code>O(n)</code> time, at the price of <code>O(n)</code> extra space. But we can ask an even better question:</p>
+<blockquote><p>Do we actually need to know both maximums at every position?</p></blockquote>
+<p>This is where the two-pointer solution appears.</p>
+
+<h3>The key observation</h3>
+<p>Suppose at some point we know <code>left_max = 5</code> and <code>right_max = 9</code>. The water level is <code>min(5, 9) = 5</code>. The right side could be 9, or 100, or 1,000,000. <strong>It doesn’t matter.</strong> As long as the right side is at least 5, the left side is the bottleneck. So we can calculate the left side without knowing the exact maximum on the right. All we need is the knowledge that the right side is high enough. Move the sliders and find where this stops being true:</p>
+<div class="fig" id="knW"></div>
+<h3>Why the smaller maximum determines what we can process</h3>
+<p>With <code>left_max = 5</code> and <code>right_max = 9</code>, the right side has already proved <em>“I am at least 9,”</em> so it cannot be the limiting boundary. The left side is. So we can safely process the left side. Conversely, with <code>left_max = 9</code> and <code>right_max = 5</code>, the right side is the bottleneck, so we process the right side:</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>if left_max &lt;= right_max:
+    # process left
+else:
+    # process right</pre></details>
+<p>Notice how different this is from Container With Most Water:</p>
+<div class="fig scroll"><table class="tt"><tr><th></th><th>Container With Most Water</th><th>Trapping Rain Water</th></tr><tr><td>What decides the move</td><td>the shorter <em>current</em> wall</td><td>the smaller <em>known maximum</em> boundary</td></tr><tr><td>What the pointer does</td><td>moves (discards that wall)</td><td>processes that side, then moves</td></tr><tr><td>What it means</td><td>keeping this wall can’t help</td><td>this side’s answer is already decided</td></tr></table></div>
+<p>Both involve a bottleneck, but the bottleneck represents different things.</p>
+
+<h3>Why can we calculate a position before knowing the other side exactly?</h3>
+<p>This is the most important question in the entire problem. Suppose <code>left_max = 4</code> and <code>right_max = 7</code>, and we’re processing a position on the left. We know <code>right_max ≥ 7</code> and <code>left_max = 4</code>, so <code>min(left_max, right_max) = 4</code>. No matter what the exact right maximum turns out to be, it is already at least 7, so the water level <code>4</code> is <strong>guaranteed</strong>. If the current bar has height 1, the water above it is <code>4 − 1 = 3</code>. We can finalize that answer. We don’t need to wait for more information. Try it, on a real run. At each state, decide which side’s answer is already determined:</p>
+<div class="fig" id="psW"></div>
+<h3>A general algorithmic idea</h3>
+<blockquote><p>You don’t always need complete information to make a decision. You only need enough information to make the decision certain.</p></blockquote>
+<p>Once we know <code>left_max ≤ right_max</code> we have enough information. The right side doesn’t need to be completely understood: it has already been proven sufficiently tall. This is what allows us to throw away a position after processing it.</p>
+
+<h3>Deriving the two-pointer solution</h3>
+<p>We maintain <code>left = 0</code>, <code>right = n − 1</code>, <code>left_max = 0</code>, <code>right_max = 0</code>, and process inward. If <code>left_max ≤ right_max</code>, the left side is the limiting side: update <code>left_max</code> with <code>height[left]</code>, add <code>left_max − height[left]</code> to the answer, and move <code>left</code>. Otherwise do the mirror image on the right.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def trap(height):
+    left = 0
+    right = len(height) - 1
+
+    left_max = 0
+    right_max = 0
+
+    water = 0
+
+    while left &lt;= right:
+        if left_max &lt;= right_max:
+            left_max = max(left_max, height[left])
+            water += left_max - height[left]
+            left += 1
+        else:
+            right_max = max(right_max, height[right])
+            water += right_max - height[right]
+            right -= 1
+
+    return water</pre></details>
+<p>Blue water is finalized. Yellow bars are the two pointers. Lighter bars have been processed. The last two presets use the <em>wrong</em> rule on purpose, processing the side with the <em>larger</em> maximum:</p>
+<div class="fig" id="trW"></div>
+<h3>Understand the movement rather than memorize the code</h3>
+<p>Read the <code>if</code> in plain English: <em>“Which side currently has the smaller boundary?”</em> If left is smaller: <em>“Left is the bottleneck. Therefore I already know the water level on the left. Process it.”</em> If right is smaller: <em>“Right is the bottleneck. Therefore I already know the water level on the right. Process it.”</em> That is the algorithm.</p>
+<h3>Why not move the side with the larger maximum?</h3>
+<p>Suppose <code>left_max = 5</code> and <code>right_max = 9</code>. If we process the right side instead, we don’t know the exact water level there, because the left side is only guaranteed to be 5. The right position’s level depends on information from the left, so we shouldn’t finalize it yet. The left side, however, is already determined. The principle:</p>
+<blockquote><p>Process the side whose answer is already determined by the information you have.</p></blockquote>
+<p>The bug presets above show what happens otherwise: the answer is simply wrong. Over many random arrays it goes wrong most of the time. Count exactly how often:</p>
+<div class="fig" id="rtT"></div>
+<h3>The deeper meaning of the two pointers</h3>
+<p>It is tempting to say <em>“so two pointers means move from both ends.”</em> That’s not the real lesson. The pointers help us maintain two pieces of information, the highest boundary discovered on the left and the highest boundary discovered on the right, and they let us gradually finalize positions once enough is known. <strong>The pointers aren’t the idea. The information they maintain is the idea.</strong></p>
+<h3>The three solutions side by side</h3>
+<div class="fig scroll"><table class="tt"><tr><th></th><th>Recompute both maxima per position</th><th>Prefix / suffix arrays</th><th>Two pointers</th></tr><tr><td>Time</td><td>O(n²)</td><td>O(n)</td><td>O(n)</td></tr><tr><td>Extra space</td><td>O(1)</td><td>O(n)</td><td>O(1)</td></tr><tr><td>Reasoning needed</td><td>none</td><td>easy</td><td>“a decided side can be finalized”</td></tr><tr><td>Passes over data</td><td>n per position</td><td>three</td><td>one</td></tr></table></div>
+
+<h2 id="s3">3. Why not sort, and why not one approach for both?</h2>
+<h3>Why not sort the array?</h3>
+<p>Suppose we sorted the heights. The problem depends heavily on <strong>position</strong>: a wall on the left and a wall on the right create a basin. Rearrange the heights and you destroy the landscape. For Container With Most Water, sorting also destroys width information, since <code>right − left</code> is essential. Compare:</p>
+<div class="fig" id="srW"></div>
+<h3>Why not use the same approach for both problems?</h3>
+<p>The problems look so similar, but Container is searching for the <strong>best pair</strong>, while Rain Water is calculating the <strong>contribution of every position</strong>. That difference changes the reasoning.</p>
+<div class="fig two"><div><div class="lbl"><strong>Container</strong></div>Choose two walls<br>↓<br>maximize their area<br><br><strong>The pointer movement is about eliminating impossible candidate pairs.</strong> “Can any pair involving this shorter wall beat the current pair?” No, so discard it.</div><div><div class="lbl"><strong>Rain Water</strong></div>Evaluate every valley<br>↓<br>sum all trapped water<br><br><strong>The pointer movement is about finalizing positions whose answer is already determined.</strong> “Can I determine the water level here yet?” Yes, so process it.</div></div>
+<h3>Check the invariants</h3>
+<p>Each algorithm keeps a statement true at every step. Pick one to see the regions its pointers maintain:</p>
+<div class="fig" id="ivW"></div>
+<h3>A much deeper view of two pointers</h3>
+<p>Two pointers are often presented as a technique: <code>left = 0; right = n − 1; while left &lt; right: …</code> But that is only the visible part. The actual technique:</p>
+<blockquote><p>Maintain two useful boundaries so that information from one side lets you safely eliminate or finalize part of the search space.</p></blockquote>
+<p>The pointers are just the mechanism for moving through that reduced search space.</p>
+
+<h2 id="s4">4. The common principle behind both problems</h2>
+<p>Both algorithms follow the same high-level reasoning:</p>
+<div class="fig scroll"><table class="tt"><tr><th>Step</th><th>Container With Most Water</th><th>Trapping Rain Water</th></tr><tr><td>1. Start with a large search space</td><td>all possible pairs</td><td>all positions whose water contribution needs to be determined</td></tr><tr><td>2. Identify the limiting factor</td><td>the shorter wall</td><td>the smaller boundary maximum</td></tr><tr><td>3. Ask what information it gives us</td><td>keeping the shorter wall while reducing width cannot improve the area</td><td>the smaller boundary already determines the water level</td></tr><tr><td>4. Safely eliminate work</td><td>discard the shorter wall</td><td>finalize the side with the smaller maximum</td></tr><tr><td>5. Repeat</td><td colspan="2">Eventually nothing remains to examine. That’s where the linear solution comes from.</td></tr></table></div>
+<h3>The trade-off is the important part</h3>
+<p>Good algorithms are full of trade-offs. In Container With Most Water we move a pointer, lose width, and potentially gain height. We accept the loss of width because keeping the shorter wall has no upside. In Trapping Rain Water we process one side without knowing everything about the other, but we know enough to make this answer certain. We accept incomplete information because complete information isn’t necessary. These are two different forms of the same deeper idea:</p>
+<blockquote><p>Give up something only when you can prove that what you’re giving up cannot improve the answer.</p></blockquote>
+<h3>Why these problems are more valuable than memorizing a pattern</h3>
+<p>Suppose tomorrow you meet a completely different problem. It doesn’t mention water, it doesn’t have an array like this, and it doesn’t look like a standard two-pointer question. If you have memorized <em>“Container → move shorter pointer”</em> you probably won’t recognize the technique. But if you have learned the reasoning, <em>“Can I start with an extreme state, and then prove that one side of the search space can never produce a better answer?”</em> you may recognize the opportunity. That is a transferable skill.</p>
+
+<h2 id="s5">5. A useful checklist when encountering a new problem</h2>
+<p>Instead of asking <em>“Is this a two-pointer problem?”</em> ask:</p>
+<ol>
+<li><strong>What am I trying to calculate?</strong> A pair? A range? A contribution at every position? An optimum?</li>
+<li><strong>What determines that answer?</strong> Look for the actual formula or constraint.</li>
+<li><strong>What is the bottleneck?</strong> Is there a minimum, maximum, boundary, capacity, or limiting resource?</li>
+<li><strong>If I move one boundary, what do I lose?</strong> Usually something like width, range, possibilities or information.</li>
+<li><strong>What could I potentially gain?</strong> Maybe greater height, a better value, or more information.</li>
+<li><strong>Can I prove that one direction cannot help?</strong> This is the critical question. If yes, we can eliminate part of the search space.</li>
+<li><strong>Can I make a decision without knowing everything?</strong> If yes, we may be able to process one side immediately.</li>
+</ol>
+<h2 id="s6">6. The two intuitions worth remembering</h2>
+<p>For <strong>Container With Most Water</strong>:</p>
+<blockquote><p>Start with maximum width. The shorter wall is the bottleneck. Moving the taller wall only reduces width while leaving the bottleneck unchanged, so it can never help. Move the shorter wall because replacing it is the only way to potentially gain enough height to compensate for the lost width.</p></blockquote>
+<p>For <strong>Trapping Rain Water</strong>:</p>
+<blockquote><p>Water is controlled by the smaller of the best boundaries on the two sides. If one side’s maximum is already smaller than the other, that side’s water level is already determined. We can process it without knowing the exact boundary on the other side.</p></blockquote>
+<p>And the broader lesson:</p>
+<blockquote><p>Two pointers are not about having two indices. They are about finding a way to use two boundaries to prove that most of the search space does not need to be explored.</p></blockquote>
+<p>That is the intuition we want to carry into the next problems.</p>
+</main>
+<script>
+var $=function(i){return document.getElementById(i)};
+var L=function(v){return v.toLocaleString('en-US')};
+function cells(a,o){o=o||{};var c=o.c||{};return '<div class="row">'+a.map(function(v,i){return '<div class="cw"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="cell '+(c[i]||'')+'">'+v+'</div><span class="ix">'+(o.noix?'':i)+'</span></div>'}).join('')+'</div>'}
+function widget(id,opts,build){
+  var el=$(id),i=0,st=[];
+  el.innerHTML=(opts.length>1?'<div class="row" style="align-items:center">'+opts.map(function(o,k){return '<button data-k="'+k+'">'+o[0]+'</button>'}).join('')+'</div>':'')+'<div class="scroll v"></div><p class="note" aria-live="polite"></p><div class="ctl"><button class="pv">Previous</button><span class="pos"></span><button class="nx">Next</button></div>';
+  var v=el.querySelector('.v'),n=el.querySelector('.note'),p=el.querySelector('.pos'),pv=el.querySelector('.pv'),nx=el.querySelector('.nx');
+  function r(){v.innerHTML=st[i].h;n.textContent=st[i].n;p.textContent='Step '+(i+1)+' of '+st.length;pv.disabled=i===0;nx.disabled=i===st.length-1}
+  function pick(k){st=build(opts[k][1]);i=0;[].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.k===k))});r()}
+  [].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.onclick=function(){pick(+b.dataset.k)}});
+  pv.onclick=function(){if(i>0){i--;r()}};nx.onclick=function(){if(i<st.length-1){i++;r()}};pick(0);
+}
+function tabs(id,labels,fn){var el=$(id);el.innerHTML='<div class="row" style="align-items:center"></div><div class="tv"></div>';var bar=el.firstChild,tv=el.lastChild;
+  labels.forEach(function(t,k){var b=document.createElement('button');b.textContent=t;b.onclick=function(){[].forEach.call(bar.children,function(x){x.setAttribute('aria-pressed',String(x===b))});tv.innerHTML=fn(k)};b.setAttribute('aria-pressed',String(k===0));bar.appendChild(b)});tv.innerHTML=fn(0)}
+function growth(id,ns,bf,tp,h1,h2){$(id).innerHTML='<table><tr><th>n</th><th>'+h1+'</th><th>'+h2+'</th></tr>'+ns.map(function(n){var b=bf(n),t=tp(n);return '<tr><td>'+L(n)+'</td><td>'+L(b)+'<div class="bar r" style="width:'+Math.max(1,Math.log10(b)/12*100)+'%;margin-left:auto"></div></td><td>'+L(t)+'<div class="bar g" style="width:'+Math.max(1,Math.log10(t)/12*100)+'%;margin-left:auto"></div></td></tr>'}).join('')+'</table><p class="cap">Bars use a log scale, otherwise the second column would be invisible.</p>'}
+
+// ---- bars with water ----
+// o: c (bar class by index), sub (label above), w (water per index), wc (water class by index), box {l,r,lv} (container water), thin
+function bars(h,o){o=o||{};var n=h.length,mx=Math.max.apply(null,h.concat([1])),u=Math.min(20,130/mx),W=n>12?28:n>9?32:38,c=o.c||{},sub=o.sub||{},w=o.w||[],wc=o.wc||{},bx=o.box,i,v,s='<div class="bars'+(o.thin?' thin':'')+'">';
+  for(i=0;i<n;i++){v=h[i];
+    s+='<div class="bc" style="width:'+W+'px"><span class="ix">'+(sub[i]||'&nbsp;')+'</span><div class="bp" style="height:'+(mx*u)+'px">';
+    if(bx&&bx.l<bx.r&&i>=bx.l&&i<=bx.r)s+='<div class="ov" style="height:'+(bx.lv*u)+'px;'+(i===bx.l?'left:50%;width:50%':i===bx.r?'left:0;width:50%':'left:0;width:100%')+'"></div>';
+    s+='<div class="bb '+(c[i]||'')+'" style="height:'+Math.max(v*u,2)+'px"></div>';
+    if(w[i])s+='<div class="wt '+(wc[i]||'')+'" style="bottom:'+(v*u)+'px;height:'+(w[i]*u)+'px"></div>';
+    s+='</div><span class="bv">'+v+'</span><span class="ix">'+i+'</span></div>'}
+  return s+'</div>'}
+function area(a,i,j){return Math.abs(j-i)*Math.min(a[i],a[j])}
+function cBrute(h){var b=0,i,j;for(i=0;i<h.length;i++)for(j=i+1;j<h.length;j++)b=Math.max(b,area(h,i,j));return b}
+function cPtr(h,bug){var l=0,r=h.length-1,b=0;while(l<r){b=Math.max(b,area(h,l,r));if(bug){if(h[l]>=h[r])l++;else r--}else{if(h[l]<h[r])l++;else r--}}return b}
+function tBrute(h){var s=0,i;for(i=0;i<h.length;i++)s+=Math.min(Math.max.apply(null,h.slice(0,i+1)),Math.max.apply(null,h.slice(i)))-h[i];return s}
+function tPtr(h,bug){var l=0,r=h.length-1,lm=0,rm=0,w=0,goL;while(l<=r){goL=bug?!(lm<=rm):(lm<=rm);if(goL){lm=Math.max(lm,h[l]);w+=lm-h[l];l++}else{rm=Math.max(rm,h[r]);w+=rm-h[r];r--}}return w}
+var HC=[1,8,6,2,5,4,8,3,7],HT=[0,1,0,2,1,0,1,3,2,1,2,1];
+
+// ---- container explorer ----
+var exW=$('exW');
+exW.innerHTML='<div class="sl"><label for="exL">left wall: index <strong id="exLo"></strong></label><input id="exL" type="range" min="0" max="8" value="1"></div><div class="sl"><label for="exR">right wall: index <strong id="exRo"></strong></label><input id="exR" type="range" min="0" max="8" value="8"></div><div id="exV"></div><p class="note" id="exN" aria-live="polite"></p>';
+function exU(who){var l=+$('exL').value,r=+$('exR').value;
+  if(l>=r){if(who==='L'){r=Math.min(8,l+1);if(l>=r){l=r-1}}else{l=Math.max(0,r-1);if(l>=r){r=l+1}}}
+  $('exL').value=l;$('exR').value=r;$('exLo').textContent=l+' (height '+HC[l]+')';$('exRo').textContent=r+' (height '+HC[r]+')';
+  var w=r-l,S=Math.min(HC[l],HC[r]),T=Math.max(HC[l],HC[r]),ar=w*S,c={},sub={},j,best=0,bj=-1,s=HC[l]<=HC[r]?l:r;
+  for(j=0;j<HC.length;j++)c[j]=(j<l||j>r)?'dim':'';c[l]='now';c[r]='now';sub[l]='L';sub[r]='R';
+  for(j=l+1;j<r;j++){var a2=area(HC,s,j);if(a2>best){best=a2;bj=j}}
+  $('exV').innerHTML=bars(HC,{c:c,sub:sub,thin:true,box:{l:l,r:r,lv:S}});
+  $('exN').innerHTML='Width = '+r+' − '+l+' = <strong>'+w+'</strong>. Shorter wall = <strong>'+S+'</strong>'+(T>S?' (the taller wall is '+T+', so '+(T-S)+' of its height sits above the water, wasted)':' (both walls are equal)')+'. Area = '+w+' × '+S+' = <strong>'+ar+'</strong>.<br>Keep the shorter wall (index '+s+') and move the other wall inward: at best '+(w-1)+' × '+S+' = <strong>'+((w-1)*S)+'</strong>'+(w>1?', and the real best among those is '+best+(bj>=0?' (pair '+Math.min(s,bj)+', '+Math.max(s,bj)+')':'')+'. Neither can beat '+ar+'.':'. There is no room left inside.')}
+$('exL').oninput=function(){exU('L')};$('exR').oninput=function(){exU('R')};exU('L');
+
+// ---- all pairs grid (static) ----
+function areaMatrix(a,st,fin){var n=a.length,h='<div class="mx" style="grid-template-columns:repeat('+(n+1)+',minmax(28px,40px))"><div></div>',i,j;
+  for(j=0;j<n;j++)h+='<div class="mh">'+a[j]+'</div>';
+  for(i=0;i<n;i++){h+='<div class="mh">'+a[i]+'</div>';for(j=0;j<n;j++)h+=j>i?'<div class="cell '+(st&&st[i*n+j]||'')+'">'+(fin?'&nbsp;':area(a,i,j))+'</div>':'<div></div>'}
+  return h+'</div>'}
+(function(){var st={},n=HC.length,b=0,bi,i,j;for(i=0;i<n;i++)for(j=i+1;j<n;j++)if(area(HC,i,j)>b){b=area(HC,i,j);bi=i*n+j}st[bi]='ok';
+  $('allP').innerHTML=areaMatrix(HC,st)+'<p class="cap">Rows and columns are the heights of the two walls. 36 pairs, one of them (green) is the answer: '+b+'.</p>'})();
+
+// ---- keep the shorter wall ----
+(function(){var a=[8,6,2,3,5],l=0,r=4,rows='',j,cur=area(a,l,r),mx=0;
+  for(j=l+1;j<r;j++){var v=area(a,j,r);mx=Math.max(mx,v);rows+='<tr><td>keep 5, left wall at index '+j+' (height '+a[j]+')</td><td>'+(r-j)+' × min('+a[j]+', 5) = '+v+'</td><td>'+(v<cur?'smaller':'not smaller')+'</td></tr>'}
+  $('keW').innerHTML=bars(a,{c:{0:'now',4:'now'},sub:{0:'L',4:'R'},thin:true,box:{l:0,r:4,lv:5}})+'<div class="scroll"><table class="tt"><tr><th>Container</th><th>Area</th><th>vs current ('+cur+')</th></tr><tr><td>current: indices 0 and 4</td><td>4 × min(8, 5) = '+cur+'</td><td>(what we hold)</td></tr>'+rows+'</table></div><p class="cap">Every container that keeps the right wall (5) and shrinks the width is stuck under height 5, so the best it can do is (width) × 5. All of them lose.</p>'})();
+
+// ---- predict the move (container) ----
+var PCA=[HC,[2,3,4,5,18,17,6],[4,3,2,1,4]],pc={k:0,l:0,r:0,best:0,cmp:0,msg:''},pcE=$('pcW');
+function pcReset(k){pc.k=k;pc.l=0;pc.r=PCA[k].length-1;pc.best=0;pc.cmp=0;pc.msg='';pcR()}
+function pcR(){var a=PCA[pc.k],l=pc.l,r=pc.r,act=l<r,c={},sub={},j,lv,ar,st;
+  for(j=0;j<a.length;j++)c[j]=(j<l||j>r)?'dim':'';
+  if(act){lv=Math.min(a[l],a[r]);ar=(r-l)*lv;c[l]='now';c[r]='now';sub[l]='L';sub[r]='R';st='Current container: '+(r-l)+' × '+lv+' = '+ar+'. Best so far: '+pc.best+'. Which wall should we discard?'}
+  else st='The pointers met after '+pc.cmp+' comparisons. Best area = '+pc.best+'.';
+  pcE.innerHTML='<div class="row" style="align-items:center">'+PCA.map(function(s,k){return '<button data-s="'+k+'" aria-pressed="'+(k===pc.k)+'">['+s.join(',')+']</button>'}).join('')+'</div>'+bars(a,{c:c,sub:sub,thin:true,box:act?{l:l,r:r,lv:lv}:null})+'<p class="note" aria-live="polite"><strong>'+st+'</strong></p><div class="ctl"><button id="pcL"'+(act?'':' disabled')+'>Discard left wall</button><button id="pcRt"'+(act?'':' disabled')+'>Discard right wall</button></div><p class="note" aria-live="polite">'+pc.msg+'</p>';
+  [].forEach.call(pcE.querySelectorAll('button[data-s]'),function(b){b.onclick=function(){pcReset(+b.dataset.s)}});
+  if(act){$('pcL').onclick=function(){pcMv('L')};$('pcRt').onclick=function(){pcMv('R')}}}
+function pcMv(d){var a=PCA[pc.k],l=pc.l,r=pc.r,ar=area(a,l,r),lv=Math.min(a[l],a[r]),w=r-l,eq=a[l]===a[r],shL=a[l]<a[r],safe=eq||((d==='L')===shL),D=0,j,taller=d==='L'?a[l]:a[r];
+  if(!safe){
+    if(d==='L'){for(j=l+1;j<r;j++)D=Math.max(D,area(a,l,j))}else{for(j=l+1;j<r;j++)D=Math.max(D,area(a,j,r))}
+    pc.msg='Unsafe. That wall ('+taller+') is the taller one, so the bottleneck stays: the shorter wall is '+lv+'. Discarding it throws away every pair that uses it with a wall in between, and such a pair can reach a height up to '+taller+', which is more than '+lv+'. '+(w>1?'The best of the pairs you would discard has area '+D+(D>ar?', which is bigger than the container you hold ('+ar+'). You would lose it.':', here not bigger than '+ar+', but nothing guarantees that in general.'):'')+' Discard the shorter wall instead.';pcR();return}
+  pc.best=Math.max(pc.best,ar);
+  if(eq)pc.msg='The walls are equal, so either wall is the bottleneck and both moves are safe.';
+  else pc.msg='Right. Keeping the shorter wall ('+lv+') while narrowing the container can do at most '+(w-1)+' × '+lv+' = '+((w-1)*lv)+', below '+ar+'. It is eliminated.';
+  if(d==='L')pc.l++;else pc.r--;pc.cmp++;pcR()}
+pcReset(0);
+
+// ---- trace table ----
+(function(){var a=HC,l=0,r=a.length-1,best=0,rows='',k=0;
+  while(l<r){var w=r-l,lv=Math.min(a[l],a[r]),ar=w*lv,mv;best=Math.max(best,ar);k++;
+    if(a[l]<a[r]){mv='left wall ('+a[l]+') discarded'}else{mv='right wall ('+a[r]+') discarded'}
+    rows+='<tr><td>'+k+'</td><td>'+l+', '+r+'</td><td>'+w+'</td><td>'+lv+'</td><td>'+ar+'</td><td>'+best+'</td><td>'+mv+'</td></tr>';
+    if(a[l]<a[r])l++;else r--}
+  $('trT').innerHTML='<table><tr><th>Step</th><th>l, r</th><th>Width</th><th>Height</th><th>Area</th><th>Best</th><th>Move</th></tr>'+rows+'</table><p class="cap">Width drops by 1 every row. The only way to hold the area is to find a taller shorter-wall.</p>'})();
+
+// ---- container stepper ----
+widget('cwS',[['[1,8,6,2,5,4,8,3,7]',HC],['[1,1]',[1,1]],['[4,3,2,1,4]',[4,3,2,1,4]],['[2,3,4,5,18,17,6]',[2,3,4,5,18,17,6]],['[1,2,3,4,5] (rising)',[1,2,3,4,5]]],function(a){
+  var n=a.length,l=0,r=n-1,best=0,s=[],cmp=0;
+  function view(l,r,done){var c={},sub={},j,lv=0;for(j=0;j<n;j++)c[j]=(done||j<l||j>r)?'dim':'';
+    if(!done){c[l]='now';c[r]='now';sub[l]='L';sub[r]='R';lv=Math.min(a[l],a[r])}
+    return bars(a,{c:c,sub:sub,thin:true,box:done?null:{l:l,r:r,lv:lv}})+'<div class="lbl">best area so far = '+best+'</div>'}
+  while(l<r){var w=r-l,lv=Math.min(a[l],a[r]),ar=w*lv,m;cmp++;
+    m='Width '+w+' × shorter wall '+lv+' = '+ar+'. '+(ar>best?'New best. ':'Not better than '+best+'. ');best=Math.max(best,ar);
+    var vw=view(l,r,false);
+    if(a[l]<a[r]){m+='The left wall ('+a[l]+') is shorter, so it is the bottleneck: discard it. left++.';l++}
+    else{m+=(a[l]===a[r]?'The walls are equal, so either is the bottleneck; the code discards the right one. ':'The right wall ('+a[r]+') is shorter, so it is the bottleneck: discard it. ')+'right--.';r--}
+    s.push({h:vw,n:m})}
+  s.push({h:view(0,0,true),n:'The pointers met: every candidate was either examined or ruled out. Best area = '+best+', after '+cmp+' comparison'+(cmp>1?'s':'')+' instead of '+(n*(n-1)/2)+' pair'+(n*(n-1)/2>1?'s':'')+'.'});return s});
+
+// ---- container grid stepper ----
+widget('cgS',[['[1,8,6,2,5,4,8,3,7]',HC],['[2,3,4,5,18,17,6]',[2,3,4,5,18,17,6]],['[4,3,2,1,4]',[4,3,2,1,4]]],function(a){
+  var n=a.length,l=0,r=n-1,tot=n*(n-1)/2,old={},s=[],cmp=0,ruled=0,best=0,bi=-1,k,j,i;
+  function view(cur,nw,l,r,fin){var st={},kk,c={},sub={},q;
+    for(kk in old)st[kk]='dim';for(kk in nw)st[kk]='mv';if(cur!==null)st[cur]='now';if(fin&&bi>=0)st[bi]='ok';
+    for(q=0;q<n;q++)c[q]=(fin||q<l||q>r)?'dim':'';
+    if(!fin){c[l]='now';c[r]='now';sub[l]='L';sub[r]='R'}
+    return bars(a,{c:c,sub:sub,thin:true})+areaMatrix(a,st)}
+  while(l<r){var ar=area(a,l,r),cur=l*n+r,nw={},m;cmp++;if(ar>best){best=ar;bi=cur}
+    if(a[l]<a[r]){for(j=l+1;j<=r;j++)nw[l*n+j]=1;ruled+=r-l;
+      m='Area '+ar+'. The left wall ('+a[l]+') is shorter, so every pair that keeps it with a narrower width is capped below this area: its whole row ('+(r-l)+' pairs) is ruled out. Ruled out so far: '+ruled+' of '+tot+'.';s.push({h:view(cur,nw,l,r),n:m});
+      for(k in nw)old[k]=1;l++}
+    else{for(i=l;i<r;i++)nw[i*n+r]=1;ruled+=r-l;
+      m='Area '+ar+'. '+(a[l]===a[r]?'The walls are equal, so discard the right one: ':'The right wall ('+a[r]+') is shorter, so ')+'its whole column ('+(r-l)+' pairs) is ruled out. Ruled out so far: '+ruled+' of '+tot+'.';s.push({h:view(cur,nw,l,r),n:m});
+      for(k in nw)old[k]=1;r--}}
+  s.push({h:view(null,{},0,0,true),n:'Done. The best container (green) has area '+best+'. We made '+cmp+' comparisons and never looked at most of the grid.'});return s});
+
+growth('grC',[10,100,1000,10000],function(n){return n*(n-1)/2},function(n){return n-1},'Brute force: n(n−1)/2 pairs','Two pointers: ≤ n−1');
+
+// ---- random tests (container) ----
+function randTest(id,brute,good,bad,label,gen){var el=$(id);
+  el.innerHTML='<button id="'+id+'B">Run 2,000 random arrays</button><div id="'+id+'O" class="note" aria-live="polite"></div>';
+  $(id+'B').onclick=function(){var N=2000,t,h,g=0,b=0,ex=null,bv,tv;
+    for(t=0;t<N;t++){h=gen();tv=brute(h);if(good(h)===tv)g++;bv=bad(h);if(bv===tv)b++;else if(!ex)ex={h:h,got:bv,want:tv}}
+    $(id+'O').innerHTML='<table class="tt"><tr><th>Rule</th><th>Agrees with brute force</th></tr><tr><td>'+label[0]+'</td><td>'+L(g)+' of '+L(N)+'</td></tr><tr><td>'+label[1]+'</td><td>'+L(b)+' of '+L(N)+'</td></tr></table>'+(ex?'<p class="cap">First failure of the wrong rule: ['+ex.h.join(', ')+'] gives '+ex.got+', the true answer is '+ex.want+'.</p>':'')}}
+function gen(minN,maxN,maxV){return function(){var n=minN+Math.floor(Math.random()*(maxN-minN+1)),h=[],i;for(i=0;i<n;i++)h.push(Math.floor(Math.random()*(maxV+1)));return h}}
+randTest('rtC',cBrute,function(h){return cPtr(h,false)},function(h){return cPtr(h,true)},['Discard the shorter wall (the real rule)','Discard the taller wall (the wrong rule)'],gen(2,12,20));
+
+// ---- landscape ----
+(function(){var w=[],i,t=0;for(i=0;i<HT.length;i++){var v=Math.min(Math.max.apply(null,HT.slice(0,i+1)),Math.max.apply(null,HT.slice(i)))-HT[i];w.push(v);t+=v}
+  $('lsF').innerHTML=bars(HT,{w:w});$('lsC').textContent='The blue region is the trapped water: '+t+' units in total.'})();
+
+// ---- single position explorer ----
+$('tpW').innerHTML='<div class="sl"><label for="tpS">position i = <strong id="tpO"></strong></label><input id="tpS" type="range" min="0" max="11" value="2"></div><div id="tpV"></div><p class="note" id="tpN" aria-live="polite"></p>';
+function tpU(){var i=+$('tpS').value,a=HT,n=a.length,lm=0,rm=0,li=0,ri=0,j,c={},sub={},w=[];$('tpO').textContent=i;
+  for(j=0;j<=i;j++)if(a[j]>lm){lm=a[j];li=j}for(j=i;j<n;j++)if(a[j]>rm){rm=a[j];ri=j}
+  var lv=Math.min(lm,rm),wt=lv-a[i];c[li]='mv';c[ri]='mv';c[i]='now';sub[li]='L max';sub[ri]=(sub[ri]?sub[ri]+' / ':'')+'R max';if(li===i&&ri===i)sub[i]='both max';
+  w[i]=wt;
+  $('tpV').innerHTML=bars(a,{c:c,sub:sub,w:w,wc:(function(){var o={};o[i]='cur';return o})()});
+  $('tpN').innerHTML='left_max = '+lm+', right_max = '+rm+'. Level = min('+lm+', '+rm+') = <strong>'+lv+'</strong>. Water above position '+i+' = '+lv+' − '+a[i]+' = <strong>'+wt+'</strong>.'+(lm<rm?' The left boundary is the bottleneck.':lm>rm?' The right boundary is the bottleneck.':' Both boundaries are equal.')}
+$('tpS').oninput=tpU;tpU();
+
+// ---- prefix/suffix table ----
+(function(){var a=HT,n=a.length,lm=[],rm=[],w=[],t=0,i;for(i=0;i<n;i++)lm.push(Math.max(i?lm[i-1]:0,a[i]));for(i=n-1;i>=0;i--)rm[i]=Math.max(i<n-1?rm[i+1]:0,a[i]);
+  for(i=0;i<n;i++){w.push(Math.min(lm[i],rm[i])-a[i]);t+=w[i]}
+  function row(l,x,b){return '<tr><td>'+l+'</td>'+x.map(function(v){return '<td style="text-align:center">'+(b?'<strong>'+v+'</strong>':v)+'</td>'}).join('')+'</tr>'}
+  $('pfT').innerHTML='<table class="tt">'+row('index',a.map(function(_,i){return i}))+row('height',a)+row('running left max',lm)+row('running right max',rm)+row('water = min − height',w,true)+'</table><p class="cap">Total = '+t+'. The running left maximum is 0 1 1 2 2 2 2 3 3 3 3 3 and the running right maximum is 3 3 3 3 3 3 3 3 2 2 2 1, exactly the rows above.</p>'})();
+
+// ---- know enough ----
+$('knW').innerHTML='<div class="sl"><label for="knL">left_max so far = <strong id="knLo"></strong></label><input id="knL" type="range" min="1" max="12" value="5"></div><div class="sl"><label for="knR">right side is known to reach at least <strong id="knRo"></strong></label><input id="knR" type="range" min="0" max="30" value="9"></div><div id="knV"></div><p class="note" id="knN" aria-live="polite"></p>';
+function knU(){var l=+$('knL').value,r=+$('knR').value,H=Math.max(l,Math.min(r,30)),u=90/30;$('knLo').textContent=l;$('knRo').textContent=r;
+  var lv=Math.min(l,r);
+  $('knV').innerHTML='<div class="mini"><div class="c"><span>left_max '+l+'</span><i style="height:'+(l*u)+'px;background:var(--acc)"></i></div><div class="c"><span>right ≥ '+r+'</span><i style="height:'+(Math.min(r,30)*u)+'px;background:var(--okb)"></i></div></div>';
+  $('knN').innerHTML=r>=l?'The right side is already at least as tall as left_max, so the left side is the bottleneck. The water level for the left position is <strong>'+l+'</strong>, whether the right side finally turns out to be '+r+' or 1,000,000. <strong>Decided.</strong>':'The right side is only known to reach '+r+', which is below left_max = '+l+'. The right side might be the bottleneck, so the level could be anything from '+r+' up to '+l+'. <strong>Not decided yet.</strong> Process the right side first.'}
+$('knL').oninput=knU;$('knR').oninput=knU;knU();
+
+// ---- predict the side ----
+var PSA=[[4,2,0,3,2,5],HT,[3,0,2]],ps={k:0,l:0,r:0,lm:0,rm:0,w:[],tot:0,msg:''},psE=$('psW');
+function psReset(k){var a=PSA[k];ps.k=k;ps.l=0;ps.r=a.length-1;ps.lm=0;ps.rm=0;ps.w=a.map(function(){return 0});ps.tot=0;ps.msg='';psR()}
+function psR(){var a=PSA[ps.k],act=ps.l<=ps.r,c={},sub={},j,st;
+  for(j=0;j<a.length;j++)c[j]=(j<ps.l||j>ps.r)?'dim':'';
+  if(act){c[ps.l]='now';c[ps.r]='now';sub[ps.l]='L';sub[ps.r]=ps.l===ps.r?'L = R':'R'}
+  st=act?'left_max = '+ps.lm+', right_max = '+ps.rm+', water so far = '+ps.tot+'. Which side’s answer is already determined?':'Done. Total water = '+ps.tot+(ps.tot===tBrute(a)?', which matches brute force.':'.');
+  psE.innerHTML='<div class="row" style="align-items:center">'+PSA.map(function(s,k){return '<button data-s="'+k+'" aria-pressed="'+(k===ps.k)+'">['+s.join(',')+']</button>'}).join('')+'</div>'+bars(a,{c:c,sub:sub,w:ps.w})+'<p class="note" aria-live="polite"><strong>'+st+'</strong></p><div class="ctl"><button id="psL"'+(act?'':' disabled')+'>Process left</button><button id="psRt"'+(act?'':' disabled')+'>Process right</button></div><p class="note" aria-live="polite">'+ps.msg+'</p>';
+  [].forEach.call(psE.querySelectorAll('button[data-s]'),function(b){b.onclick=function(){psReset(+b.dataset.s)}});
+  if(act){$('psL').onclick=function(){psMv('L')};$('psRt').onclick=function(){psMv('R')}}}
+function psMv(d){var a=PSA[ps.k],lm=ps.lm,rm=ps.rm,add,nm;
+  if(d==='R'&&lm<rm){ps.msg='Not yet. The right position’s level is min(its left boundary, its right boundary). Its right boundary is '+rm+', but about the left we only know it is at least '+lm+'. The true level could be anywhere from '+lm+' to '+rm+', so it is not determined. The left side is: the right side is already at least '+rm+' ≥ '+lm+'.';psR();return}
+  if(d==='L'&&lm>rm){ps.msg='Not yet. The left position’s level is min(its left boundary, its right boundary). Its left boundary is '+lm+', but about the right we only know it is at least '+rm+'. The true level could be anywhere from '+rm+' to '+lm+', so it is not determined. The right side is: the left side is already at least '+lm+' ≥ '+rm+'.';psR();return}
+  if(d==='L'){nm=Math.max(lm,a[ps.l]);add=nm-a[ps.l];ps.w[ps.l]=add;ps.tot+=add;ps.msg=(lm===rm?'The maxima are equal, so neither side is a bottleneck over the other and both choices are safe. ':'Right. The right side is already at least '+rm+', so left_max is the bottleneck. ')+'left_max = max('+lm+', '+a[ps.l]+') = '+nm+'. Water here = '+nm+' − '+a[ps.l]+' = '+add+'.';ps.lm=nm;ps.l++}
+  else{nm=Math.max(rm,a[ps.r]);add=nm-a[ps.r];ps.w[ps.r]=add;ps.tot+=add;ps.msg=(lm===rm?'The maxima are equal, so neither side is a bottleneck over the other and both choices are safe. ':'Right. The left side is already at least '+lm+', so right_max is the bottleneck. ')+'right_max = max('+rm+', '+a[ps.r]+') = '+nm+'. Water here = '+nm+' − '+a[ps.r]+' = '+add+'.';ps.rm=nm;ps.r--}
+  psR()}
+psReset(0);
+
+// ---- trap stepper ----
+widget('trW',[['[0,1,0,2,1,0,1,3,2,1,2,1]',[HT,false]],['[4,2,0,3,2,5]',[[4,2,0,3,2,5],false]],['[3,0,2]',[[3,0,2],false]],['[1,2,3] (no basin)',[[1,2,3],false]],['[5,4,1,2]',[[5,4,1,2],false]],['Same as the first, larger side (BUG)',[HT,true]],['[4,2,0,3,2,5], larger side (BUG)',[[4,2,0,3,2,5],true]]],function(p){
+  var a=p[0],bug=p[1],n=a.length,l=0,r=n-1,lm=0,rm=0,tot=0,w=a.map(function(){return 0}),s=[];
+  function view(l,r,done){var c={},sub={},j;for(j=0;j<n;j++)c[j]=(done||j<l||j>r)?'dim':'';
+    if(!done){c[l]='now';c[r]='now';sub[l]='L';sub[r]=l===r?'L = R':'R'}
+    return bars(a,{c:c,sub:sub,w:w})+'<div class="lbl">left_max = '+lm+' &nbsp;|&nbsp; right_max = '+rm+' &nbsp;|&nbsp; water so far = '+tot+'</div>'}
+  while(l<=r){var goL=bug?!(lm<=rm):(lm<=rm),vw=view(l,r,false),m,nm,add,wrong;
+    if(goL){nm=Math.max(lm,a[l]);add=nm-a[l];wrong=lm>rm;
+      m=(wrong?'BUG: left_max = '+lm+' is larger than right_max = '+rm+', so the right side is the bottleneck and this level is not determined. We process the left anyway. ':'left_max = '+lm+' ≤ right_max = '+rm+': the left side is the bottleneck, so the level here is already determined. ')+'left_max becomes max('+lm+', '+a[l]+') = '+nm+'. Water here = '+nm+' − '+a[l]+' = '+add+'. left++.';
+      w[l]=add;tot+=add;lm=nm;l++}
+    else{nm=Math.max(rm,a[r]);add=nm-a[r];wrong=rm>lm;
+      m=(wrong?'BUG: right_max = '+rm+' is larger than left_max = '+lm+', so the left side is the bottleneck and this level is not determined. We process the right anyway. ':(lm<rm?'':'')+'right_max = '+rm+' < left_max = '+lm+': the right side is the bottleneck, so the level here is already determined. ')+'right_max becomes max('+rm+', '+a[r]+') = '+nm+'. Water here = '+nm+' − '+a[r]+' = '+add+'. right--.';
+      if(!wrong&&lm===rm)m='left_max = right_max = '+lm+': both sides are safe. '+'right_max becomes max('+rm+', '+a[r]+') = '+nm+'. Water here = '+nm+' − '+a[r]+' = '+add+'. right--.';
+      w[r]=add;tot+=add;rm=nm;r--}
+    s.push({h:vw,n:m})}
+  var truth=tBrute(a);
+  s.push({h:view(0,0,true),n:'Done. Total water = '+tot+'.'+(bug?(tot===truth?' (This input happens to match the true answer, '+truth+', but the rule is still unjustified.)':' The true answer is '+truth+'. Processing the side that is not the bottleneck overcounts.'):(tot===truth?' This matches the brute-force answer.':''))});
+  return s});
+
+// ---- random tests (trap) ----
+randTest('rtT',tBrute,function(h){return tPtr(h,false)},function(h){return tPtr(h,true)},['Process the side with the smaller maximum (the real rule)','Process the side with the larger maximum (the wrong rule)'],gen(1,14,12));
+
+// ---- sorting ----
+var SRD=[['Rain water: original',HT,'t'],['Rain water: sorted',HT.slice().sort(function(a,b){return a-b}),'t'],['Container: original',HC,'c'],['Container: sorted',HC.slice().sort(function(a,b){return a-b}),'c']];
+tabs('srW',SRD.map(function(d){return d[0]}),function(k){var d=SRD[k],a=d[1],h;
+  if(d[2]==='t'){var w=[],i,t=0;for(i=0;i<a.length;i++){var v=Math.min(Math.max.apply(null,a.slice(0,i+1)),Math.max.apply(null,a.slice(i)))-a[i];w.push(v);t+=v}
+    h=bars(a,{w:w})+'<p class="note"><strong>Heights ['+a.join(', ')+'] trap '+t+' units of water.</strong>'+(k===1?' Sorting turned the landscape into a staircase: there is no basin anywhere, so the answer collapsed.':'')+'</p>'}
+  else{var b=0,bi=0,bj=1,i,j;for(i=0;i<a.length;i++)for(j=i+1;j<a.length;j++)if(area(a,i,j)>b){b=area(a,i,j);bi=i;bj=j}
+    var c={};c[bi]='now';c[bj]='now';h=bars(a,{c:c,thin:true,box:{l:bi,r:bj,lv:Math.min(a[bi],a[bj])}})+'<p class="note"><strong>Best container for ['+a.join(', ')+']: indices '+bi+' and '+bj+', area '+b+'.</strong>'+(k===3?' The answer changed from 49, because the two 8s that were seven apart are now neighbours. Sorting destroyed the width information.':'')+'</p>'}
+  return h});
+
+// ---- invariants ----
+var IVD=[['Container',[[2,'var(--dim)','discarded walls: every pair using them was measured or capped'],[5,'','still-possible walls: [left, right]'],[2,'var(--dim)','discarded walls']],'Every pair using a discarded wall has either been measured, or is capped below the best container we have measured.'],
+ ['Rain water',[[3,'var(--ok)','finalized: water level already known'],[3,'','unprocessed'],[3,'var(--ok)','finalized: water level already known']],'Every position outside [left, right] has its water finalized, left_max is the tallest wall seen on the left, and right_max is the tallest wall seen on the right.']];
+tabs('ivW',IVD.map(function(d){return d[0]}),function(k){var d=IVD[k];return '<div class="lbl">The regions the pointers maintain:</div><div class="zones">'+d[1].map(function(z){return '<div style="flex:'+z[0]+(z[1]?';background:'+z[1]:'')+'">'+z[2]+'</div>'}).join('')+'</div><blockquote><p>'+d[2]+'</p></blockquote>'});
+
+// ---- code toggle and theme ----
+var cb=$('codeBtn'),hid=false;
+cb.onclick=function(){hid=!hid;[].forEach.call(document.querySelectorAll('details'),function(d){d.open=!hid});cb.textContent=hid?'Show code':'Hide code'};
+var root=document.documentElement,tb=$('theme');
+function setTheme(t){root.setAttribute('data-theme',t);tb.textContent=t==='dark'?'Light':'Dark'}
+try{var sv=localStorage.getItem('theme');if(sv==='dark'||sv==='light')setTheme(sv)}catch(e){}
+tb.onclick=function(){var t=root.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);try{localStorage.setItem('theme',t)}catch(e){}};
+</script>
+</body>
+</html>

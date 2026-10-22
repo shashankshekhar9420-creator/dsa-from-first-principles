@@ -62,22 +62,11 @@ pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,
 .flag{font-size:.9rem;color:var(--mut)}
 .tt td:first-child{font-weight:600}
 .tt td{text-align:left}
-.top-nav{display:flex;align-items:center;gap:8px;font-size:.95rem;margin-bottom:20px;color:var(--mut)}
-.top-nav a{color:var(--acc);text-decoration:none}
-.top-nav a:hover{text-decoration:underline}
-.nav-sep{color:var(--line)}
-.nav-current{color:var(--mut)}
-.article-nav{display:flex;justify-content:space-between;gap:16px;margin-top:48px;padding-top:24px;border-top:1px solid var(--line);flex-wrap:wrap}
-.article-nav a{display:flex;flex-direction:column;padding:12px 16px;border:1px solid var(--line);border-radius:6px;background:var(--card);text-decoration:none;color:var(--ink);transition:border-color .15s,background .15s;flex:1;min-width:200px}
-.article-nav a:hover{border-color:var(--acc);background:var(--mv)}
-.article-nav .an-sub{font-size:.8rem;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
-.article-nav .an-title{font-weight:600;color:var(--acc)}
 </style>
 </head>
 <body>
 <div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
 <main>
-<nav class="top-nav"><a href="../index.html">← DSA from First Principles</a> <span class="nav-sep">/</span> <span class="nav-current">Essay 06 · Two Pointers: Beyond the Pattern (Part 2)</span></nav>
 <h1>Two Pointers: Beyond the Basic Pattern</h1>
 <p>In the previous article, we built the intuition behind the <strong>two-pointer technique</strong>. The important thing was not to memorize <em>“use two pointers when you see a sorted array.”</em> Instead, we arrived at something more fundamental:</p>
 <blockquote><p>Two pointers are useful when two positions in a data structure can help us continuously eliminate parts of the search space.</p></blockquote>
@@ -355,16 +344,6 @@ for i in range(low + 1, high + 1):
 <p>That is why learning algorithms through intuition is more useful than memorizing patterns. The goal isn’t to look at <code>left</code> and <code>right</code> and immediately say <em>“Two pointers!”</em> The goal is to look at a problem and notice:</p>
 <blockquote><p>There is a lot of work here that I don’t actually need to do.</p></blockquote>
 <p>Then ask <em>“what structure lets me prove that?”</em> That is where the algorithm comes from.</p>
-<div class="article-nav">
-  <a href="problems%20on%20two%20pointers%201.html">
-    <span class="an-sub">Previous Essay · 05</span>
-    <span class="an-title">← Two Pointers: Problems (Part 1)</span>
-  </a>
-  <a href="../index.html" style="text-align:right">
-    <span class="an-sub">Series Complete</span>
-    <span class="an-title">Back to Table of Contents →</span>
-  </a>
-</div>
 </main>
 <script>
 var $=function(i){return document.getElementById(i)};

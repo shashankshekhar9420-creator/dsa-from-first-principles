@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sliding Window: From Recomputing Everything to Maintaining a Window</title>
+<style>
+:root{--bg:#fff;--ink:#111;--mut:#555;--line:#ccc;--acc:#1f4e8c;--hi:#fff3b0;--hib:#c9a227;--ok:#dcf0dc;--okb:#3a8a3a;--mv:#e6edf7;--dim:#eee;--card:#fafafa;--red:#b5342b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#121212;--ink:#eee;--mut:#aaa;--line:#3a3a3a;--acc:#8ab4f8;--hi:#4a4220;--hib:#c9a227;--ok:#1d3a22;--okb:#5cb85c;--mv:#1c2a40;--dim:#2a2a2a;--card:#1a1a1a;--red:#ff7b72;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Roman",Times,serif}
+main{max-width:720px;margin:0 auto;padding:40px 20px 80px}
+h1,h2,h3{font-family:inherit;line-height:1.25}
+h1{font-size:2.1rem;margin:.2em 0 .6em}
+h2{font-size:1.5rem;margin:2.6em 0 .6em;padding-top:1.2em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin:1.6em 0 .4em}
+blockquote{margin:1.2em 0;padding:.4em 1em;border-left:4px solid var(--acc);font-size:1.12rem}
+blockquote p{margin:.3em 0}
+code{font:inherit;background:var(--card);padding:1px 5px;border-radius:4px}
+a{color:var(--acc)}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:1.2em 0}
+.cap{font-size:.9rem;color:var(--mut);margin:.6em 0 0}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:flex-end}
+.cw{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ix{font-size:.8rem;color:var(--mut);min-height:1.1em;font-weight:600}
+.cell{min-width:54px;padding:7px 6px;text-align:center;border:2px solid var(--line);background:var(--bg);border-radius:6px;font-weight:600;transition:background .2s}
+.gap{border-style:dashed;background:transparent}
+.ok{background:var(--ok);border-color:var(--okb)}
+.now{background:var(--hi);border-color:var(--hib)}
+.dim{background:var(--dim);color:var(--mut);border-color:var(--dim)}
+.mv{background:var(--mv);border-color:var(--acc)}
+.mx{display:grid;gap:3px;margin:8px 0}
+.mh{font-size:.8rem;color:var(--mut);text-align:center;align-self:center}
+.mx .cell{min-width:0;padding:3px 0;font-size:.8rem}
+button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
+button:hover:not(:disabled){background:var(--mv)}
+button:disabled{opacity:.4;cursor:default}
+button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--hib);outline-offset:2px}
+.tools{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5;display:flex;gap:8px}
+.ctl{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.pos{color:var(--mut);font-size:.9rem}
+.note{min-height:3em;margin:.4em 0 0;font-weight:500}
+.lbl{font-size:.9rem;margin:8px 0 3px}
+.bar{height:14px;border-radius:4px;background:var(--acc);min-width:3px}
+.bar.g{background:var(--okb)}.bar.r{background:var(--red)}
+input[type=range]{width:100%}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--dim)}
+details{margin:1em 0;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+summary{cursor:pointer;padding:8px 12px;font-size:.95rem;color:var(--acc)}
+pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,Menlo,Consolas,monospace}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.two{grid-template-columns:1fr}}
+.flow{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;font-size:.95rem}
+.flow .cell{min-width:140px}
+.zones{display:flex;border:2px solid var(--line);border-radius:6px;overflow:hidden;text-align:center;font-size:.85rem}
+.zones div{padding:10px 6px}
+.flag{font-size:.9rem;color:var(--mut)}
+.tt td:first-child{font-weight:600}
+.tt td{text-align:left}
+.vb{display:flex;gap:6px;align-items:flex-end;margin:6px 0}
+.vc{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:26px;max-width:60px;justify-content:flex-end}
+.vbar{width:100%;border:2px solid var(--line);background:var(--bg);border-radius:4px 4px 0 0;transition:height .2s,background .2s}
+</style>
+</head>
+<body>
+<div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
+<main>
+
+<h1>Sliding Window: From Recomputing Everything to Maintaining a Window</h1>
+<p>We have already seen the <strong>two-pointer</strong> idea. Two pointers are useful when we are trying to reason about a range inside an array or string without blindly checking every possible pair of positions.</p>
+<p>But there is another very common situation:</p>
+<blockquote><p>What if the thing we care about is not two individual elements, but an entire <strong>contiguous range</strong>?</p></blockquote>
+<p>For example: <code>[2, 1, 5, 1, 3, 2]</code></p>
+<p>Suppose we ask:</p>
+<blockquote><p>What is the maximum sum of any 3 consecutive elements?</p></blockquote>
+<p>The ranges we care about are:</p>
+<div class="fig scroll"><pre>[2, 1, 5] → 8
+[1, 5, 1] → 7
+[5, 1, 3] → 9
+[1, 3, 2] → 6</pre></div>
+<p>The answer is <code>9</code>. At first, this looks simple enough. But the interesting question is not:</p>
+<blockquote><p>How do we calculate these sums?</p></blockquote>
+<p>It is:</p>
+<blockquote><p><strong>Do we really need to calculate each sum from scratch?</strong></p></blockquote>
+<p>That question leads us to the sliding window. Each problem below has a stepper, and the code can be hidden with the button at the top.</p>
+<ol>
+<li><a href="#s1">Start with the obvious solution</a></li>
+<li><a href="#s2">Don't recalculate what you already know</a></li>
+<li><a href="#s3">What exactly is the "window"?</a></li>
+<li><a href="#s4">The fixed-size window</a></li>
+<li><a href="#s5">The Python solution</a></li>
+<li><a href="#s6">Why is this better?</a></li>
+<li><a href="#s7">A visual way to think about it</a></li>
+<li><a href="#s8">The deeper pattern: overlapping subproblems</a></li>
+<li><a href="#s9">But fixed-size windows are almost too easy</a></li>
+<li><a href="#s10">Let the window grow</a></li>
+<li><a href="#s11">Now shrink the window</a></li>
+<li><a href="#s12">The window now has two jobs</a></li>
+<li><a href="#s13">Why are we allowed to shrink greedily?</a></li>
+<li><a href="#s14">The variable-size solution</a></li>
+<li><a href="#s15">Notice something subtle</a></li>
+<li><a href="#s16">Fixed window vs variable window</a></li>
+<li><a href="#s17">The real abstraction</a></li>
+<li><a href="#s18">When does this approach actually make sense?</a></li>
+<li><a href="#s19">A limitation we should not ignore</a></li>
+<li><a href="#s20">Two problems, one idea</a></li>
+<li><a href="#s21">What we should carry forward</a></li>
+<li><a href="#s22">Where this gets interesting</a></li>
+</ol>
+
+<h2 id="s1">1. Start with the obvious solution</h2>
+<p>We need every group of <code>k</code> consecutive elements. For <code>[2, 1, 5, 1, 3, 2]</code> with <code>k = 3</code>, we could simply take every group and add its elements.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def max_sum_subarray(arr, k):
+    best = float("-inf")
+
+    for i in range(len(arr) - k + 1):
+        current = sum(arr[i:i + k])
+        best = max(best, current)
+
+    return best</pre></details>
+<p>Conceptually:</p>
+<div class="fig" id="fig1a"></div>
+<p>There is nothing wrong with this approach. But look carefully at what happens when the window moves. From <code>[2, 1, 5]</code> to <code>[1, 5, 1]</code> we didn't get a completely new collection of elements. We already know <code>1 + 5</code> was part of the previous calculation.</p>
+<p>The only things that changed were:</p>
+<ul>
+<li><code>2</code> left the window</li>
+<li><code>1</code> entered the window</li>
+</ul>
+<p>So instead of throwing away the previous sum and calculating everything again, why not <strong>update the existing sum?</strong> That is the first important idea.</p>
+
+<h2 id="s2">2. Don't recalculate what you already know</h2>
+<p>Suppose our current window is <code>[2, 1, 5]</code>. Its sum is <code>8</code>. Now move the window one position to the right:</p>
+<div class="fig" id="fig2d"></div>
+<p>The new window is <code>[1, 5, 1]</code>. Instead of doing <code>1 + 5 + 1</code> we can say:</p>
+<div class="fig"><pre>old sum
+- element that left
++ element that entered</pre></div>
+<p>So: <code>8 - 2 + 1 = 7</code></p>
+<p>The next movement, <code>[1, 5, 1]</code> ↓ <code>[5, 1, 3]</code>, becomes <code>7 - 1 + 3 = 9</code></p>
+<p>And again, <code>[5, 1, 3]</code> ↓ <code>[1, 3, 2]</code>, becomes <code>9 - 5 + 2 = 6</code></p>
+<p>We are no longer repeatedly calculating the contents of the window. We are <strong>maintaining the state of the window</strong>. That is the fundamental idea behind sliding window.</p>
+
+<h2 id="s3">3. What exactly is the "window"?</h2>
+<p>A window is simply a range of contiguous elements that we are currently looking at. For example:</p>
+<div class="fig" id="fig3"></div>
+<p>The window has:</p>
+<ul>
+<li>a <strong>left boundary</strong></li>
+<li>a <strong>right boundary</strong></li>
+</ul>
+<p>We can represent them with two indices, <code>left</code> and <code>right</code>, as the labels above the cells show. The elements between them are our current window.</p>
+<p>The important part is that the window <strong>moves</strong>. We don't create a completely new window every time. We move the boundaries and update whatever information we care about.</p>
+<p>For a sum problem, that information is <code>window_sum</code>. For other problems, it might eventually become:</p>
+<ul>
+<li>frequency of characters</li>
+<li>number of distinct elements</li>
+<li>number of zeroes</li>
+<li>number of elements satisfying some condition</li>
+<li>...</li>
+</ul>
+<p>This is why the name is useful:</p>
+<blockquote><p>We keep a window over the data and slide it while maintaining information about what is inside.</p></blockquote>
+
+<h2 id="s4">4. The fixed-size window</h2>
+<p>The first kind of sliding window we should learn is the easiest:</p>
+<blockquote><p><strong>The window always has the same size.</strong></p></blockquote>
+<p>If <code>k = 3</code>, then the window must always contain exactly three elements. So:</p>
+<div class="fig"><pre>[2, 1, 5, 1, 3, 2]
+
+[2, 1, 5]
+   ↓
+[1, 5, 1]
+   ↓
+[5, 1, 3]
+   ↓
+[1, 3, 2]</pre></div>
+<p>The window doesn't grow or shrink. It simply moves. This gives us a very clean algorithm.</p>
+<h3>Step 1</h3>
+<p>Build the first window, <code>[2, 1, 5]</code>. Calculate its sum: <code>8</code></p>
+<h3>Step 2</h3>
+<p>Move the window one position. Remove the element leaving: <code>-2</code>. Add the new element entering: <code>+1</code>. New sum: <code>7</code></p>
+<h3>Step 3</h3>
+<p>Repeat. <code>7 - 1 + 3 = 9</code></p>
+<h3>Step 4</h3>
+<p>Repeat again. <code>9 - 5 + 2 = 6</code></p>
+<p>Keep the largest sum seen.</p>
+
+<h2 id="s5">5. The Python solution</h2>
+<details open><summary>Python code (click to hide or show)</summary><pre>def max_sum_subarray(arr, k):
+    window_sum = sum(arr[:k])
+    best = window_sum
+
+    for right in range(k, len(arr)):
+        window_sum += arr[right]
+        window_sum -= arr[right - k]
+
+        best = max(best, window_sum)
+
+    return best</pre></details>
+<p>There is a useful invariant hiding inside this code:</p>
+<blockquote><p><strong><code>window_sum</code> always represents the sum of the current window of size <code>k</code>.</strong></p></blockquote>
+<p>That is the key idea. Not the loop. Not the syntax. The invariant. At every iteration, <code>window_sum</code> is the sum of exactly <code>k</code> elements.</p>
+<h3>Watch it run</h3>
+<p>The same colours mean the same thing in every figure of this post:</p>
+<div class="fig" id="legend"></div>
+<p>The presets include an all-negative array, a window as large as the array, and a buggy version that forgets to subtract. Watch what happens to the invariant there.</p>
+<div class="fig" id="stepper1"></div>
+<p class="cap">Yellow = the current window. Blue = just entered. Grey = left behind. Green = best window so far (and the final answer). The label <code>l=r</code> appears when the window holds a single element.</p>
+<h3>Now you drive it</h3>
+<p>Each time the window slides, we decide how <code>window_sum</code> changes. Some of the tempting answers are wrong in instructive ways.</p>
+<div class="fig" id="drv1"></div>
+<p class="cap">Yellow = the current window. Blue = the element about to enter. Grey = left behind. Green = the best window, once we finish.</p>
+
+<h2 id="s6">6. Why is this better?</h2>
+<p>The naive approach repeatedly adds all <code>k</code> elements. If there are many windows, we repeatedly do work that we have already done.</p>
+<p>The sliding-window approach does something different. For every movement, it performs only two updates: remove one, add one.</p>
+<div class="fig" id="fig1c"></div>
+<p>So instead of thinking:</p>
+<blockquote><p>"Calculate the next subarray."</p></blockquote>
+<p>we think:</p>
+<blockquote><p>"I already know almost everything about the next subarray. What changed?"</p></blockquote>
+<p>That shift in thinking is much more important than this particular problem. Drag the window size to see how the work compares on an array of 1,000 numbers:</p>
+<div class="fig" id="sl1"></div>
+<h3>Why not the simpler approach?</h3>
+<div class="fig scroll"><table class="tt"><tr><th></th><th>Recompute each window</th><th>Prefix sums</th><th>Sliding window</th></tr>
+<tr><td>Time</td><td>O(n &middot; k)</td><td>O(n)</td><td>O(n)</td></tr>
+<tr><td>Extra space</td><td>O(1)</td><td>O(n)</td><td>O(1)</td></tr>
+<tr><td>Reasoning</td><td>Obvious and always correct, but repeats work</td><td>Window sum is <code>P[i+k] &minus; P[i]</code>; stores every prefix</td><td>Keeps one number and updates it</td></tr></table></div>
+<p>Prefix sums are also a good answer here. The sliding window wins on memory, and it grows into problems prefix sums handle less naturally. It also leans on the fact that a sum can be undone by subtracting.</p>
+
+<h2 id="s7">7. A visual way to think about it</h2>
+<p>Imagine physically moving a window across the array.</p>
+<div class="fig" id="fig7"></div>
+<p>Notice something important. The window is not jumping from one unrelated group to another. It overlaps heavily with the previous window. That overlap is the entire reason sliding window works so well here.</p>
+
+<h2 id="s8">8. The deeper pattern: overlapping subproblems</h2>
+<p>This is the question worth carrying forward:</p>
+<blockquote><p><strong>When consecutive ranges overlap heavily, am I recalculating information that I already have?</strong></p></blockquote>
+<p>For <code>[2, 1, 5]</code> and <code>[1, 5, 1]</code>, two out of three elements are the same. Why would we calculate those two elements again? We don't. We preserve what we already know and update only what changed.</p>
+<p>This is the intuition behind the entire sliding-window family.</p>
+
+<h2 id="s9">9. But fixed-size windows are almost too easy</h2>
+<p>So far, the window size was given to us, <code>k = 3</code>. That makes life convenient. We always know exactly when the window is valid.</p>
+<p>But what happens when the problem says something like:</p>
+<blockquote><p>Find the smallest contiguous subarray whose sum is at least <code>7</code>.</p></blockquote>
+<p>Now there is no <code>k</code>. We don't know how large the window should be. That changes everything.</p>
+<p>Consider <code>[2, 1, 5, 2, 3, 2]</code>. We want the smallest contiguous range whose sum is at least <code>7</code>. Possible ranges include:</p>
+<div class="fig" id="fig2a"></div>
+<p>The answer is <code>[5, 2]</code> with length <code>2</code>.</p>
+<p>But now the window cannot simply move one element at a time while staying the same size. We need to figure out:</p>
+<blockquote><p><strong>When should the window grow?</strong><br>and:<br><strong>When should the window shrink?</strong></p></blockquote>
+<p>This is where sliding window becomes much more interesting.</p>
+
+<h2 id="s10">10. Let the window grow</h2>
+<p>Start with an empty window.</p>
+<div class="fig" id="fig10"></div>
+<p>We move the right boundary forward and add elements.</p>
+<p><strong>Add <code>2</code></strong>: <code>[2]</code>, <code>sum = 2</code>. Not enough. Keep expanding.</p>
+<p><strong>Add <code>1</code></strong>: <code>[2, 1]</code>, <code>sum = 3</code>. Still not enough.</p>
+<p><strong>Add <code>5</code></strong>: <code>[2, 1, 5]</code>, <code>sum = 8</code>. Now <code>sum &gt;= 7</code>. The window is valid.</p>
+<p>But are we done? No. We want the <strong>smallest</strong> valid window. And our current window has length <code>3</code>. Maybe we can remove something from the left and still remain valid.</p>
+
+<h2 id="s11">11. Now shrink the window</h2>
+<p>Current:</p>
+<div class="fig" id="fig11"></div>
+<p>Remove the leftmost <code>2</code>: <code>[1, 5]</code>, <code>sum = 6</code>. Now the sum is too small. So <code>[1, 5]</code> is invalid. We must stop shrinking.</p>
+<p>Our best valid window so far is <code>[2, 1, 5]</code>, length <code>3</code>.</p>
+<p>Now expand again. Add <code>2</code>: <code>[1, 5, 2]</code>, <code>sum = 8</code>. Valid again. Can we shrink?</p>
+<p>Remove <code>1</code>: <code>[5, 2]</code>, <code>sum = 7</code>. Still valid. This is important. We found <code>[5, 2]</code>, length <code>2</code>. Can we shrink again?</p>
+<p>Remove <code>5</code>: <code>[2]</code>, <code>sum = 2</code>. Invalid. So we stop. Our best answer is now length <code>2</code>.</p>
+<h3>Watch it expand and shrink</h3>
+<p>Same colours as before. Pay attention to the pointer-move counters, we will come back to them in section 15.</p>
+<div class="fig" id="stepper2"></div>
+<p class="cap">Yellow = the current window. Blue = just entered. Grey = left behind (finished). Green = smallest valid window recorded so far, and the final answer.</p>
+
+<h2 id="s12">12. The window now has two jobs</h2>
+<p>This is the key transition from fixed-size to variable-size sliding windows. The window can now:</p>
+<p><strong>Expand</strong> when the current window doesn't satisfy the requirement: <code>invalid</code> ↓ <code>expand right</code></p>
+<p><strong>Shrink</strong> when the current window satisfies the requirement and we want to improve it: <code>valid</code> ↓ <code>shrink left</code></p>
+<p>So the window behaves almost like a controlled search:</p>
+<div class="fig" id="fig2c"></div>
+<p>This expand/shrink behavior is the heart of the next level of sliding window problems.</p>
+
+<h2 id="s13">13. Why are we allowed to shrink greedily?</h2>
+<p>This deserves attention because otherwise the algorithm can feel like a trick. We are solving:</p>
+<blockquote><p>Find the <strong>smallest</strong> subarray whose sum is at least <code>7</code>.</p></blockquote>
+<p>Suppose <code>[2, 1, 5]</code>, <code>sum = 8</code>. The window is valid. If we want the smallest valid window, keeping the <code>2</code> on the left cannot make the window better. So we try removing it.</p>
+<p>If the resulting window is still valid... <code>[1, 5]</code>, <code>sum = 6</code>. Oops. It isn't. Therefore we know:</p>
+<blockquote><p>Removing <code>2</code> made the window invalid.</p></blockquote>
+<p>So there cannot be a smaller valid window obtained by removing even more from this particular left side. We stop. Then we move the right side forward and continue searching.</p>
+<p>The important property here is that the array contains <strong>positive numbers</strong>. If all numbers are positive:</p>
+<ul>
+<li>expanding the window can only increase the sum</li>
+<li>shrinking the window can only decrease the sum</li>
+</ul>
+<p>That monotonic behavior gives us permission to make these local decisions. This is a very important tradeoff to understand.</p>
+<p>Here is what that permission looks like in a snapshot: everything grey on the left is finished, because for each start we have dropped, its shortest valid window has already been recorded.</p>
+<div class="fig" id="fig2b"></div>
+<h3>Now you drive it</h3>
+<p>At every moment there is one decision: expand, shrink, or stop. Look at the sum and decide.</p>
+<div class="fig" id="drv2"></div>
+<p class="cap">Yellow = the current window. Grey = left behind. Green = the smallest valid window, once we finish.</p>
+
+<h2 id="s14">14. The variable-size solution</h2>
+<details open><summary>Python code (click to hide or show)</summary><pre>def min_subarray_len(target, arr):
+    left = 0
+    window_sum = 0
+    best = float("inf")
+
+    for right in range(len(arr)):
+        window_sum += arr[right]
+
+        while window_sum &gt;= target:
+            best = min(best, right - left + 1)
+
+            window_sum -= arr[left]
+            left += 1
+
+    return 0 if best == float("inf") else best</pre></details>
+<p>The invariant is now:</p>
+<blockquote><p><code>window_sum</code> represents the sum of all elements between <code>left</code> and <code>right</code>.</p></blockquote>
+<p>And the logic is:</p>
+<div class="fig" id="fig14"></div>
+
+<h2 id="s15">15. Notice something subtle</h2>
+<p>Look at the nested <code>while</code> loop. At first glance, someone might think:</p>
+<blockquote><p>"There's a <code>for</code> loop and a <code>while</code> loop inside it. Isn't that quadratic?"</p></blockquote>
+<p>This is where understanding the movement of the pointers matters more than staring at the nesting. <code>right</code> only moves forward. <code>left</code> also only moves forward. Neither pointer ever goes backward.</p>
+<p>Across the entire algorithm:</p>
+<div class="fig"><pre>right:  0 → 1 → 2 → 3 → ... → n
+
+left:   0 → 1 → 2 → 3 → ... → n</pre></div>
+<p>Each element can enter the window once and leave the window once. So although the <code>while</code> loop is nested syntactically, the total pointer movement is still linear.</p>
+<p>The important mental model is:</p>
+<blockquote><p><strong>Don't count loops blindly. Count how many times the pointers can actually move.</strong></p></blockquote>
+<p>This is a recurring theme in pointer-based algorithms. The pointer counters in the stepper above show it directly; here is the scale of the difference:</p>
+<div class="fig scroll" id="growth2"></div>
+
+<h2 id="s16">16. Fixed window vs variable window</h2>
+<p>We now have two versions of the same broader idea.</p>
+<h3>Fixed-size window</h3>
+<p>The size is known, <code>window size = k</code>. We add the incoming element and remove the outgoing element. Example:</p>
+<blockquote><p>Maximum sum of a subarray of size <code>K</code>.</p></blockquote>
+<h3>Variable-size window</h3>
+<p>The size is determined by a condition. We expand until valid, then shrink while valid. Example:</p>
+<blockquote><p>Smallest subarray whose sum is at least <code>target</code>.</p></blockquote>
+<p>The difference is small syntactically. Conceptually, it is important.</p>
+
+<h2 id="s17">17. The real abstraction</h2>
+<p>It is tempting to memorize:</p>
+<div class="fig"><pre>for right in range(...):
+    ...</pre></div>
+<p>and:</p>
+<div class="fig"><pre>while condition:
+    ...</pre></div>
+<p>But that isn't the useful part. Instead, think:</p>
+<h3>Fixed window</h3>
+<blockquote><p>"I know exactly how big my range should be. I just need to move it efficiently."</p></blockquote>
+<h3>Variable window</h3>
+<blockquote><p>"I don't know how big the range should be. I need to adjust its size according to a condition."</p></blockquote>
+<p>And both rely on the same underlying observation:</p>
+<blockquote><p><strong>The next window overlaps heavily with the current window, so preserve what you already know instead of starting from scratch.</strong></p></blockquote>
+
+<h2 id="s18">18. When does this approach actually make sense?</h2>
+<p>Sliding window is not magic. We shouldn't see a contiguous array and automatically write two pointers. The better question is:</p>
+<blockquote><p><strong>Does the problem repeatedly ask about contiguous ranges, and can I maintain the relevant information when the range moves?</strong></p></blockquote>
+<p>For example, these are strong signals:</p>
+<ul>
+<li>subarray</li>
+<li>substring</li>
+<li>contiguous range</li>
+<li>consecutive elements</li>
+</ul>
+<p>Then ask:</p>
+<ol>
+<li><strong>What information does the window need?</strong> For the first problem: <code>sum</code>. For the second: <code>sum</code>. Later it might be: frequency map, number of distinct characters, number of zeroes, required character counts, ...</li>
+<li><strong>What makes the window valid?</strong> For example: window has exactly K elements, or <code>window_sum &gt;= target</code>. Later: at most K distinct characters, or no character appears twice.</li>
+<li><strong>What happens when we expand?</strong> Does the window become more or less valid?</li>
+<li><strong>What happens when we shrink?</strong> Does the constraint move in the direction we need?</li>
+</ol>
+<p>These questions will become much more important as the problems get harder.</p>
+
+<h2 id="s19">19. A limitation we should not ignore</h2>
+<p>The variable-size minimum-subarray solution above relies on <strong>positive numbers</strong>. Consider <code>[2, -10, 10, 5]</code>.</p>
+<p>Now removing an element from the left does not necessarily behave in the simple way we relied upon. With positive numbers: <code>expand → sum increases</code>, <code>shrink → sum decreases</code>. With negative numbers, that relationship disappears.</p>
+<p>For example, <code>[2, -10]</code> has <code>sum = -8</code>. Remove <code>2</code> and <code>[-10]</code> has <code>sum = -10</code>. But other arrangements can make shrinking or expanding behave unexpectedly. Here are two of them, run through the same algorithm with target 10 and target 8, next to the true answer:</p>
+<div class="fig" id="stepper3"></div>
+<p class="cap">Yellow = the current window. Blue = just entered. Grey = left behind. Green = a verified answer (not shown here, because the algorithm gets it wrong).</p>
+<p>This matters because sliding window is not merely:</p>
+<blockquote><p>"Use two pointers on a subarray."</p></blockquote>
+<p>There needs to be some structure that makes moving the boundaries useful and safe. Understanding <strong>why the movement works</strong> is more valuable than memorizing the pattern.</p>
+<h3>Why not the simpler approach?</h3>
+<div class="fig scroll"><table class="tt"><tr><th></th><th>Try every start</th><th>Sliding window</th></tr>
+<tr><td>Time</td><td>O(n<sup>2</sup>)</td><td>O(n)</td></tr>
+<tr><td>Extra space</td><td>O(1)</td><td>O(1)</td></tr>
+<tr><td>Reasoning</td><td>Makes no assumption about the values</td><td>Relies on positive numbers: expanding raises the sum, shrinking lowers it</td></tr></table></div>
+<p>Trying every start (nested loops, stopping at the first valid end) stays correct with negative numbers. The sliding window is faster only because the problem gives its movement a direction. We choose by the constraints we have.</p>
+
+<h2 id="s20">20. Two problems, one idea</h2>
+<p>Let's put the two problems side by side.</p>
+<div class="fig" id="fig20"></div>
+<p>The second problem didn't require learning an entirely new pattern. It emerged naturally from the first.</p>
+<p>The fixed window taught us:</p>
+<blockquote><p><strong>Maintain a contiguous range instead of recomputing it.</strong></p></blockquote>
+<p>The variable window adds:</p>
+<blockquote><p><strong>Let the boundaries move independently according to the condition.</strong></p></blockquote>
+<p>That is the real progression.</p>
+<div class="fig" id="formW"></div>
+
+<h2 id="s21">21. What we should carry forward</h2>
+<p>At this point, don't memorize a "sliding window template." Instead, remember these ideas:</p>
+<h3>1. A window is just a contiguous range</h3>
+<p><code>[left ........ right]</code> Nothing more mysterious than that.</p>
+<h3>2. Consecutive windows overlap</h3>
+<p>That overlap is useful. Instead of recomputing everything:</p>
+<div class="fig" id="fig4"></div>
+<h3>3. Fixed windows have a predetermined size</h3>
+<p><code>size = K</code> So the window simply slides.</p>
+<h3>4. Variable windows are controlled by a condition</h3>
+<p>We may <code>expand → make the window larger</code> or <code>shrink → make the window smaller</code>.</p>
+<h3>5. The window should maintain some state</h3>
+<p>For these problems: <code>window_sum</code>. Later: counts, distinct elements, frequency maps, number of replacements, ...</p>
+<h3>6. The most important question is "what changed?"</h3>
+<p>When the window moves:</p>
+<blockquote><p>What entered?</p><p>What left?</p><p>What information became different?</p></blockquote>
+<p>That question is often enough to turn an apparently expensive solution into a linear one.</p>
+
+<h2 id="s22">22. Where this gets interesting</h2>
+<p>So far, our window has been tracking something very simple: <code>sum</code>. But imagine the following problem:</p>
+<blockquote><p>Find the longest substring containing at most 2 distinct characters.</p></blockquote>
+<p>Now the window isn't controlled by a fixed size. And we aren't tracking just a sum. We need to know:</p>
+<ul>
+<li>Which characters are inside?</li>
+<li>How many times does each occur?</li>
+<li>Is the window still valid?</li>
+<li>If not, how far should the left side move?</li>
+</ul>
+<p>Or:</p>
+<blockquote><p>Find the longest substring without repeating characters.</p></blockquote>
+<p>Now the window needs to know whether a character has appeared before.</p>
+<p>Or:</p>
+<blockquote><p>Find the longest substring where we can replace at most <code>k</code> characters to make all characters the same.</p></blockquote>
+<p>Now the window needs even more information. The window itself hasn't fundamentally changed. What changes is:</p>
+<blockquote><p><strong>the state we maintain and the condition that determines whether the window is valid.</strong></p></blockquote>
+<p>That is where sliding window stops feeling like a simple optimization and starts becoming a general way of reasoning about contiguous ranges. And that is what we'll build toward next.</p>
+<h3>The evolution of the idea</h3>
+<div class="fig scroll"><table class="tt"><tr><th>Problem</th><th>What it teaches</th></tr>
+<tr><td>Maximum sum of a subarray of size <code>k</code></td><td>Maintain a contiguous range instead of recomputing it.</td></tr>
+<tr><td>Smallest subarray with sum at least <code>target</code></td><td>Let the boundaries move independently according to the condition.</td></tr>
+<tr><td>Longest substring with at most 2 distinct characters (next)</td><td>The state grows from a sum to a frequency map.</td></tr>
+<tr><td>Longest substring without repeating characters (next)</td><td>The window must know what has appeared before.</td></tr>
+<tr><td>Longest substring with at most <code>k</code> replacements (next)</td><td>The window needs even more information.</td></tr></table></div>
+
+</main>
+
+<script>
+/* ===== SHARED HELPERS: do not change ===== */
+var $=function(i){return document.getElementById(i)};
+var L=function(v){return v.toLocaleString('en-US')};
+var num=function(x,y){return x-y};
+function isSorted(a){for(var i=1;i<a.length;i++)if(a[i-1]>a[i])return false;return true}
+
+/* cells(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label above'}, noix:true}) -> row of cells */
+function cells(a,o){o=o||{};var c=o.c||{};return '<div class="row">'+a.map(function(v,i){var g=v===''||v===null;return '<div class="cw"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="cell'+(g?' gap':'')+' '+(c[i]||'')+'">'+(g?'&nbsp;':v)+'</div><span class="ix">'+(o.noix?'':i)+'</span></div>'}).join('')+'</div>'}
+
+/* widget(id, presets, build): Previous/Next stepper.
+   presets = [[buttonLabel, params], ...]; build(params) returns [{h:htmlString, n:noteText}, ...] */
+function widget(id,opts,build){
+  var el=$(id),i=0,st=[];
+  el.innerHTML=(opts.length>1?'<div class="row" style="align-items:center">'+opts.map(function(o,k){return '<button data-k="'+k+'">'+o[0]+'</button>'}).join('')+'</div>':'')+'<div class="scroll v"></div><p class="note" aria-live="polite"></p><div class="ctl"><button class="pv">Previous</button><span class="pos"></span><button class="nx">Next</button><button class="pl">Play</button></div>';
+  var v=el.querySelector('.v'),n=el.querySelector('.note'),p=el.querySelector('.pos'),pv=el.querySelector('.pv'),nx=el.querySelector('.nx'),pl=el.querySelector('.pl'),tm=null;
+  function stop(){if(tm){clearInterval(tm);tm=null}pl.textContent='Play'}
+  function r(){v.innerHTML=st[i].h;n.textContent=st[i].n;p.textContent='Step '+(i+1)+' of '+st.length;pv.disabled=i===0;nx.disabled=i===st.length-1}
+  function pick(k){stop();st=build(opts[k][1]);i=0;[].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.k===k))});r()}
+  [].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.onclick=function(){pick(+b.dataset.k)}});
+  pv.onclick=function(){stop();if(i>0){i--;r()}};nx.onclick=function(){stop();if(i<st.length-1){i++;r()}};
+  pl.onclick=function(){if(tm){stop();return}if(i>=st.length-1){i=0;r()}pl.textContent='Pause';tm=setInterval(function(){if(i<st.length-1){i++;r()}else stop()},1100)};
+  pick(0);
+}
+
+/* tabs(id, labels, fn): tab buttons; fn(k) returns html for tab k */
+function tabs(id,labels,fn){var el=$(id);el.innerHTML='<div class="row" style="align-items:center"></div><div class="tv"></div>';var bar=el.firstChild,tv=el.lastChild;
+  labels.forEach(function(t,k){var b=document.createElement('button');b.textContent=t;b.onclick=function(){[].forEach.call(bar.children,function(x){x.setAttribute('aria-pressed',String(x===b))});tv.innerHTML=fn(k)};b.setAttribute('aria-pressed',String(k===0));bar.appendChild(b)});tv.innerHTML=fn(0)}
+
+/* growth(id, ns, bruteFn, betterFn, header1, header2): log-scale comparison table */
+function growth(id,ns,bf,tp,h1,h2){$(id).innerHTML='<table><tr><th>n</th><th>'+h1+'</th><th>'+h2+'</th></tr>'+ns.map(function(n){var b=bf(n),t=tp(n);return '<tr><td>'+L(n)+'</td><td>'+L(b)+'<div class="bar r" style="width:'+Math.max(1,Math.log10(b)/12*100)+'%;margin-left:auto"></div></td><td>'+L(t)+'<div class="bar g" style="width:'+Math.max(1,Math.log10(t)/12*100)+'%;margin-left:auto"></div></td></tr>'}).join('')+'</table><p class="cap">Bars use a log scale, otherwise the second column would be invisible.</p>'}
+
+/* flow(['step','step',...]) -> vertical arrow flow */
+function flow(a){return '<div class="flow">'+a.map(function(x){return '<div class="cell">'+x+'</div>'}).join('<span>↓</span>')+'</div>'}
+
+/* grid(matrix, {c:function(r,c){return 'ok|now|dim|mv'}, rh:[row headers], ch:[col headers]}) -> 2D table of cells (DP tables, grids, matrices) */
+function grid(m,o){o=o||{};var w=m[0].length,ch=o.ch,rh=o.rh;
+  var h='<div class="mx" style="grid-template-columns:'+(rh?'auto ':'')+'repeat('+w+',minmax(0,1fr))">';
+  if(ch){h+=(rh?'<span></span>':'')+ch.map(function(x){return '<span class="mh">'+x+'</span>'}).join('')}
+  m.forEach(function(r,i){if(rh)h+='<span class="mh">'+rh[i]+'</span>';r.forEach(function(v,j){h+='<div class="cell '+((o.c&&o.c(i,j))||'')+'">'+v+'</div>'})});
+  return h+'</div>'}
+
+/* vbars(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label'}}) -> vertical bar chart of an array (sorting, partitioning, heights) */
+function vbars(a,o){o=o||{};var c=o.c||{},mx=Math.max.apply(null,a.map(Math.abs))||1;
+  return '<div class="vb">'+a.map(function(v,i){return '<div class="vc"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="vbar '+(c[i]||'')+'" style="height:'+Math.max(4,Math.round(Math.abs(v)/mx*110))+'px"></div><span class="ix">'+v+'</span></div>'}).join('')+'</div>'}
+
+/* driver(id, cfg): "you drive the algorithm". The reader picks the move; wrong moves get a teaching message.
+   cfg = {
+     presets:[[label,param],...],
+     init:function(param){return state},
+     view:function(state,done){return html},
+     done:function(state){return bool},
+     prompt:function(state,done){return 'What should we do?'},
+     choices:[['A','button text'],['B','button text'],...],
+     expected:function(state){return 'A'},               // the correct choice id
+     apply:function(state,choiceId){ return 'Right. why it worked'},   // mutate state here
+     hint:function(state){return 'general hint'},
+     wrong:function(state,choiceId){return 'specific message for a tempting wrong choice, or undefined'}
+   } */
+function driver(id,cfg){
+  var el=$(id),k=0,s,msg='';
+  function init(){s=cfg.init(cfg.presets[k][1]);msg='';draw()}
+  function draw(){var done=cfg.done(s);
+    el.innerHTML='<div class="row" style="align-items:center">'+cfg.presets.map(function(p,j){return '<button data-p="'+j+'" aria-pressed="'+(j===k)+'">'+p[0]+'</button>'}).join('')+'</div><div class="scroll">'+cfg.view(s,done)+'</div><p class="note" aria-live="polite"><strong>'+cfg.prompt(s,done)+'</strong></p><div class="ctl">'+cfg.choices.map(function(c){return '<button data-c="'+c[0]+'"'+(done?' disabled':'')+'>'+c[1]+'</button>'}).join('')+'</div><p class="note" aria-live="polite">'+msg+'</p>';
+    [].forEach.call(el.querySelectorAll('button[data-p]'),function(b){b.onclick=function(){k=+b.dataset.p;init()}});
+    [].forEach.call(el.querySelectorAll('button[data-c]'),function(b){b.onclick=function(){choose(b.dataset.c)}})}
+  function choose(c){if(c!==cfg.expected(s)){msg=(cfg.wrong&&cfg.wrong(s,c))||('Not quite. '+cfg.hint(s));draw();return}
+    msg=cfg.apply(s,c)||'Right.';draw()}
+  init()}
+
+/* slider(id, {min,max,value,label,render:function(v){return html}}) -> "drag to see how the cost grows" figure */
+function slider(id,o){var el=$(id);el.innerHTML='<label for="'+id+'S">'+o.label+' = <strong class="so"></strong></label><input id="'+id+'S" type="range" min="'+o.min+'" max="'+o.max+'" value="'+o.value+'"><div class="sv"></div>';
+  var inp=el.querySelector('input'),out=el.querySelector('.so'),sv=el.querySelector('.sv');
+  function u(){out.textContent=inp.value;sv.innerHTML=o.render(+inp.value)}inp.oninput=u;u()}
+
+/* ===== PAGE-SPECIFIC ILLUSTRATIONS GO BELOW ===== */
+
+/* ----- page-specific helpers (shared block untouched) ----- */
+function sm(a,l,r){var s=0,i;for(i=l;i<=r;i++)s+=a[i];return s}
+function lst(a,l,r){return r<l?'[ ]':'['+a.slice(l,r+1).join(', ')+']'}
+function allc(l,r,cl){var c={},i;for(i=l;i<=r;i++)c[i]=cl;return c}
+function sg(x){return x<0?'('+x+')':String(x)}
+
+/* win(a,l,r,{enter,out}): array with window [l..r] yellow, left-behind grey, entered blue, pointer labels */
+function win(a,l,r,o){o=o||{};var c={},sub={},i;
+  for(i=0;i<a.length;i++){if(i<l)c[i]='dim';else if(i<=r)c[i]='now'}
+  if(o.enter!==undefined&&o.enter>=0&&o.enter<a.length)c[o.enter]='mv';
+  if(o.out!==undefined&&o.out>=0)sub[o.out]='out';
+  if(r>=l){if(l===r){sub[l]='l=r'}else{sub[l]='left';sub[r]='right'}}
+  else if(l<a.length){sub[l]='left'}
+  return cells(a,{c:c,sub:sub})}
+
+/* zbar(n,l,r): three regions of the array: left behind | window | not seen yet */
+function zbar(n,l,r){var w=Math.max(r-l+1,0),u=n-1-r;
+  return '<div class="zones">'+(l>0?'<div class="dim" style="flex:'+l+'">left behind</div>':'')+(w>0?'<div class="now" style="flex:'+w+'">window</div>':'')+(u>0?'<div style="flex:'+u+'">not seen yet</div>':'')+'</div>'}
+
+/* brow: the best window so far as its own green row */
+function brow(a,bl,br,txt){if(bl<0)return '<p class="lbl">'+txt+' none yet</p>';
+  return '<p class="lbl">'+txt+' '+lst(a,bl,br)+'</p>'+cells(a.slice(bl,br+1),{c:allc(0,br-bl,'ok'),noix:true})}
+
+/* brute force reference: shortest window with sum >= t (valid for any signs) */
+function brute(a,t){var b=null,i,j,s;for(i=0;i<a.length;i++){s=0;for(j=i;j<a.length;j++){s+=a[j];if(s>=t){if(b===null||j-i+1<b.len)b={len:j-i+1,l:i,r:j};break}}}return b}
+
+/* legend */
+$('legend').innerHTML=cells(['best / answer','window','just entered','left behind','not seen yet'],{c:{0:'ok',1:'now',2:'mv',3:'dim'},noix:true})+'<p class="cap">Green = finished and verified (the best window so far, or the final answer). Yellow = being examined (the window). Blue = just entered. Grey = left behind, no longer needed. No colour = not seen yet.</p>';
+
+/* ================= 1. FIXED WINDOW ================= */
+(function(){
+  var A=[2,1,5,1,3,2],k=3,h='',w,c,i,s;
+  for(w=0;w<=A.length-k;w++){
+    s=sm(A,w,w+k-1);c=allc(w,w+k-1,s===9?'ok':'now');
+    h+='<p class="lbl">window '+(w+1)+': '+lst(A,w,w+k-1)+' &rarr; sum = <strong>'+s+'</strong></p>'+cells(A,{c:c,noix:w<A.length-k});
+  }
+  $('fig1a').innerHTML=h+'<p class="cap">Yellow = the window being examined. Green = the window with the largest sum. Consecutive windows share k &minus; 1 = 2 elements: one leaves, one enters.</p>';
+})();
+
+(function(){
+  var A=[2,1,5,1,3,2],k=3,W=A.length-k+1,m1=[],m2=[],rh=[],ch=[],c1=0,c2=0,w,j,inw,rd;
+  for(j=0;j<A.length;j++)ch.push(j);
+  for(w=0;w<W;w++){var r1=[],r2=[];rh.push('w'+(w+1));
+    for(j=0;j<A.length;j++){
+      inw=j>=w&&j<w+k;r1.push(inw?A[j]:'&nbsp;');if(inw)c1++;
+      rd=(w===0)?inw:(j===w+k-1||j===w-1);r2.push(rd?A[j]:'&nbsp;');if(rd)c2++;
+    }
+    m1.push(r1);m2.push(r2)}
+  var f1=function(r,c){return (c>=r&&c<r+k)?'now':''};
+  var f2=function(r,c){if(r===0)return (c<k)?'now':'';if(c===r+k-1)return 'mv';if(c===r-1)return 'dim';return ''};
+  $('fig1c').innerHTML='<div class="two"><div><p class="lbl"><strong>Recompute each window</strong><br>'+c1+' elements read</p>'+grid(m1,{c:f1,rh:rh,ch:ch})+'</div><div><p class="lbl"><strong>Update the sum</strong><br>'+c2+' elements read</p>'+grid(m2,{c:f2,rh:rh,ch:ch})+'</div></div><p class="cap">Rows are windows, columns are array positions; an empty cell means that element is not touched for that window. Left: every element of every window is read again (yellow). Right: after the first window, only the element that left (grey) and the one that entered (blue) are read. The gap widens quickly as k grows.</p>';
+})();
+
+function fixedSteps(p){
+  var a=p.a,k=p.k,n=a.length,bug=!!p.bug,s=[],sum=sm(a,0,k-1),best=sum,bl=0,tb=sum,reads=k,r;
+  function info(v,tru){return '<p class="lbl">window_sum = <strong>'+v+'</strong>'+(v!==tru?' <span style="color:var(--red)">(the real sum of this window is '+tru+')</span>':'')+' &nbsp;&middot;&nbsp; best = <strong>'+best+'</strong> &nbsp;&middot;&nbsp; elements read so far: '+reads+'</p>'}
+  s.push({h:win(a,0,k-1)+info(sum,sum)+brow(a,0,k-1,'best window so far:'),
+    n:'We build the first window once: '+a.slice(0,k).map(sg).join(' + ')+' = '+sum+'. This is the only time we add up all k = '+k+' elements, and it is our best so far'+(sum<0?' (we start best at this real sum, never at 0, because every window here is negative).':'.')});
+  for(r=k;r<n;r++){
+    var out=r-k,old=sum,inn=a[r],tru,better,l=r-k+1,msg;
+    sum=bug?old+inn:old-a[out]+inn;
+    reads+=bug?1:2;
+    tru=sm(a,l,r);
+    better=sum>best;
+    if(tru>tb)tb=tru;
+    if(better){best=sum;bl=l}
+    if(bug){
+      msg='BUG: window_sum = '+old+' + '+sg(inn)+' = '+sum+'. We forgot to subtract a['+out+'] = '+sg(a[out])+', so window_sum now covers '+(r+1)+' elements, but the real window '+lst(a,l,r)+' sums to '+tru+'. The invariant is broken.';
+    }else{
+      msg='window_sum = '+old+' &minus; '+sg(a[out])+' (left) + '+sg(inn)+' (entered) = '+sum+'. '+(k>1?'The other '+(k-1)+' element'+(k>2?'s':'')+' did not change, so we never read them again. ':'')+(better?'That beats the old best, so best = '+best+'.':(sum===best?'That ties the best ('+best+'), so we keep the earlier window.':'That is below the best ('+best+'), so best stays.'));
+    }
+    s.push({h:win(a,l,r,{enter:r,out:out})+info(sum,tru)+brow(a,bl,bl+k-1,'best window so far:'),n:msg});
+  }
+  if(bug){
+    s.push({h:cells(a,{})+'<p class="lbl">reported answer = <strong>'+best+'</strong> &nbsp;&middot;&nbsp; correct answer = <strong>'+tb+'</strong></p>',
+      n:'The buggy version reports '+best+', but the correct answer is '+tb+'. Without the subtraction, window_sum stopped meaning "the sum of exactly k elements", and everything built on it drifted.'});
+  }else{
+    s.push({h:cells(a,{c:allc(bl,bl+k-1,'ok')})+'<p class="lbl">answer = <strong>'+best+'</strong></p>',
+      n:'Every window has been visited. The largest sum is '+best+', from '+lst(a,bl,bl+k-1)+', and that is the answer'+(n===k?'. With k equal to the array length there is only one window, so the loop never ran.':'.')});
+  }
+  return s;
+}
+widget('stepper1',[
+  ['Main example',{a:[2,1,5,1,3,2],k:3}],
+  ['All negative',{a:[-3,-1,-4,-2],k:2}],
+  ['k = n',{a:[3,-1,2],k:3}],
+  ['Longer array',{a:[4,2,1,7,8,1,2,8,1,0],k:3}],
+  ['Bug: never subtract',{a:[2,1,5,1,3,2],k:3,bug:true}]
+],fixedSteps);
+
+driver('drv1',{
+  presets:[['[2,1,5,1,3,2], k = 3',{a:[2,1,5,1,3,2],k:3}],['[1,4,2,9,5,1], k = 2',{a:[1,4,2,9,5,1],k:2}]],
+  init:function(p){var s0=sm(p.a,0,p.k-1);return {a:p.a,k:p.k,r:p.k,sum:s0,best:s0,bl:0}},
+  view:function(s,done){var a=s.a,k=s.k,c={},sub={},i;
+    if(done){c=allc(s.bl,s.bl+k-1,'ok')}
+    else{for(i=0;i<a.length;i++){if(i<s.r-k)c[i]='dim';else if(i<s.r)c[i]='now'}c[s.r]='mv';sub[s.r-k]='leaves';sub[s.r]='enters'}
+    return cells(a,{c:c,sub:sub})+'<p class="lbl">window_sum = <strong>'+s.sum+'</strong> &nbsp;&middot;&nbsp; best = <strong>'+s.best+'</strong></p>'},
+  done:function(s){return s.r>=s.a.length},
+  prompt:function(s,done){if(done)return 'Finished. The maximum sum is '+s.best+', from '+lst(s.a,s.bl,s.bl+s.k-1)+'.';
+    return 'The window sum is '+s.sum+'. a['+(s.r-s.k)+'] = '+sg(s.a[s.r-s.k])+' leaves and a['+s.r+'] = '+sg(s.a[s.r])+' enters. What is the new window_sum?'},
+  choices:[['A','sum &minus; leaving + entering'],['B','sum + entering'],['C','add up the whole window again'],['D','sum &minus; entering + leaving']],
+  expected:function(s){return 'A'},
+  apply:function(s){var old=s.sum,out=s.a[s.r-s.k],inn=s.a[s.r],b='';
+    s.sum=old-out+inn;s.r++;
+    if(s.sum>s.best){s.best=s.sum;s.bl=s.r-s.k;b=' That is a new best.'}
+    return 'Right: '+old+' &minus; '+sg(out)+' + '+sg(inn)+' = '+s.sum+'. Only two elements changed; the other '+(s.k-1)+' were not touched.'+b},
+  hint:function(s){return 'Think about which element is in the old window but not the new one, and which is in the new one but not the old.'},
+  wrong:function(s,c){var out=s.a[s.r-s.k],inn=s.a[s.r],tru=sm(s.a,s.r-s.k+1,s.r);
+    if(c==='B')return 'Not quite. '+s.sum+' + '+sg(inn)+' = '+(s.sum+inn)+' still includes a['+(s.r-s.k)+'] = '+sg(out)+', so window_sum would cover '+(s.k+1)+' elements. The window must hold exactly '+s.k+'.';
+    if(c==='C')return 'That gives the right number ('+tru+'), but it adds '+s.k+' elements again. The whole point is to touch only the two that changed.';
+    if(c==='D')return 'Backwards. '+s.sum+' &minus; '+sg(inn)+' + '+sg(out)+' = '+(s.sum-inn+out)+', but the new window actually sums to '+tru+'. The element that leaves is subtracted and the one that enters is added.'}
+});
+
+slider('sl1',{min:2,max:500,value:3,label:'Window size k (array of 1,000 numbers)',render:function(k){
+  var n=1000,nv=(n-k+1)*k,sw=k+2*(n-k),mx=250500;
+  return '<p class="lbl">Recompute every window: <strong>'+L(nv)+'</strong> additions</p><div class="bar r" style="width:'+(nv/mx*100)+'%"></div><p class="lbl">Slide the window: <strong>'+L(sw)+'</strong> reads</p><div class="bar g" style="width:'+(sw/mx*100)+'%"></div><p class="cap">Red bar = recomputing, green bar = sliding, on the same linear scale. Recomputing costs (n &minus; k + 1) &middot; k; sliding costs k for the first window plus 2 for each of the other n &minus; k.</p>'}});
+
+/* ================= 2. VARIABLE WINDOW ================= */
+(function(){
+  var A=[2,1,5,2,3,2],rows=[[0,2],[1,3],[2,3],[3,5]],h='';
+  rows.forEach(function(r){var s=sm(A,r[0],r[1]);
+    h+='<p class="lbl">'+lst(A,r[0],r[1])+' &rarr; sum = <strong>'+s+'</strong>, length '+(r[1]-r[0]+1)+'</p>'+cells(A,{c:allc(r[0],r[1],r[0]===2?'ok':'now'),noix:true})});
+  $('fig2a').innerHTML=h+'<p class="cap">Every range here has sum at least 7 (yellow). The shortest one, <code>[5, 2]</code>, is the answer (green).</p>';
+})();
+
+$('fig2c').innerHTML=flow(['invalid','make window bigger','valid','try making it smaller','still valid? yes: continue shrinking. no: stop shrinking, expand again'])+'<p class="cap">A controlled search: expand while invalid, shrink while valid.</p>';
+
+(function(){
+  var A=[2,1,5,2,3,2];
+  $('fig2b').innerHTML=win(A,2,3)+zbar(A.length,2,3)+'<p class="cap">A snapshot with target 7, left = 2, right = 3. Grey: starts we are finished with; each already had its shortest valid window recorded. Yellow: the window. White: elements we have not reached.</p>';
+})();
+
+function varSteps(p){
+  var a=p.a,t=p.t,n=a.length,l=0,sum=0,best=1e9,bl=-1,br=-1,rm=0,lm=0,s=[],r,len,out,res,bf;
+  function info(){return '<p class="lbl">sum = <strong>'+sum+'</strong> (target '+t+') &nbsp;&middot;&nbsp; best length = <strong>'+(bl<0?'none':best)+'</strong> &nbsp;&middot;&nbsp; pointer moves: right '+rm+', left '+lm+' (n = '+n+')</p>'}
+  s.push({h:win(a,0,-1)+info()+brow(a,bl,br,'best window so far:'),n:'Start with an empty window and sum 0. We want the shortest window with sum at least '+t+'. If the sum is below the target we expand; if it reaches the target we record and shrink.'});
+  for(r=0;r<n;r++){
+    sum+=a[r];rm++;
+    s.push({h:win(a,l,r,{enter:r})+info()+brow(a,bl,br,'best window so far:'),
+      n:'Expand: add a['+r+'] = '+sg(a[r])+', so the sum becomes '+sum+'. '+(sum>=t?'That reaches the target '+t+', so the window '+lst(a,l,r)+' is valid and we try to shrink it.':'That is still below '+t+', so we expand again.')});
+    while(sum>=t&&l<=r){
+      len=r-l+1;out=l;
+      var msg='The window '+lst(a,l,r)+' is valid with length '+len;
+      if(len<best){best=len;bl=l;br=r;msg+=', shorter than before, so best length = '+len+'.'}
+      else msg+=', which is not shorter than the best ('+best+').';
+      sum-=a[l];l++;lm++;
+      msg+=' Shrink: drop a['+out+'] = '+sg(a[out])+', so the sum becomes '+sum+'. '+(sum>=t?'Still at least '+t+', so we keep shrinking.':'Now below '+t+', so we stop shrinking and expand again.');
+      s.push({h:win(a,l,r,{out:out})+info()+brow(a,bl,br,'best window so far:'),n:msg});
+    }
+  }
+  res=bl<0?0:best;bf=brute(a,t);
+  var bfLen=bf?bf.len:0;
+  if(res!==bfLen){
+    s.push({h:cells(a,{})+info(),n:'The algorithm reports '+(res===0?'no valid window (0)':res)+', but brute force finds '+lst(a,bf.l,bf.r)+' with sum '+sm(a,bf.l,bf.r)+' and length '+bf.len+'. A negative number dragged the sum down, and since we only shrink while the window is valid, we never dropped it. The positive-numbers assumption was doing the work.'});
+  }else if(bl<0){
+    s.push({h:cells(a,{})+info(),n:'We reached the end and no window ever reached '+t+' (the whole array sums to only '+sm(a,0,n-1)+'), so the answer is 0.'});
+  }else{
+    s.push({h:cells(a,{c:allc(bl,br,'ok')})+info(),n:'Done. The smallest window with sum at least '+t+' is '+lst(a,bl,br)+' (sum '+sm(a,bl,br)+'), length '+best+'. Right moved '+rm+' times and left moved '+lm+' times, never backward.'});
+  }
+  return s;
+}
+widget('stepper2',[
+  ['Main example',{a:[2,1,5,2,3,2],t:7}],
+  ['Another array',{a:[2,3,1,2,4,3],t:7}],
+  ['Single element',{a:[1,4,8,2],t:8}],
+  ['No valid window',{a:[1,1,1,1],t:10}]
+],varSteps);
+widget('stepper3',[
+  ['[2,-10,10,5], target 10',{a:[2,-10,10,5],t:10}],
+  ['[-10,5,8], target 8',{a:[-10,5,8],t:8}]
+],varSteps);
+
+driver('drv2',{
+  presets:[['[2,1,5,2,3,2], target 7',{a:[2,1,5,2,3,2],t:7}],['[2,3,1,2,4,3], target 7',{a:[2,3,1,2,4,3],t:7}],['[1,1,1,1], target 10',{a:[1,1,1,1],t:10}]],
+  init:function(p){return {a:p.a,t:p.t,l:0,r:-1,sum:0,best:1e9,bl:-1,br:-1}},
+  view:function(s,done){var h;
+    if(done&&s.bl>=0)h=cells(s.a,{c:allc(s.bl,s.br,'ok')});else h=win(s.a,s.l,s.r);
+    return h+'<p class="lbl">sum = <strong>'+s.sum+'</strong> &nbsp;&middot;&nbsp; target '+s.t+' &nbsp;&middot;&nbsp; best length = <strong>'+(s.bl<0?'none':s.best)+'</strong></p>'},
+  done:function(s){return s.r>=s.a.length-1&&s.sum<s.t},
+  prompt:function(s,done){
+    if(done)return 'Finished. '+(s.bl<0?'No window ever reached '+s.t+', so the answer is 0.':'The smallest valid window has length '+s.best+': '+lst(s.a,s.bl,s.br)+'.');
+    return 'The window '+lst(s.a,s.l,s.r)+' has sum '+s.sum+' and the target is '+s.t+'. '+(s.sum>=s.t?'It is valid.':'It is not valid.')+' What now?'},
+  choices:[['A','Expand: add the next element on the right'],['B','Shrink: drop the leftmost element'],['C','Stop: this window is good enough']],
+  expected:function(s){return s.sum>=s.t?'B':'A'},
+  apply:function(s,c){
+    if(c==='A'){s.r++;s.sum+=s.a[s.r];return 'Right. The window was too small, so we add a['+s.r+'] = '+sg(s.a[s.r])+' and the sum becomes '+s.sum+'.'}
+    var len=s.r-s.l+1,out=s.a[s.l],msg='Right. '+lst(s.a,s.l,s.r)+' is valid with length '+len;
+    if(len<s.best){s.best=len;s.bl=s.l;s.br=s.r;msg+=', a new best.'}else msg+=', not shorter than the best ('+s.best+').';
+    s.sum-=out;s.l++;
+    return msg+' Now drop a['+(s.l-1)+'] = '+sg(out)+' and the sum becomes '+s.sum+'.'},
+  hint:function(s){return 'Below the target we need more; at or above it we try to make the window shorter.'},
+  wrong:function(s,c){var valid=s.sum>=s.t;
+    if(c==='C')return valid?'Valid is not the same as smallest. '+lst(s.a,s.l,s.r)+' works at length '+(s.r-s.l+1)+', but dropping its left element might keep it valid and shorter, and we have not looked at the rest of the array yet.':'This window is not even valid: '+s.sum+' is below '+s.t+'.';
+    if(c==='A'&&valid)return s.r+1>=s.a.length?'There is nothing left to add on the right. This window is valid, so we shrink to see whether a shorter one exists.':'This window already reaches the target. Adding a['+(s.r+1)+'] only makes it longer, and a longer valid window cannot beat the one we have. First try shrinking from the left.';
+    if(c==='B'&&!valid)return s.r<s.l?'The window is empty, so there is nothing to drop. We have to expand.':'The window is already too small ('+s.sum+' is below '+s.t+'). Dropping a['+s.l+'] = '+sg(s.a[s.l])+' would lower the sum further, because all the numbers are positive. We have to expand.'}
+});
+
+growth('growth2',[100,10000,1000000],function(n){return n*(n+1)/2},function(n){return 2*n},'every start and end pair','pointer moves in the window (at most 2n)');
+
+/* ================= 3. WHAT THESE TAUGHT US ================= */
+tabs('formW',['Fixed window','Variable window','What changes next'],function(k){
+  if(k===0)return win([2,1,5,1,3,2],1,3,{enter:3,out:0})+'<p class="cap">Both ends step together: one leaves (grey), one enters (blue).</p><div class="scroll"><table class="tt"><tr><th>Question</th><th>Fixed window</th></tr><tr><td>Size</td><td>Known in advance: exactly k</td></tr><tr><td>State we keep</td><td><code>window_sum</code></td></tr><tr><td>Valid when</td><td>it holds k elements, which is true by construction</td></tr><tr><td>How it moves</td><td>add one, remove one, together</td></tr><tr><td>Invariant</td><td>the sum of exactly k elements</td></tr></table></div>';
+  if(k===1)return win([2,1,5,2,3,2],2,3)+zbar(6,2,3)+'<p class="cap">The two ends move on their own: right expands, left shrinks.</p><div class="scroll"><table class="tt"><tr><th>Question</th><th>Variable window</th></tr><tr><td>Size</td><td>Decided by a condition</td></tr><tr><td>State we keep</td><td><code>window_sum</code></td></tr><tr><td>Valid when</td><td><code>window_sum &gt;= target</code></td></tr><tr><td>How it moves</td><td>expand while invalid, shrink while valid</td></tr><tr><td>Invariant</td><td>the sum of <code>arr[left..right]</code>; everything left behind is finished</td></tr><tr><td>Safe because</td><td>the numbers are positive</td></tr></table></div>';
+  return '<p class="note">The window never changes shape as an idea. Only the state and the validity test do.</p><div class="scroll"><table class="tt"><tr><th>Problem</th><th>State</th><th>Valid when</th></tr><tr><td>At most 2 distinct characters</td><td>counts per character</td><td>distinct count &le; 2</td></tr><tr><td>No repeating characters</td><td>which characters are inside</td><td>no character appears twice</td></tr><tr><td>At most k replacements</td><td>counts and the most frequent one</td><td>changes needed &le; k</td></tr></table></div>'});
+
+/* ================= 4. BIGGER PATTERN ================= */
+$('fig4').innerHTML=flow(['old information about the window','&minus; what left','+ what entered','new information about the window'])+'<p class="cap">Every sliding window, whatever it tracks, follows this update.</p>';
+
+/* ===== added figures for the full-length post ===== */
+$('fig7').innerHTML=$('fig1a').innerHTML;
+(function(){
+  var A=[2,1,5,1,3,2],B=[2,1,5,2,3,2];
+  $('fig2d').innerHTML=win(A,1,3,{enter:3,out:0})+'<p class="cap">Moving the window right: <code>2</code> leaves (out), <code>1</code> enters (blue). The window is now <code>[1, 5, 1]</code>.</p>';
+  $('fig3').innerHTML=win(A,1,3)+'<p class="cap">The window is the yellow range, from <code>left</code> to <code>right</code>.</p>';
+  $('fig10').innerHTML=win(B,0,-1)+'<p class="cap">An empty window. <code>left</code> starts at index 0.</p>';
+  $('fig11').innerHTML=win(B,0,2)+'<p class="lbl">sum = <strong>8</strong>, target 7: valid</p><p class="cap"><code>left</code> at index 0, <code>right</code> at index 2.</p>';
+  $('fig14').innerHTML=flow(['expand right','window becomes valid','shrink left as much as possible','record the best valid window','continue expanding'])+'<p class="cap">The logic of the loop.</p>';
+  $('fig20').innerHTML='<div class="two"><div><p class="lbl"><strong>Problem 1: Maximum Sum Subarray of Size K</strong><br>We know window size = K</p>'+flow(['create window','slide right','remove left, add right','repeat'])+'</div><div><p class="lbl"><strong>Problem 2: Smallest Subarray with Given Sum</strong><br>We don\'t know the size</p>'+flow(['expand right','is window valid? no: expand more','yes: shrink left','still valid? yes: shrink more','no: expand again'])+'</div></div>';
+})();
+
+/* ===== CODE TOGGLE AND THEME: do not change ===== */
+var cb=$('codeBtn'),hid=false;
+cb.onclick=function(){hid=!hid;[].forEach.call(document.querySelectorAll('details'),function(d){d.open=!hid});cb.textContent=hid?'Show code':'Hide code'};
+var root=document.documentElement,tb=$('theme');
+function setTheme(t){root.setAttribute('data-theme',t);tb.textContent=t==='dark'?'Light':'Dark'}
+try{var sv=localStorage.getItem('theme');if(sv==='dark'||sv==='light')setTheme(sv)}catch(e){}
+tb.onclick=function(){var t=root.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);try{localStorage.setItem('theme',t)}catch(e){}};
+</script>
+</body>
+</html>

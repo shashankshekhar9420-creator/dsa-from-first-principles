@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sliding Window II: When the Window Is Controlled by a Constraint</title>
+<style>
+:root{--bg:#fff;--ink:#111;--mut:#555;--line:#ccc;--acc:#1f4e8c;--hi:#fff3b0;--hib:#c9a227;--ok:#dcf0dc;--okb:#3a8a3a;--mv:#e6edf7;--dim:#eee;--card:#fafafa;--red:#b5342b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#121212;--ink:#eee;--mut:#aaa;--line:#3a3a3a;--acc:#8ab4f8;--hi:#4a4220;--hib:#c9a227;--ok:#1d3a22;--okb:#5cb85c;--mv:#1c2a40;--dim:#2a2a2a;--card:#1a1a1a;--red:#ff7b72;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Roman",Times,serif}
+main{max-width:720px;margin:0 auto;padding:40px 20px 80px}
+h1,h2,h3{font-family:inherit;line-height:1.25}
+h1{font-size:2.1rem;margin:.2em 0 .6em}
+h2{font-size:1.5rem;margin:2.6em 0 .6em;padding-top:1.2em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin:1.6em 0 .4em}
+blockquote{margin:1.2em 0;padding:.4em 1em;border-left:4px solid var(--acc);font-size:1.12rem}
+blockquote p{margin:.3em 0}
+code{font:inherit;background:var(--card);padding:1px 5px;border-radius:4px}
+a{color:var(--acc)}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:1.2em 0}
+.cap{font-size:.9rem;color:var(--mut);margin:.6em 0 0}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:flex-end}
+.cw{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ix{font-size:.8rem;color:var(--mut);min-height:1.1em;font-weight:600}
+.cell{min-width:54px;padding:7px 6px;text-align:center;border:2px solid var(--line);background:var(--bg);border-radius:6px;font-weight:600;transition:background .2s}
+.gap{border-style:dashed;background:transparent}
+.ok{background:var(--ok);border-color:var(--okb)}
+.now{background:var(--hi);border-color:var(--hib)}
+.dim{background:var(--dim);color:var(--mut);border-color:var(--dim)}
+.mv{background:var(--mv);border-color:var(--acc)}
+.mx{display:grid;gap:3px;margin:8px 0}
+.mh{font-size:.8rem;color:var(--mut);text-align:center;align-self:center}
+.mx .cell{min-width:0;padding:3px 0;font-size:.8rem}
+button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
+button:hover:not(:disabled){background:var(--mv)}
+button:disabled{opacity:.4;cursor:default}
+button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--hib);outline-offset:2px}
+.tools{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5;display:flex;gap:8px}
+.ctl{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.pos{color:var(--mut);font-size:.9rem}
+.note{min-height:3em;margin:.4em 0 0;font-weight:500}
+.lbl{font-size:.9rem;margin:8px 0 3px}
+.bar{height:14px;border-radius:4px;background:var(--acc);min-width:3px}
+.bar.g{background:var(--okb)}.bar.r{background:var(--red)}
+input[type=range]{width:100%}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--dim)}
+details{margin:1em 0;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+summary{cursor:pointer;padding:8px 12px;font-size:.95rem;color:var(--acc)}
+pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,Menlo,Consolas,monospace}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.two{grid-template-columns:1fr}}
+.flow{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;font-size:.95rem}
+.flow .cell{min-width:140px}
+.zones{display:flex;border:2px solid var(--line);border-radius:6px;overflow:hidden;text-align:center;font-size:.85rem}
+.zones div{padding:10px 6px}
+.flag{font-size:.9rem;color:var(--mut)}
+.tt td:first-child{font-weight:600}
+.tt td{text-align:left}
+.vb{display:flex;gap:6px;align-items:flex-end;margin:6px 0}
+.vc{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:26px;max-width:60px;justify-content:flex-end}
+.vbar{width:100%;border:2px solid var(--line);background:var(--bg);border-radius:4px 4px 0 0;transition:height .2s,background .2s}
+</style>
+</head>
+<body>
+<div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
+<main>
+
+<h1>Sliding Window II: When the Window Is Controlled by a Constraint</h1>
+<p>In the previous article we met the simplest form of sliding window: a fixed-size window. We knew exactly how large it had to be, so each move was one element leaving on the left and one entering on the right, while we updated whatever we were tracking.</p>
+<p>That was useful, but a little too convenient. Real problems rarely say "look at exactly 5 elements". They say things like <em>find the longest substring with at most <code>K</code> distinct characters</em>, or <em>find the longest substring without repeating characters</em>. Now there is a new question: how big should the window be? We do not know.</p>
+<blockquote><p>The window can be any size, as long as it satisfies the rule.</p></blockquote>
+<p>This post follows that idea through a few problems. Each one has an interactive figure, and the code can be hidden with the button at the top. Try the sliders and the "you drive it" widget as well as the steppers.</p>
+<ol>
+<li><a href="#s1">The window no longer has a fixed size</a></li>
+<li><a href="#s2">Grow, break, repair: Longest Substring with K Distinct Characters</a></li>
+<li><a href="#s3">Why this is linear</a></li>
+<li><a href="#s4">Same structure, new story: Fruits into Baskets</a></li>
+<li><a href="#s5">Remove K entirely: No-Repeat Substring</a></li>
+<li><a href="#s6">Longest versus smallest</a></li>
+<li><a href="#s7">When does this actually work?</a></li>
+<li><a href="#s8">What these problems taught us</a></li>
+<li><a href="#s9">The bigger pattern</a></li>
+<li><a href="#s10">A useful way to recognize these problems</a></li>
+<li><a href="#s11">The evolution of the idea</a></li>
+</ol>
+
+<!-- ===== 1 ===== -->
+<h2 id="s1">1. The window no longer has a fixed size</h2>
+<p>Consider <code>"araaci"</code> and the question: find the longest substring containing at most 2 distinct characters. What should the window size be? Could it be 2 (<code>"ar"</code>)? 4 (<code>"araa"</code>)? 5 (<code>"araac"</code>)? It depends on what is inside the window.</p>
+<div class="fig" id="fig1a"></div>
+<h3>First understand what "valid" means</h3>
+<p>The problem gives us a constraint: at most 2 distinct characters. So <code>"ara"</code> holds <code>a</code> and <code>r</code>, which is valid. <code>"araa"</code> still holds just <code>a</code> and <code>r</code>, so it is valid too. But <code>"araac"</code> holds <code>a</code>, <code>r</code> and <code>c</code>, which is three, so it is invalid.</p>
+<div class="fig" id="fig1b"></div>
+<blockquote><p>The window now has a state: valid or invalid. A fixed-size window never needed that idea.</p></blockquote>
+
+<!-- ===== 2 ===== -->
+<h2 id="s2">2. Grow, break, repair</h2>
+<h3>The naive way</h3>
+<p>Generate every substring (<code>a</code>, <code>ar</code>, <code>ara</code>, <code>araa</code>, <code>araac</code>, ...) and count the distinct characters in each. But those substrings overlap heavily. <code>"araa"</code> and <code>"araac"</code> share almost their whole range, so we keep recounting things we already knew.</p>
+<h3>Let the window grow, then repair it</h3>
+<p>We want the <strong>longest</strong> valid window, so while the window is valid there is no reason to stop: expand. When a new character makes it invalid, we ask a better question than "start over":</p>
+<blockquote><p>Can I remove elements from the left until the window becomes valid again?</p></blockquote>
+<p>Step through it. The blue cells are the window, the yellow cell is the character just added, the grey cells are outside, and the green cells at the end are the best window found. <code>L</code> and <code>R</code> mark the two pointers.</p>
+<div class="fig" id="stK"></div>
+
+<h3>Why shrink from the left?</h3>
+<p>Why not remove something from the middle, or the rightmost character? Because the window must stay <strong>contiguous</strong>. Removing the middle <code>r</code> leaves a hole, and we can no longer describe the range with just two boundaries.</p>
+<div class="fig" id="fig2a"></div>
+<p>If we only ever move <code>left</code> and <code>right</code>, the window stays contiguous automatically.</p>
+
+<h3>What do we need to know about the window?</h3>
+<p>For a sum problem we kept <code>window_sum</code>. Here we need to know how many times each character occurs inside the window. A frequency map gives that, and the number of distinct characters is just <code>len(counts)</code>. Sliding window itself has not changed. Only the <strong>information we maintain about the window</strong> has.</p>
+
+<h3>How does K change the answer?</h3>
+<p>Drag the slider. The same string, with a looser rule, allows a longer window.</p>
+<div class="fig" id="slK"></div>
+
+<h3>The complete algorithm</h3>
+<details open><summary>Python code (click to hide or show)</summary><pre>def longest_substring_k_distinct(s, k):
+    left = 0
+    counts = {}
+    best = 0
+
+    for right in range(len(s)):
+        counts[s[right]] = counts.get(s[right], 0) + 1
+
+        while len(counts) &gt; k:
+            char = s[left]
+            counts[char] -= 1
+            if counts[char] == 0:
+                del counts[char]
+            left += 1
+
+        best = max(best, right - left + 1)
+
+    return best</pre></details>
+<p>Do not memorize it. Read what each piece means. <code>counts</code> is "what is inside my window?". <code>len(counts) &gt; k</code> is "have I violated the constraint?". <code>left += 1</code> is "remove things from the left until the constraint is restored". <code>right - left + 1</code> is "how large is my current valid window?".</p>
+
+<h3>The invariant</h3>
+<blockquote><p>After the shrinking step finishes, the window <code>[left, right]</code> contains at most <code>k</code> distinct characters.</p></blockquote>
+<p>Adding a character may temporarily break the window. That is fine, because we repair it immediately. So at the moment we compute <code>best</code>, the window is guaranteed valid.</p>
+
+<h3>Now you drive</h3>
+<p>You decide at each moment whether to expand or shrink. Wrong moves get an explanation.</p>
+<div class="fig" id="drv"></div>
+
+<!-- ===== 3 ===== -->
+<h2 id="s3">3. Why this is linear</h2>
+<p>The nested <code>while</code> inside the <code>for</code> looks quadratic, but it is not. <code>right</code> only moves forward, and <code>left</code> only moves forward. Each character enters the window once and leaves at most once; it never comes back. Together, the two pointers make at most <code>2n</code> moves.</p>
+<div class="fig" id="slN"></div>
+<div class="fig" id="grN"></div>
+<p>The frequency map holds at most <code>K</code> entries (or at most the number of distinct characters in the input), so the extra space is <code>O(K)</code>, and <code>O(n)</code> in the worst case when <code>K</code> can grow with the input.</p>
+<blockquote><p>A nested while loop does not automatically make an algorithm quadratic. Count pointer movement, not loop depth.</p></blockquote>
+<p>A useful mental model is a rubber band stretched over the array. The right side keeps pulling it forward. If the rule is broken, the left side is pulled forward to repair it.</p>
+
+<!-- ===== 4 ===== -->
+<h2 id="s4">4. Same structure, new story: Fruits into Baskets</h2>
+<p>You have two baskets, and each can hold only one type of fruit. What is the maximum number of fruits you can pick from a contiguous section of trees? With trees <code>A A B B B C C</code> and two baskets, we are really looking for the longest contiguous range containing at most 2 distinct values.</p>
+<div class="fig">
+<div class="flow">
+<div class="cell">Fruits into Baskets</div><span>↓</span>
+<div class="cell">at most 2 fruit types</div><span>↓</span>
+<div class="cell">at most 2 distinct values</div><span>↓</span>
+<div class="cell">longest valid contiguous window</div><span>↓</span>
+<div class="cell">same sliding-window reasoning</div>
+</div>
+</div>
+<p>Here it is on a few tree rows. The code is the same function as before.</p>
+<div class="fig" id="stFruit"></div>
+<blockquote><p>The story changed. The underlying structure did not. We are learning to recognize the structure underneath the story.</p></blockquote>
+
+<!-- ===== 5 ===== -->
+<h2 id="s5">5. Remove K entirely: No-Repeat Substring</h2>
+<p>Find the longest substring without repeating characters. What makes a window valid? No character may appear more than once. So <code>"abc"</code> is valid, but <code>"abca"</code> is not, because <code>a</code> appears twice. The behaviour is identical: expand, detect a duplicate, shrink until valid.</p>
+<h3>The naive way to shrink: frequency counts</h3>
+<p>When we hit a duplicate we remove from the left one character at a time until the duplicate disappears. Simple, and easy to reason about. But we already know exactly which character caused the problem.</p>
+<h3>Key insight: remember where each character was last seen</h3>
+<blockquote><p>If we maintain more information, can we make the update cheaper?</p></blockquote>
+<p>For <code>a b c a</code>, the previous <code>a</code> was at index 0. So the next valid window must start after it: <code>left = 1</code>. We can jump, not crawl. Compare both approaches side by side, then try the string <code>abba</code>, which has a trap in the jump version.</p>
+<div class="two">
+<div class="fig" id="nrA"><!-- counts --></div>
+<div class="fig" id="nrB"><!-- last seen --></div>
+</div>
+<p class="cap">Left: frequency counts, shrink one at a time. Right: last-seen positions, jump <code>left</code> directly. On <code>abba</code>, notice that the second <code>a</code> was seen at index 0, but that is already outside the window, so <code>left</code> must not move backward. That is why the code uses <code>max</code>.</p>
+
+<h3>The complete algorithms</h3>
+<details open><summary>Python code (click to hide or show)</summary><pre># Frequency counts
+def longest_no_repeat_counts(s):
+    left, best = 0, 0
+    counts = {}
+    for right, ch in enumerate(s):
+        counts[ch] = counts.get(ch, 0) + 1
+        while counts[ch] &gt; 1:
+            counts[s[left]] -= 1
+            left += 1
+        best = max(best, right - left + 1)
+    return best
+
+# Last-seen positions
+def longest_no_repeat_last_seen(s):
+    last = {}
+    left, best = 0, 0
+    for right, ch in enumerate(s):
+        if ch in last:
+            left = max(left, last[ch] + 1)   # never move left backward
+        last[ch] = right
+        best = max(best, right - left + 1)
+    return best</pre></details>
+
+<h3>Why not just pick the faster one?</h3>
+<div class="fig scroll"><table class="tt"><tr><th></th><th>Frequency counts</th><th>Last-seen positions</th></tr>
+<tr><td>Time</td><td>O(n)</td><td>O(n)</td></tr>
+<tr><td>Extra space</td><td>O(distinct characters)</td><td>O(distinct characters)</td></tr>
+<tr><td>Movement of <code>left</code></td><td>one step at a time</td><td>direct jump</td></tr>
+<tr><td>Reasoning</td><td>same loop shape as every other window problem</td><td>needs the <code>max</code> guard; easy to get wrong</td></tr></table></div>
+<p>Both are linear. The jump version stores more state to move the boundary more directly, but it asks you to reason about a subtle edge case. Neither is universally better, and the lesson is the tradeoff, not a canonical template.</p>
+
+<!-- ===== 6 ===== -->
+<h2 id="s6">6. Longest versus smallest</h2>
+<p>This distinction changes the behaviour of the whole algorithm. Pick a tab.</p>
+<div class="fig" id="ls"></div>
+<p>Here is the smallest case in action: the smallest subarray with sum at least a target, from the previous article. Notice how it shrinks while the window is still valid, the opposite of what we did above.</p>
+<div class="fig" id="stShort"></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>def smallest_subarray_sum(nums, target):
+    left, total = 0, 0
+    best = float("inf")
+    for right in range(len(nums)):
+        total += nums[right]
+        while total &gt;= target:            # shrink while VALID
+            best = min(best, right - left + 1)
+            total -= nums[left]
+            left += 1
+    return 0 if best == float("inf") else best</pre></details>
+<blockquote><p>Longest: expand aggressively, shrink only when forced. Smallest: expand until valid, shrink aggressively while valid.</p></blockquote>
+
+<!-- ===== 7 ===== -->
+<h2 id="s7">7. When does this actually work?</h2>
+<p>Not every substring problem can be solved by blindly doing <code>right += 1</code> and <code>while invalid: left += 1</code>. The crucial question is whether moving <code>left</code> monotonically repairs the violation.</p>
+<div class="fig" id="mono"></div>
+<blockquote><p>The pattern works because of the properties of the problem, not because we memorized a loop.</p></blockquote>
+
+<!-- ===== 8 ===== -->
+<h2 id="s8">8. What these problems taught us</h2>
+<p>Every sliding-window problem has three pieces. The window <code>[left ... right]</code>. The <strong>state</strong> we maintain about it. And the <strong>validity condition</strong>. Pick a problem to see its three pieces:</p>
+<div class="fig" id="formW"></div>
+<h3>Validity is the real engine</h3>
+<p>The loop below is the same function in all three tabs. Only the validity rule changes.</p>
+<div class="fig" id="vEngine"></div>
+<p>The pointers tell us <em>where</em> the window is. The maintained state tells us <em>what is happening inside it</em>. The validity condition tells us <em>whether we are allowed to keep it</em>.</p>
+
+<!-- ===== 9 ===== -->
+<h2 id="s9">9. The bigger pattern</h2>
+<p>In the first article the reasoning was: the next window overlaps with the previous one, so do not recalculate everything. Now we have added a layer: the window has no predetermined size, so let its boundaries move according to a validity condition.</p>
+<p>The tradeoff is the same one that appears all over algorithm design:</p>
+<div class="fig"><div class="flow"><div class="cell">more maintained state</div><span>↓</span><div class="cell">less recomputation</div><span>↓</span><div class="cell">faster algorithm</div></div></div>
+<p>We spend a little memory on a frequency map to avoid asking "what is inside this substring?" from scratch every time.</p>
+<blockquote><p>Can this window satisfy the constraint, and what is the cheapest state that lets me check?</p></blockquote>
+
+<!-- ===== 10 ===== -->
+<h2 id="s10">10. A useful way to recognize these problems</h2>
+<p>When you see a new subarray or substring problem, do not ask "which template is this?". Ask these instead.</p>
+<ol>
+<li><strong>Is the thing we look at contiguous?</strong> If yes, a window may make sense.</li>
+<li><strong>What makes a window valid?</strong> Write it in plain English, such as "at most 2 distinct characters".</li>
+<li><strong>What information do I need to maintain?</strong> A sum, a frequency map, last-seen positions, a count of zeroes.</li>
+<li><strong>If I expand, what changes?</strong> A new element enters, so update the state.</li>
+<li><strong>If the window becomes invalid, how can I repair it?</strong> Usually move <code>left</code> forward while updating the state.</li>
+<li><strong>Longest or shortest?</strong> That decides when shrinking happens.</li>
+</ol>
+
+<!-- ===== 11 ===== -->
+<h2 id="s11">11. The evolution of the idea</h2>
+<div class="fig scroll"><table class="tt"><tr><th>Problem</th><th>What it teaches</th></tr>
+<tr><td>Maximum sum of size K</td><td>Fixed window: slide, do not recompute.</td></tr>
+<tr><td>Smallest subarray with sum ≥ target</td><td>Variable window: shrink while valid.</td></tr>
+<tr><td>Longest substring with K distinct</td><td>State becomes a frequency map; shrink only when invalid.</td></tr>
+<tr><td>Fruits into Baskets</td><td>A new story on the same structure.</td></tr>
+<tr><td>No-repeat substring</td><td>Validity without a number; last-seen positions can make shrinking cheaper.</td></tr></table></div>
+<h3>What comes next</h3>
+<p>The next problems make the constraint itself more interesting. In <em>longest substring with at most <code>K</code> replacements to make all characters the same</em>, "distinct characters" is no longer enough: we need the most frequent character in the window and how many replacements the rest would cost. In <em>longest run of 1s after flipping at most <code>K</code> zeroes</em>, the state becomes the number of zeroes in the window.</p>
+<blockquote><p>The window itself is no longer the difficult part. Designing the right state and the right validity condition is.</p></blockquote>
+</main>
+
+<script>
+/* ===== SHARED HELPERS: do not change ===== */
+var $=function(i){return document.getElementById(i)};
+var L=function(v){return v.toLocaleString('en-US')};
+var num=function(x,y){return x-y};
+function isSorted(a){for(var i=1;i<a.length;i++)if(a[i-1]>a[i])return false;return true}
+
+/* cells(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label above'}, noix:true}) -> row of cells */
+function cells(a,o){o=o||{};var c=o.c||{};return '<div class="row">'+a.map(function(v,i){var g=v===''||v===null;return '<div class="cw"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="cell'+(g?' gap':'')+' '+(c[i]||'')+'">'+(g?'&nbsp;':v)+'</div><span class="ix">'+(o.noix?'':i)+'</span></div>'}).join('')+'</div>'}
+
+/* widget(id, presets, build): Previous/Next stepper.
+   presets = [[buttonLabel, params], ...]; build(params) returns [{h:htmlString, n:noteText}, ...] */
+function widget(id,opts,build){
+  var el=$(id),i=0,st=[];
+  el.innerHTML=(opts.length>1?'<div class="row" style="align-items:center">'+opts.map(function(o,k){return '<button data-k="'+k+'">'+o[0]+'</button>'}).join('')+'</div>':'')+'<div class="scroll v"></div><p class="note" aria-live="polite"></p><div class="ctl"><button class="pv">Previous</button><span class="pos"></span><button class="nx">Next</button><button class="pl">Play</button></div>';
+  var v=el.querySelector('.v'),n=el.querySelector('.note'),p=el.querySelector('.pos'),pv=el.querySelector('.pv'),nx=el.querySelector('.nx'),pl=el.querySelector('.pl'),tm=null;
+  function stop(){if(tm){clearInterval(tm);tm=null}pl.textContent='Play'}
+  function r(){v.innerHTML=st[i].h;n.textContent=st[i].n;p.textContent='Step '+(i+1)+' of '+st.length;pv.disabled=i===0;nx.disabled=i===st.length-1}
+  function pick(k){stop();st=build(opts[k][1]);i=0;[].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.k===k))});r()}
+  [].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.onclick=function(){pick(+b.dataset.k)}});
+  pv.onclick=function(){stop();if(i>0){i--;r()}};nx.onclick=function(){stop();if(i<st.length-1){i++;r()}};
+  pl.onclick=function(){if(tm){stop();return}if(i>=st.length-1){i=0;r()}pl.textContent='Pause';tm=setInterval(function(){if(i<st.length-1){i++;r()}else stop()},1100)};
+  pick(0);
+}
+
+/* tabs(id, labels, fn): tab buttons; fn(k) returns html for tab k */
+function tabs(id,labels,fn){var el=$(id);el.innerHTML='<div class="row" style="align-items:center"></div><div class="tv"></div>';var bar=el.firstChild,tv=el.lastChild;
+  labels.forEach(function(t,k){var b=document.createElement('button');b.textContent=t;b.onclick=function(){[].forEach.call(bar.children,function(x){x.setAttribute('aria-pressed',String(x===b))});tv.innerHTML=fn(k)};b.setAttribute('aria-pressed',String(k===0));bar.appendChild(b)});tv.innerHTML=fn(0)}
+
+/* growth(id, ns, bruteFn, betterFn, header1, header2): log-scale comparison table */
+function growth(id,ns,bf,tp,h1,h2){$(id).innerHTML='<table><tr><th>n</th><th>'+h1+'</th><th>'+h2+'</th></tr>'+ns.map(function(n){var b=bf(n),t=tp(n);return '<tr><td>'+L(n)+'</td><td>'+L(b)+'<div class="bar r" style="width:'+Math.max(1,Math.log10(b)/12*100)+'%;margin-left:auto"></div></td><td>'+L(t)+'<div class="bar g" style="width:'+Math.max(1,Math.log10(t)/12*100)+'%;margin-left:auto"></div></td></tr>'}).join('')+'</table><p class="cap">Bars use a log scale, otherwise the second column would be invisible.</p>'}
+
+/* flow(['step','step',...]) -> vertical arrow flow */
+function flow(a){return '<div class="flow">'+a.map(function(x){return '<div class="cell">'+x+'</div>'}).join('<span>↓</span>')+'</div>'}
+
+/* grid(matrix, {c:function(r,c){return 'ok|now|dim|mv'}, rh:[row headers], ch:[col headers]}) -> 2D table of cells (DP tables, grids, matrices) */
+function grid(m,o){o=o||{};var w=m[0].length,ch=o.ch,rh=o.rh;
+  var h='<div class="mx" style="grid-template-columns:'+(rh?'auto ':'')+'repeat('+w+',minmax(0,1fr))">';
+  if(ch){h+=(rh?'<span></span>':'')+ch.map(function(x){return '<span class="mh">'+x+'</span>'}).join('')}
+  m.forEach(function(r,i){if(rh)h+='<span class="mh">'+rh[i]+'</span>';r.forEach(function(v,j){h+='<div class="cell '+((o.c&&o.c(i,j))||'')+'">'+v+'</div>'})});
+  return h+'</div>'}
+
+/* vbars(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label'}}) -> vertical bar chart of an array (sorting, partitioning, heights) */
+function vbars(a,o){o=o||{};var c=o.c||{},mx=Math.max.apply(null,a.map(Math.abs))||1;
+  return '<div class="vb">'+a.map(function(v,i){return '<div class="vc"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="vbar '+(c[i]||'')+'" style="height:'+Math.max(4,Math.round(Math.abs(v)/mx*110))+'px"></div><span class="ix">'+v+'</span></div>'}).join('')+'</div>'}
+
+/* driver(id, cfg): "you drive the algorithm". The reader picks the move; wrong moves get a teaching message.
+   cfg = {
+     presets:[[label,param],...],
+     init:function(param){return state},
+     view:function(state,done){return html},
+     done:function(state){return bool},
+     prompt:function(state,done){return 'What should we do?'},
+     choices:[['A','button text'],['B','button text'],...],
+     expected:function(state){return 'A'},               // the correct choice id
+     apply:function(state,choiceId){ return 'Right. why it worked'},   // mutate state here
+     hint:function(state){return 'general hint'},
+     wrong:function(state,choiceId){return 'specific message for a tempting wrong choice, or undefined'}
+   } */
+function driver(id,cfg){
+  var el=$(id),k=0,s,msg='';
+  function init(){s=cfg.init(cfg.presets[k][1]);msg='';draw()}
+  function draw(){var done=cfg.done(s);
+    el.innerHTML='<div class="row" style="align-items:center">'+cfg.presets.map(function(p,j){return '<button data-p="'+j+'" aria-pressed="'+(j===k)+'">'+p[0]+'</button>'}).join('')+'</div><div class="scroll">'+cfg.view(s,done)+'</div><p class="note" aria-live="polite"><strong>'+cfg.prompt(s,done)+'</strong></p><div class="ctl">'+cfg.choices.map(function(c){return '<button data-c="'+c[0]+'"'+(done?' disabled':'')+'>'+c[1]+'</button>'}).join('')+'</div><p class="note" aria-live="polite">'+msg+'</p>';
+    [].forEach.call(el.querySelectorAll('button[data-p]'),function(b){b.onclick=function(){k=+b.dataset.p;init()}});
+    [].forEach.call(el.querySelectorAll('button[data-c]'),function(b){b.onclick=function(){choose(b.dataset.c)}})}
+  function choose(c){if(c!==cfg.expected(s)){msg=(cfg.wrong&&cfg.wrong(s,c))||('Not quite. '+cfg.hint(s));draw();return}
+    msg=cfg.apply(s,c)||'Right.';draw()}
+  init()}
+
+/* slider(id, {min,max,value,label,render:function(v){return html}}) -> "drag to see how the cost grows" figure */
+function slider(id,o){var el=$(id);el.innerHTML='<label for="'+id+'S">'+o.label+' = <strong class="so"></strong></label><input id="'+id+'S" type="range" min="'+o.min+'" max="'+o.max+'" value="'+o.value+'"><div class="sv"></div>';
+  var inp=el.querySelector('input'),out=el.querySelector('.so'),sv=el.querySelector('.sv');
+  function u(){out.textContent=inp.value;sv.innerHTML=o.render(+inp.value)}inp.oninput=u;u()}
+
+/* ===== PAGE-SPECIFIC ILLUSTRATIONS GO BELOW ===== */
+
+/* ---------- shared simulation: longest valid window for any validity rule ---------- */
+function dist(c){return Object.keys(c).length}
+function kv(k){return function(c){return dist(c)<=k}}
+function nv(c){for(var x in c)if(c[x]>1)return false;return true}
+function cs(c){return '{'+Object.keys(c).map(function(x){return x+':'+c[x]}).join(', ')+'}'}
+
+function sim(a,valid,desc){
+  var counts={},l=0,bl=0,br=-1,st=[];
+  function view(l,r,cls,fin){
+    var c={},sub={},i;
+    for(i=0;i<a.length;i++)c[i]=(i>=l&&i<=r)?'mv':'dim';
+    if(fin){for(i=bl;i<=br;i++)c[i]='ok'}
+    else if(r>=l&&cls)c[r]=cls;
+    if(r>=l){sub[l]='L';sub[r]=(l===r?'L,R':'R')}
+    return cells(a,{c:c,sub:sub})+'<p class="lbl">counts '+cs(counts)+' · distinct = '+dist(counts)+'</p>'}
+  st.push({h:view(0,-1),n:'Empty window. '+desc});
+  for(var r=0;r<a.length;r++){
+    counts[a[r]]=(counts[a[r]]||0)+1;
+    var v=valid(counts);
+    st.push({h:view(l,r,'now'),n:'Add '+a[r]+' on the right. '+(v?'Window is still valid, length '+(r-l+1)+'.':'Window is now INVALID. Repair it from the left.')});
+    while(!valid(counts)){
+      var ch=a[l];counts[ch]--;if(!counts[ch])delete counts[ch];l++;
+      st.push({h:view(l,r),n:'Remove '+ch+' from the left. '+(valid(counts)?'Valid again, length '+(r-l+1)+'.':'Still invalid, keep shrinking.')});
+    }
+    if(r-l+1>br-bl+1){bl=l;br=r}
+  }
+  st.push({h:view(l,a.length-1,null,true),n:'Done. Longest valid window has length '+(br-bl+1)+': "'+a.slice(bl,br+1).join('')+'".'});
+  st.best=[bl,br];
+  return st}
+
+/* ---------- section 1 ---------- */
+(function(){
+  var a='araaci'.split('');
+  $('fig1a').innerHTML=
+    '<p class="lbl">Fixed window (previous article): we choose the size, here 3</p>'+
+    cells(['2','1','5','1','3','2'],{c:{0:'mv',1:'mv',2:'mv'},noix:true})+
+    '<p class="lbl">Variable window: could be size 2, 4 or 5. It depends on the contents</p>'+
+    cells(a,{c:{0:'mv',1:'mv'},noix:true})+
+    cells(a,{c:{0:'mv',1:'mv',2:'mv',3:'mv'},noix:true})+
+    cells(a,{c:{0:'mv',1:'mv',2:'mv',3:'mv',4:'mv'},noix:true})+
+    '<p class="cap">Three candidate windows over <code>"araaci"</code>. Which is right? We cannot tell without checking the rule.</p>';
+  $('fig1b').innerHTML=
+    '<p class="lbl">"ara" has {a, r}: 2 distinct, valid</p>'+cells(a,{c:{0:'ok',1:'ok',2:'ok',3:'dim',4:'dim',5:'dim'},noix:true})+
+    '<p class="lbl">"araa" has {a, r}: 2 distinct, valid</p>'+cells(a,{c:{0:'ok',1:'ok',2:'ok',3:'ok',4:'dim',5:'dim'},noix:true})+
+    '<p class="lbl">"araac" has {a, r, c}: 3 distinct, invalid</p>'+cells(a,{c:{0:'mv',1:'mv',2:'mv',3:'mv',4:'now',5:'dim'},sub:{4:'3rd distinct'},noix:true})+
+    '<p class="cap">Green = valid. Yellow = the character that broke the rule.</p>';
+})();
+
+/* ---------- section 2 ---------- */
+widget('stK',[
+  ['"araaci", K=2',['araaci',2]],
+  ['"araaci", K=1',['araaci',1]],
+  ['"cbbebi", K=3',['cbbebi',3]]
+],function(p){return sim(p[0].split(''),kv(p[1]),'Rule: at most '+p[1]+' distinct character'+(p[1]>1?'s':'')+'.')});
+
+$('fig2a').innerHTML=
+  '<p class="lbl">Window [a r a a c]. Moving the left boundary keeps it contiguous:</p>'+
+  cells(['a','r','a','a','c'],{c:{0:'dim',1:'mv',2:'mv',3:'mv',4:'mv'},sub:{1:'L',4:'R'},noix:true})+
+  '<p class="lbl">Removing the middle r leaves a hole, not a range:</p>'+
+  cells(['a','','a','a','c'],{c:{0:'mv',2:'mv',3:'mv',4:'mv'},noix:true})+
+  '<p class="cap">The dashed cell cannot be described by two boundaries. That is why we only ever move <code>left</code>.</p>';
+
+slider('slK',{min:1,max:4,value:2,label:'K (max distinct characters)',render:function(k){
+  var a='araaci'.split(''),s=sim(a,kv(k),''),b=s.best,c={},i;
+  for(i=0;i<a.length;i++)c[i]=(i>=b[0]&&i<=b[1])?'ok':'dim';
+  return cells(a,{c:c})+'<p class="cap">String "araaci". With K='+k+', the longest valid window is "'+a.slice(b[0],b[1]+1).join('')+'" with length '+(b[1]-b[0]+1)+'.</p>'}});
+
+driver('drv',{
+  presets:[['"araaci", K=2',['araaci',2]],['"cbbebi", K=3',['cbbebi',3]]],
+  init:function(p){return {a:p[0].split(''),k:p[1],l:0,r:0,c:{},bl:0,br:-1}},
+  view:function(s,done){
+    var c={},sub={},i;
+    for(i=0;i<s.a.length;i++)c[i]=(i>=s.l&&i<s.r)?'mv':'dim';
+    if(done){for(i=s.bl;i<=s.br;i++)c[i]='ok'}
+    if(s.r>s.l)sub[s.l]='L';
+    if(s.r<s.a.length)sub[s.r]=(sub[s.r]?sub[s.r]+',':'')+'next';
+    return cells(s.a,{c:c,sub:sub})+'<p class="lbl">counts '+cs(s.c)+' · distinct = '+dist(s.c)+' (limit '+s.k+') · best so far = '+(s.br-s.bl+1)+'</p>'},
+  done:function(s){return s.r>=s.a.length&&dist(s.c)<=s.k},
+  prompt:function(s,done){
+    if(done)return 'Done. The longest valid window has length '+(s.br-s.bl+1)+': "'+s.a.slice(s.bl,s.br+1).join('')+'".';
+    return dist(s.c)>s.k?'The window is INVALID ('+dist(s.c)+' distinct, limit '+s.k+'). What now?':'The window is valid. What now?'},
+  choices:[['E','Expand right'],['S','Shrink left']],
+  expected:function(s){return dist(s.c)>s.k?'S':'E'},
+  apply:function(s,c){
+    if(c==='E'){var ch=s.a[s.r];s.c[ch]=(s.c[ch]||0)+1;s.r++}
+    else{var x=s.a[s.l];s.c[x]--;if(!s.c[x])delete s.c[x];s.l++}
+    if(dist(s.c)<=s.k&&s.r-s.l>s.br-s.bl+1){s.bl=s.l;s.br=s.r-1}
+    return c==='E'?'Right. The window was valid, so growing can only help us find a longer one.':'Right. Moving left is the only repair that keeps the window contiguous.'},
+  hint:function(s){return 'Ask yourself: is the window valid right now? Valid, expand. Invalid, shrink.'},
+  wrong:function(s,c){return c==='S'?'The window is valid and we want the longest. Shrinking now only throws length away. Shrink only when forced.':'The window is already invalid. Adding more cannot reduce the distinct count. Repair it first by moving left.'}
+});
+
+/* ---------- section 3 ---------- */
+slider('slN',{min:1,max:30,value:12,label:'string length n',render:function(n){
+  var mw=2*n,sub=n*(n+1)/2;
+  return '<p class="lbl">Right pointer moves: <strong>'+n+'</strong> · Left pointer moves: at most <strong>'+n+'</strong> · Total: at most <strong>'+mw+'</strong></p>'+
+    '<div class="lbl">Window (pointer moves)</div><div class="bar g" style="width:'+(mw/930*100)+'%"></div>'+
+    '<div class="lbl">Brute force: substrings to inspect (n(n+1)/2 = '+sub+')</div><div class="bar r" style="width:'+(sub/465*100)+'%"></div>'+
+    '<p class="cap">Bars share the same scale (up to n=30). For tiny n brute force is not worse; the gap is in how the two grow.</p>'}});
+growth('grN',[10,100,1000,10000,100000],function(n){return n*(n+1)/2},function(n){return 2*n},'Substrings (brute force)','Window moves (≤ 2n)');
+
+/* ---------- section 4 ---------- */
+widget('stFruit',[
+  ['A A B B B C C',['AABBBCC',2]],
+  ['A B C B B C B A',['ABCBBCBA',2]],
+  ['A B A C C',['ABACC',2]]
+],function(p){return sim(p[0].split(''),kv(p[1]),'Two baskets: at most 2 fruit types.')});
+
+/* ---------- section 5 ---------- */
+widget('nrA',[['abcabcbb','abcabcbb'],['abba','abba']],function(s){return sim(s.split(''),nv,'Valid = no character appears twice. Counts method.')});
+
+widget('nrB',[['abcabcbb','abcabcbb'],['abba','abba']],function(s){
+  var a=s.split(''),last={},l=0,bl=0,br=-1,st=[];
+  function lastStr(){return '{'+Object.keys(last).map(function(x){return x+'→'+last[x]}).join(', ')+'}'}
+  function view(r,fin){var c={},sub={},i;
+    for(i=0;i<a.length;i++)c[i]=(r>=0&&i>=l&&i<=r)?'mv':'dim';
+    if(fin){for(i=bl;i<=br;i++)c[i]='ok'}else if(r>=0)c[r]='now';
+    if(r>=0){sub[l]='L';sub[r]=(l===r?'L,R':'R')}
+    return cells(a,{c:c,sub:sub})+'<p class="lbl">last seen '+lastStr()+'</p>'}
+  st.push({h:view(-1),n:'Empty window. Last-seen method: jump left past the previous copy.'});
+  for(var r=0;r<a.length;r++){
+    var ch=a[r],note;
+    if(ch in last){
+      if(last[ch]>=l){l=last[ch]+1;note='Seen '+ch+' at index '+last[ch]+', inside the window. Jump left to '+l+'.'}
+      else note='Seen '+ch+' at index '+last[ch]+', but that is already outside the window. Do NOT move left backward (the max guard).'}
+    else note='New character '+ch+'. Window just grows.';
+    last[ch]=r;
+    if(r-l+1>br-bl+1){bl=l;br=r}
+    st.push({h:view(r),n:note+' Length '+(r-l+1)+'.'})}
+  st.push({h:view(a.length-1,true),n:'Done. Longest: "'+a.slice(bl,br+1).join('')+'", length '+(br-bl+1)+'.'});
+  return st});
+
+/* ---------- section 6 ---------- */
+tabs('ls',['Longest valid window','Smallest valid window'],function(k){
+  if(k===0)return '<p class="note">Looking for the <strong>longest</strong> window. Once valid, making it smaller moves us away from the goal.</p>'+
+    flow(['expand','valid?','yes: keep expanding','no: shrink from left until valid again'])+
+    '<p class="cap">Seen in: K distinct characters, Fruits into Baskets, No-repeat substring.</p>';
+  return '<p class="note">Looking for the <strong>smallest</strong> window. Once valid, record it and try to make it smaller.</p>'+
+    flow(['expand until valid','valid?','yes: record, then shrink while still valid','no: expand'])+
+    '<p class="cap">Seen in: smallest subarray with a given sum.</p>'});
+
+widget('stShort',[
+  ['[2,1,5,2,3,2], target 7',[[2,1,5,2,3,2],7]],
+  ['[2,1,5,2,8], target 7',[[2,1,5,2,8],7]],
+  ['[3,4,1,1,6], target 8',[[3,4,1,1,6],8]]
+],function(p){
+  var a=p[0],t=p[1],l=0,sum=0,best=1e9,bl=0,br=-1,st=[];
+  function view(l,r,fin){var c={},sub={},i;
+    for(i=0;i<a.length;i++)c[i]=(r>=0&&i>=l&&i<=r)?'mv':'dim';
+    if(fin){for(i=bl;i<=br;i++)c[i]='ok'}else if(r>=0&&r>=l)c[r]='now';
+    if(r>=l&&r>=0){sub[l]='L';sub[r]=(l===r?'L,R':'R')}
+    return cells(a,{c:c,sub:sub})+'<p class="lbl">window sum = '+sum+' · target = '+t+'</p>'}
+  st.push({h:view(0,-1),n:'Empty window. Valid means sum ≥ '+t+'. We want the smallest.'});
+  for(var r=0;r<a.length;r++){
+    sum+=a[r];
+    st.push({h:view(l,r),n:'Add '+a[r]+'. Sum = '+sum+'. '+(sum>=t?'Valid! Now shrink while it stays valid.':'Not valid yet, keep expanding.')});
+    while(sum>=t){
+      var len=r-l+1;if(len<best){best=len;bl=l;br=r}
+      var gone=a[l];sum-=gone;l++;
+      st.push({h:view(l,r),n:'Window had length '+len+' (best '+best+'). Drop '+gone+'. Sum = '+sum+'. '+(sum>=t?'Still valid, keep shrinking.':'Invalid, expand again.')})}
+  }
+  st.push({h:view(l,a.length-1,true),n:best===1e9?'No window reaches the target.':'Done. Smallest valid window has length '+best+'.'});
+  return st});
+
+/* ---------- section 7 ---------- */
+tabs('mono',['Positive numbers: sum ≥ target','With negatives'],function(k){
+  if(k===0)return cells([2,3,1,2,4],{c:{0:'mv',1:'mv',2:'mv',3:'mv',4:'mv'},sub:{0:'drop me'}})+
+    '<p class="note">Window sum is 12. Removing from the left can only <strong>lower</strong> the sum, never raise it. So "shrink while sum ≥ target" is predictable and safe.</p>';
+  return cells([-2,5,1,-1,4],{c:{0:'now',1:'mv',2:'mv',3:'mv',4:'mv'},sub:{0:'drop me'}})+
+    '<p class="note">Dropping the <strong>-2</strong> makes the sum go <strong>up</strong>. Now shrinking might fix the violation or it might not, depending on what we remove, so one left-moving pass can skip valid answers. A different technique is needed.</p>'});
+
+/* ---------- section 8 ---------- */
+tabs('formW',['K distinct','Fruits into Baskets','No-repeat','Smallest sum'],function(k){
+  var rows=[
+    ['<code>[left...right]</code> over a string','frequency map','distinct ≤ K','longest'],
+    ['<code>[left...right]</code> over trees','frequency map of fruit types','distinct types ≤ 2','longest'],
+    ['<code>[left...right]</code> over a string','frequency map or last-seen positions','every character appears ≤ 1 time','longest'],
+    ['<code>[left...right]</code> over numbers','running sum','sum ≥ target','smallest']][k];
+  return '<table class="tt"><tr><td>Window</td><td>'+rows[0]+'</td></tr><tr><td>State</td><td>'+rows[1]+'</td></tr><tr><td>Validity</td><td>'+rows[2]+'</td></tr><tr><td>Goal</td><td>'+rows[3]+'</td></tr></table>'});
+
+tabs('vEngine',['≤ K distinct (K=2)','Fruits (≤ 2 types)','No repeats'],function(k){
+  var cfg=[['araaci'.split(''),kv(2),'at most 2 distinct'],['AABBBCC'.split(''),kv(2),'at most 2 fruit types'],['abcabcbb'.split(''),nv,'no duplicates']][k];
+  var s=sim(cfg[0],cfg[1],''),b=s.best,c={},i;
+  for(i=0;i<cfg[0].length;i++)c[i]=(i>=b[0]&&i<=b[1])?'ok':'dim';
+  return '<p class="note">Rule: '+cfg[2]+'.</p>'+cells(cfg[0],{c:c})+'<p class="cap">Longest valid window: "'+cfg[0].slice(b[0],b[1]+1).join('')+'" (length '+(b[1]-b[0]+1)+'). Same <code>sim()</code> loop, different validity function.</p>'});
+
+/* ===== CODE TOGGLE AND THEME: do not change ===== */
+var cb=$('codeBtn'),hid=false;
+cb.onclick=function(){hid=!hid;[].forEach.call(document.querySelectorAll('details'),function(d){d.open=!hid});cb.textContent=hid?'Show code':'Hide code'};
+var root=document.documentElement,tb=$('theme');
+function setTheme(t){root.setAttribute('data-theme',t);tb.textContent=t==='dark'?'Light':'Dark'}
+try{var sv=localStorage.getItem('theme');if(sv==='dark'||sv==='light')setTheme(sv)}catch(e){}
+tb.onclick=function(){var t=root.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);try{localStorage.setItem('theme',t)}catch(e){}};
+</script>
+</body>
+</html>

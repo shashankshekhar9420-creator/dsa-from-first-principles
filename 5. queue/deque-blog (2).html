@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Deque: Why Would We Need Both Ends?</title>
+<style>
+:root{--bg:#fff;--ink:#111;--mut:#555;--line:#ccc;--acc:#1f4e8c;--hi:#fff3b0;--hib:#c9a227;--ok:#dcf0dc;--okb:#3a8a3a;--mv:#e6edf7;--dim:#eee;--card:#fafafa;--red:#b5342b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#121212;--ink:#eee;--mut:#aaa;--line:#3a3a3a;--acc:#8ab4f8;--hi:#4a4220;--hib:#c9a227;--ok:#1d3a22;--okb:#5cb85c;--mv:#1c2a40;--dim:#2a2a2a;--card:#1a1a1a;--red:#ff7b72;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Roman",Times,serif}
+main{max-width:720px;margin:0 auto;padding:40px 20px 80px}
+h1,h2,h3{font-family:inherit;line-height:1.25}
+h1{font-size:2.1rem;margin:.2em 0 .6em}
+h2{font-size:1.5rem;margin:2.6em 0 .6em;padding-top:1.2em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin:1.3em 0 .3em}
+blockquote{margin:1em 0;padding:.4em 1em;border-left:4px solid var(--acc);font-size:1.12rem}
+blockquote p{margin:.3em 0}
+code{font:inherit;background:var(--card);padding:1px 5px;border-radius:4px}
+a{color:var(--acc)}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:1.2em 0}
+.cap{font-size:.9rem;color:var(--mut);margin:.6em 0 0}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:flex-end}
+.cw{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ix{font-size:.8rem;color:var(--mut);min-height:1.1em;font-weight:600}
+.cell{min-width:40px;padding:7px 6px;text-align:center;border:2px solid var(--line);background:var(--bg);border-radius:6px;font-weight:600;transition:background .2s}
+.gap{border-style:dashed;background:transparent}
+.ok{background:var(--ok);border-color:var(--okb)}
+.now{background:var(--hi);border-color:var(--hib)}
+.dim{background:var(--dim);color:var(--mut);border-color:var(--dim)}
+.mv{background:var(--mv);border-color:var(--acc)}
+.mx{display:grid;gap:3px;margin:8px 0}
+.mh{font-size:.8rem;color:var(--mut);text-align:center;align-self:center}
+.mx .cell{min-width:0;padding:3px 0;font-size:.8rem}
+button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
+button:hover:not(:disabled){background:var(--mv)}
+button:disabled{opacity:.4;cursor:default}
+button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--hib);outline-offset:2px}
+.tools{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5;display:flex;gap:8px}
+.ctl{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.pos{color:var(--mut);font-size:.9rem}
+.note{min-height:3em;margin:.4em 0 0;font-weight:500}
+.lbl{font-size:.9rem;margin:8px 0 3px}
+.bar{height:14px;border-radius:4px;background:var(--acc);min-width:3px}
+.bar.g{background:var(--okb)}.bar.r{background:var(--red)}
+input[type=range]{width:100%}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--dim)}
+details{margin:.6em 0 .9em;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+summary{cursor:pointer;padding:8px 12px;font-size:.95rem;color:var(--acc)}
+pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,Menlo,Consolas,monospace}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.two{grid-template-columns:1fr}}
+.flow{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;font-size:.95rem}
+.flow .cell{min-width:140px}
+.zones{display:flex;border:2px solid var(--line);border-radius:6px;overflow:hidden;text-align:center;font-size:.85rem}
+.zones div{padding:10px 6px}
+.flag{font-size:.9rem;color:var(--mut)}
+.tt td:first-child{font-weight:600}
+.tt td{text-align:left}
+p{margin:.7em 0}
+ul,ol{margin:.7em 0}
+li{margin:.15em 0}
+.dg{margin:.4em 0 .9em;padding:.1em 0 .1em 14px;border-left:3px solid var(--line);overflow-x:auto}
+.dg pre{padding:0;font-size:.88rem;line-height:1.45}
+.st{display:flex;gap:5px;flex-wrap:wrap;align-items:flex-end;margin:.4em 0 .9em}
+.st .cell{min-width:38px;padding:3px 10px}
+.st .ix{min-height:0}
+.st-n{display:flex;flex-direction:column;gap:2px;margin:.4em 0 .9em;font-size:.9rem;color:var(--mut)}
+.vb{display:flex;gap:6px;align-items:flex-end;margin:6px 0}
+.vc{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:26px;max-width:60px;justify-content:flex-end}
+.vbar{width:100%;border:2px solid var(--line);background:var(--bg);border-radius:4px 4px 0 0;transition:height .2s,background .2s}
+</style>
+</head>
+<body>
+<div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
+<main>
+<h1>Deque: Why Would We Need Both Ends?</h1>
+
+<p>In the previous article, we started with a simple problem:</p>
+<blockquote><p>Things arrive over time, and the first thing that arrives should leave first.</p></blockquote>
+<p>That gave us the <strong>queue</strong>.</p>
+<div class="dg"><div class="st"><div class="cw"><span class="ix">front</span><div class="cell ">A</div><span class="ix">↑ remove</span></div><div class="cw"><span class="ix">&nbsp;</span><div class="cell ">B</div><span class="ix">&nbsp;</span></div><div class="cw"><span class="ix">&nbsp;</span><div class="cell ">C</div><span class="ix">&nbsp;</span></div><div class="cw"><span class="ix">back</span><div class="cell ">D</div><span class="ix">↑ add</span></div></div></div>
+<p>New things enter at the back.</p>
+<p>Old things leave from the front.</p>
+<p>That's FIFO.</p>
+<p>But while looking at sliding windows, we noticed something interesting.</p>
+<p>A sliding window also has things entering and leaving:</p>
+<div class="dg"><div class="st"><div class="cw"><div class="cell dim">2</div></div><div class="cw"><div class="cell ">1</div></div><div class="cw"><div class="cell ">5</div></div></div><div class="st-n" style="font-size:1.1rem;margin:0 0 .3em 14px">↓</div><div class="st"><div class="cw"><div class="cell ">1</div></div><div class="cw"><div class="cell ">5</div></div><div class="cw"><div class="cell now">3</div></div></div><div class="st-n"><span>2 leaves</span><span>3 enters</span></div></div>
+<p>So a queue seemed like a natural fit.</p>
+<p>But then we discovered a problem.</p>
+<p>A queue knows about <strong>order</strong>.</p>
+<p>It doesn't know about <strong>value</strong>.</p>
+<p>For example:</p>
+<div class="st"><div class="cw"><div class="cell ">2</div></div><div class="cw"><div class="cell ">1</div></div><div class="cw"><div class="cell ">5</div></div></div>
+<p>A queue knows:</p>
+<div class="dg"><pre>2 came first
+1 came second
+5 came third</pre></div>
+<p>But if we ask:</p>
+<blockquote><p>Which one is largest?</p></blockquote>
+<p>the queue doesn't help us.</p>
+<p>We'll solve that problem soon.</p>
+<p>First, however, there is one more small idea we need.</p>
+
+<h2 id="s1">1. What If the Front Isn't the Only Place We Care About?</h2>
+<p>A normal queue gives us:</p>
+<div class="dg"><div class="st"><div class="cw"><span class="ix">front</span><div class="cell ">A</div></div><div class="cw"><span class="ix">&nbsp;</span><div class="cell ">B</div></div><div class="cw"><span class="ix">&nbsp;</span><div class="cell ">C</div></div><div class="cw"><span class="ix">back</span><div class="cell ">D</div></div></div></div>
+<p>We can:</p>
+<div class="dg"><div class="st" style="margin:.2em 0"><div class="cell ">remove</div><span style="align-self:center;padding:0 4px;color:var(--mut)">←</span><div class="cell mv">front</div></div><div class="st" style="margin:.2em 0"><div class="cell ">add</div><span style="align-self:center;padding:0 4px;color:var(--mut)">→</span><div class="cell mv">back</div></div></div>
+<p>This is enough for FIFO.</p>
+<p>But imagine a slightly different problem.</p>
+<p>Suppose we have:</p>
+<div class="st"><div class="cw"><div class="cell ">A</div></div><div class="cw"><div class="cell ">B</div></div><div class="cw"><div class="cell ">C</div></div><div class="cw"><div class="cell ">D</div></div></div>
+<p>and for some reason, we want to remove either:</p>
+<div class="st"><div class="cw"><div class="cell ">A</div></div></div>
+<p>or:</p>
+<div class="st"><div class="cw"><div class="cell ">D</div></div></div>
+<p>A normal queue isn't designed around that.</p>
+<p>It has a preferred direction:</p>
+<div class="dg"><div class="st"><div class="cw"><span class="ix">remove</span><div class="cell mv">front</div></div><span style="align-self:flex-end;padding:0 4px 6px;color:var(--mut)">←────────</span><div class="cw"><span class="ix">add</span><div class="cell mv">back</div></div></div></div>
+<p>What if we want both ends to be accessible?</p>
+<p>That is the problem a <strong>deque</strong> solves.</p>
+
+<h2 id="s2">2. A Queue With Two Doors</h2>
+<p>Think of a queue as a hallway with two doors.</p>
+<div class="dg"><div class="lbl" style="margin:0 0 2px"><strong>Queue</strong></div><div class="st" style="flex-wrap:nowrap;gap:3px"><span style="align-self:center;padding:0 4px 1.2em;color:var(--mut)">enter →</span><div class="cw"><div style="min-width:30px;padding:3px 8px" class="cell ">A</div><span class="ix">↑ back</span></div><div class="cw"><div style="min-width:30px;padding:3px 8px" class="cell ">B</div><span class="ix">&nbsp;</span></div><div class="cw"><div style="min-width:30px;padding:3px 8px" class="cell ">C</div><span class="ix">&nbsp;</span></div><div class="cw"><div style="min-width:30px;padding:3px 8px" class="cell ">D</div><span class="ix">↑ front</span></div><span style="align-self:center;padding:0 4px 1.2em;color:var(--mut)">→ leave</span></div></div>
+<p>A deque simply opens both ends for operations.</p>
+<div class="dg"><div class="lbl" style="margin:0 0 2px"><strong>Deque</strong></div><div class="st" style="flex-wrap:nowrap;gap:3px"><div class="cw"><span class="ix">in/out</span><div style="min-width:30px;padding:3px 8px" class="cell mv">⇄</div></div><div class="cw"><span class="ix">&nbsp;</span><div style="min-width:30px;padding:3px 8px" class="cell ">A</div></div><div class="cw"><span class="ix">&nbsp;</span><div style="min-width:30px;padding:3px 8px" class="cell ">B</div></div><div class="cw"><span class="ix">&nbsp;</span><div style="min-width:30px;padding:3px 8px" class="cell ">C</div></div><div class="cw"><span class="ix">&nbsp;</span><div style="min-width:30px;padding:3px 8px" class="cell ">D</div></div><div class="cw"><span class="ix">in/out</span><div style="min-width:30px;padding:3px 8px" class="cell mv">⇄</div></div></div></div>
+<p>You can add or remove from either side.</p>
+<p>That's where the name comes from:</p>
+<blockquote><p><strong>Deque = Double-Ended Queue</strong></p></blockquote>
+<p>It is usually pronounced like:</p>
+<blockquote><p>"deck"</p></blockquote>
+<p>The important part isn't the name.</p>
+<p>It's the model:</p>
+<blockquote><p><strong>Both ends are accessible.</strong></p></blockquote>
+<div class="fig" id="v1"></div>
+
+<h2 id="s3">3. Why Would That Be Useful?</h2>
+<p>Let's start with an empty deque.</p>
+<div class="st"><div class="cw"><div class="cell gap">&nbsp;</div></div></div>
+<p>Add <code>A</code> to the back:</p>
+<div class="st"><div class="cw"><div class="cell ">A</div></div></div>
+<p>Add <code>B</code> to the back:</p>
+<div class="st"><div class="cw"><div class="cell ">A</div></div><div class="cw"><div class="cell ">B</div></div></div>
+<p>Add <code>C</code> to the back:</p>
+<div class="st"><div class="cw"><div class="cell ">A</div></div><div class="cw"><div class="cell ">B</div></div><div class="cw"><div class="cell ">C</div></div></div>
+<p>So far, it behaves exactly like a queue.</p>
+<p>But now we can also add something to the <strong>front</strong>.</p>
+<div class="dg"><pre>appendleft(D)</pre></div>
+<p>giving:</p>
+<div class="st"><div class="cw"><div class="cell ">D</div></div><div class="cw"><div class="cell ">A</div></div><div class="cw"><div class="cell ">B</div></div><div class="cw"><div class="cell ">C</div></div></div>
+<p>We can also remove from the front:</p>
+<div class="dg"><pre>popleft()</pre></div>
+<p>giving:</p>
+<div class="st"><div class="cw"><div class="cell ">A</div></div><div class="cw"><div class="cell ">B</div></div><div class="cw"><div class="cell ">C</div></div></div>
+<p>Or remove from the back:</p>
+<div class="dg"><pre>pop()</pre></div>
+<p>giving:</p>
+<div class="st"><div class="cw"><div class="cell ">A</div></div><div class="cw"><div class="cell ">B</div></div></div>
+<p>So the four fundamental operations are:</p>
+<div class="dg"><div class="lbl" style="margin:0 0 2px"><strong>Deque</strong></div><div class="st"><div class="cw"><span class="ix">front</span><div class="cell ">A</div></div><div class="cw"><span class="ix">&nbsp;</span><div class="cell ">B</div></div><div class="cw"><span class="ix">&nbsp;</span><div class="cell ">C</div></div><div class="cw"><span class="ix">back</span><div class="cell ">D</div></div></div><table class="tt" style="width:auto;margin:.2em 0 .6em"><tr><th></th><th>front</th><th>back</th></tr><tr><td>remove</td><td><code>popleft()</code></td><td><code>pop()</code></td></tr><tr><td>add</td><td><code>appendleft()</code></td><td><code>append()</code></td></tr></table></div>
+<p>The important observation:</p>
+<blockquote><p>A deque doesn't force us to treat one end differently from the other.</p></blockquote>
+
+<h2 id="s4">4. The Four Operations</h2>
+<p>In Python:</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>from collections import deque
+
+d = deque()</pre></details>
+<h3>Add to the back</h3>
+<details open><summary>Python code (click to hide or show)</summary><pre>d.append(10)</pre></details>
+<div class="st"><div class="cw"><div class="cell ">10</div></div></div>
+<p>Add another:</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>d.append(20)</pre></details>
+<div class="st"><div class="cw"><div class="cell ">10</div></div><div class="cw"><div class="cell ">20</div></div></div>
+<h3>Add to the front</h3>
+<details open><summary>Python code (click to hide or show)</summary><pre>d.appendleft(5)</pre></details>
+<div class="st"><div class="cw"><div class="cell ">5</div></div><div class="cw"><div class="cell ">10</div></div><div class="cw"><div class="cell ">20</div></div></div>
+<h3>Remove from the front</h3>
+<details open><summary>Python code (click to hide or show)</summary><pre>d.popleft()</pre></details>
+<div class="st"><div class="cw"><div class="cell ">10</div></div><div class="cw"><div class="cell ">20</div></div></div>
+<h3>Remove from the back</h3>
+<details open><summary>Python code (click to hide or show)</summary><pre>d.pop()</pre></details>
+<div class="st"><div class="cw"><div class="cell ">10</div></div></div>
+<p>So we have:</p>
+<div class="fig scroll"><table class="tt"><tr><th>Operation</th><th>Meaning</th></tr><tr><td><code>append(x)</code></td><td>add to back</td></tr><tr><td><code>appendleft(x)</code></td><td>add to front</td></tr><tr><td><code>pop()</code></td><td>remove from back</td></tr><tr><td><code>popleft()</code></td><td>remove from front</td></tr></table></div>
+<p>That's essentially everything we need from the deque for now.</p>
+<div class="fig" id="v2"></div>
+
+<h2 id="s5">5. Queue vs Deque</h2>
+<p>It is tempting to think:</p>
+<blockquote><p>"So is a deque just a better queue?"</p></blockquote>
+<p>Not exactly.</p>
+<p>A deque is <strong>more flexible</strong>.</p>
+<p>A queue imposes a particular rule:</p>
+<div class="dg"><div class="st" style="margin:.2em 0"><div class="cell ">add</div><span style="align-self:center;padding:0 4px;color:var(--mut)">→</span><div class="cell mv">back</div></div><div class="st" style="margin:.2em 0"><div class="cell ">remove</div><span style="align-self:center;padding:0 4px;color:var(--mut)">→</span><div class="cell mv">front</div></div></div>
+<p>A deque allows:</p>
+<div class="dg"><pre>add/remove ← either end → </pre></div>
+<p>So you can use a deque <strong>as a queue</strong>.</p>
+<p>For example:</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>from collections import deque
+
+q = deque()
+
+q.append("A")
+q.append("B")
+q.append("C")
+
+q.popleft()</pre></details>
+<p>This behaves like a normal FIFO queue.</p>
+<p>But you can also use the same structure when you need both ends.</p>
+<p>That's an important general DSA idea:</p>
+<blockquote><p><strong>A more flexible data structure can implement a simpler one.</strong></p></blockquote>
+<p>A deque can behave like a queue.</p>
+<p>A deque can also behave like a stack.</p>
+<p>But its real value appears when we genuinely need access to <strong>both ends</strong>.</p>
+
+<h2 id="s6">6. Let's Return to Sliding Window</h2>
+<p>Now let's reconnect this to what we already know.</p>
+<p>Suppose:</p>
+<div class="dg"><pre>nums = [2, 1, 5, 3, 4]
+k = 3</pre></div>
+<p>Our first window is:</p>
+<div class="st"><div class="cw"><div class="cell ">2</div></div><div class="cw"><div class="cell ">1</div></div><div class="cw"><div class="cell ">5</div></div></div>
+<p>Then the window moves:</p>
+<div class="dg"><div class="st"><div class="cw"><div class="cell dim">2</div></div><div class="cw"><div class="cell ">1</div></div><div class="cw"><div class="cell ">5</div></div></div><div class="st-n" style="font-size:1.1rem;margin:0 0 .3em 14px">↓</div><div class="st"><div class="cw"><div class="cell ">1</div></div><div class="cw"><div class="cell ">5</div></div><div class="cw"><div class="cell now">3</div></div></div></div>
+<p>What happened?</p>
+<div class="dg"><pre>2 left
+3 entered</pre></div>
+<p>Then:</p>
+<div class="dg"><div class="st"><div class="cw"><div class="cell dim">1</div></div><div class="cw"><div class="cell ">5</div></div><div class="cw"><div class="cell ">3</div></div></div><div class="st-n" style="font-size:1.1rem;margin:0 0 .3em 14px">↓</div><div class="st"><div class="cw"><div class="cell ">5</div></div><div class="cw"><div class="cell ">3</div></div><div class="cw"><div class="cell now">4</div></div></div></div>
+<p>Again:</p>
+<div class="dg"><pre>1 left
+4 entered</pre></div>
+<p>This movement has a very specific shape:</p>
+<div class="dg"><div class="two"><div class="flow"><div class="cell">oldest element</div><span>↓</span><div class="cell dim">leaves</div></div><div class="flow"><div class="cell">newest element</div><span>↓</span><div class="cell now">enters</div></div></div></div>
+<p>Which looks suspiciously like:</p>
+<div class="dg"><div class="st"><div class="cw"><span class="ix">front</span><div class="cell gap">&nbsp;</div><span class="ix">↑ leaves</span></div><div class="cw"><span class="ix">&nbsp;</span><div class="cell ok">elements inside window</div><span class="ix">&nbsp;</span></div><div class="cw"><span class="ix">back</span><div class="cell gap">&nbsp;</div><span class="ix">↑ enters</span></div></div></div>
+<p>A deque can represent this movement perfectly.</p>
+<div class="fig" id="v3"></div>
+
+<h2 id="s7">7. But Why Not Just Use a Queue?</h2>
+<p>Good question.</p>
+<p>If the window moves like a queue, why did we need to learn a deque?</p>
+<p>Because we're about to encounter a second requirement.</p>
+<p>Suppose the window is:</p>
+<div class="st"><div class="cw"><div class="cell ">2</div></div><div class="cw"><div class="cell ">1</div></div><div class="cw"><div class="cell ">5</div></div></div>
+<p>and we want:</p>
+<blockquote><p><strong>the maximum</strong></p></blockquote>
+<p>The answer is:</p>
+<div class="st"><div class="cw"><div class="cell ">5</div></div></div>
+<p>A queue can tell us that:</p>
+<div class="dg"><pre>2 is the oldest
+1 came after it
+5 came after that</pre></div>
+<p>But it cannot efficiently tell us:</p>
+<div class="dg"><pre>5 is the largest</pre></div>
+<p>So we need to maintain <strong>some information about the values</strong>.</p>
+<p>And this is where the two ends of a deque are going to become much more interesting.</p>
+
+<h2 id="s8">8. An Important Thought Experiment</h2>
+<p>Consider:</p>
+<div class="st"><div class="cw"><div class="cell ">2</div></div><div class="cw"><div class="cell ">1</div></div><div class="cw"><div class="cell ">5</div></div></div>
+<p>We want the maximum.</p>
+<p>Now ask:</p>
+<blockquote><p>Do we actually need to keep every element equally?</p></blockquote>
+<p>Suppose <code>5</code> has just entered.</p>
+<p>Compare:</p>
+<div class="dg"><pre>2 vs 5
+1 vs 5</pre></div>
+<p>We know:</p>
+<div class="dg"><pre>2 &lt; 5
+1 &lt; 5</pre></div>
+<p>So while <code>5</code> remains inside the window:</p>
+<ul>
+<li><code>2</code> cannot become the maximum.</li>
+<li><code>1</code> cannot become the maximum.</li>
+</ul>
+<p>They are already beaten by a newer element.</p>
+<p>This gives us our first major clue:</p>
+<blockquote><p><strong>Some elements inside a window can become permanently irrelevant.</strong></p></blockquote>
+<p>That's a very different idea from an ordinary queue.</p>
+<p>A queue says:</p>
+<blockquote><p>"Everyone waits their turn."</p></blockquote>
+<p>But for a maximum problem, we don't necessarily care about everyone.</p>
+<p>We care about the elements that <strong>could still become the maximum</strong>.</p>
+
+<h2 id="s9">9. The Idea of "Candidates"</h2>
+<p>Let's look at:</p>
+<div class="st"><div class="cw"><div class="cell ">2</div></div><div class="cw"><div class="cell ">1</div></div><div class="cw"><div class="cell ">5</div></div></div>
+<p>If we're looking for the maximum, the useful candidate is:</p>
+<div class="st"><div class="cw"><div class="cell ">5</div></div></div>
+<p>because it's currently the largest.</p>
+<p>The <code>2</code> and <code>1</code> are weaker candidates.</p>
+<p>But don't jump too quickly to:</p>
+<blockquote><p>"Delete everything smaller."</p></blockquote>
+<p>We need to be careful.</p>
+<p>Consider:</p>
+<div class="st"><div class="cw"><div class="cell ">5</div></div><div class="cw"><div class="cell ">3</div></div><div class="cw"><div class="cell ">4</div></div></div>
+<p>The current maximum is:</p>
+<div class="st"><div class="cw"><div class="cell ">5</div></div></div>
+<p>But <code>3</code> might still matter later.</p>
+<p>Why?</p>
+<p>Because <code>5</code> could eventually leave the window.</p>
+<p>If that happens:</p>
+<div class="dg"><div class="st"><div class="cw"><div class="cell dim">5</div><span class="ix">↑ 5 expires</span></div><div class="cw"><div class="cell ">3</div><span class="ix">&nbsp;</span></div><div class="cw"><div class="cell ">4</div><span class="ix">&nbsp;</span></div></div></div>
+<p>then the candidates for the maximum become:</p>
+<div class="st"><div class="cw"><div class="cell ">3</div></div><div class="cw"><div class="cell ">4</div></div></div>
+<p>and <code>4</code> wins.</p>
+<p>So we can't simply keep only the current maximum.</p>
+<p>We need to keep the <strong>useful candidates</strong>.</p>
+<p>That is the real problem.</p>
+
+<h2 id="s10">10. What Makes an Element Useless?</h2>
+<p>Let's compare two elements:</p>
+<div class="dg"><pre>3
+4</pre></div>
+<p>Suppose <code>4</code> arrives <strong>after</strong> <code>3</code>.</p>
+<p>We have:</p>
+<div class="st"><div class="cw"><div class="cell ">3</div></div><div class="cw"><div class="cell ">4</div></div></div>
+<p>Ask:</p>
+<blockquote><p>While <code>4</code> is inside the window, can <code>3</code> ever become the maximum?</p></blockquote>
+<p>No.</p>
+<p>Why?</p>
+<p>Because:</p>
+<div class="dg"><pre>3 &lt; 4</pre></div>
+<p>And <code>4</code> is newer.</p>
+<p>Therefore, <code>3</code> has two disadvantages:</p>
+<ol>
+<li>It's smaller.</li>
+<li>It will leave no later than <code>4</code>.</li>
+</ol>
+<p>So <code>3</code> can never beat <code>4</code>.</p>
+<p>This is a powerful observation.</p>
+<blockquote><p><strong>A newer element that is larger than an older element completely dominates the older element.</strong></p></blockquote>
+<p>And once an element is dominated like this, we don't need to keep it as a candidate.</p>
+<div class="fig" id="v4a"></div>
+
+<h2 id="s11">11. Why the Back of the Deque Matters</h2>
+<p>Now our need for <strong>both ends</strong> begins to make sense.</p>
+<p>Suppose our useful candidates are:</p>
+<div class="st"><div class="cw"><div class="cell ">5</div></div><div class="cw"><div class="cell ">3</div></div><div class="cw"><div class="cell ">2</div></div></div>
+<p>The largest candidate is at the front:</p>
+<div class="dg"><div class="st"><div class="cw"><span class="ix">front</span><div class="cell mv">5</div></div><div class="cw"><span class="ix">&nbsp;</span><div class="cell ">3</div></div><div class="cw"><span class="ix">&nbsp;</span><div class="cell ">2</div></div></div></div>
+<p>Now a new value arrives:</p>
+<div class="st"><div class="cw"><div class="cell ">4</div></div></div>
+<p>We compare it with the candidates at the <strong>back</strong>.</p>
+<div class="dg"><div class="st"><div class="cw"><div class="cell ">5</div><span class="ix">&nbsp;</span></div><div class="cw"><div class="cell ">3</div><span class="ix">&nbsp;</span></div><div class="cw"><div class="cell now">2</div><span class="ix">↑ 2</span></div></div></div>
+<p><code>2</code> is smaller than <code>4</code>.</p>
+<p>So <code>2</code> is dominated.</p>
+<p>Remove it:</p>
+<div class="st"><div class="cw"><div class="cell ">5</div></div><div class="cw"><div class="cell ">3</div></div></div>
+<p>Now compare <code>4</code> with <code>3</code>.</p>
+<div class="dg"><div class="st"><div class="cw"><div class="cell ">5</div><span class="ix">&nbsp;</span></div><div class="cw"><div class="cell now">3</div><span class="ix">↑ 3</span></div></div></div>
+<p>Again:</p>
+<div class="dg"><pre>3 &lt; 4</pre></div>
+<p>So <code>3</code> is also dominated.</p>
+<p>Remove it:</p>
+<div class="st"><div class="cw"><div class="cell ">5</div></div></div>
+<p>Now add <code>4</code>:</p>
+<div class="st"><div class="cw"><div class="cell ">5</div></div><div class="cw"><div class="cell ">4</div></div></div>
+<p>Notice what happened.</p>
+<p>We:</p>
+<ul>
+<li>looked at the <strong>front</strong> for the best candidate,</li>
+<li>removed useless candidates from the <strong>back</strong>,</li>
+<li>added the new candidate at the <strong>back</strong>.</li>
+</ul>
+<p>That requires access to both ends.</p>
+<p>And suddenly the deque isn't just a fancy queue anymore.</p>
+<p>It is becoming exactly the structure we need.</p>
+<div class="fig" id="v4b"></div>
+<div class="fig" id="v4c"></div>
+
+<h2 id="s12">12. Don't Name the Pattern Yet</h2>
+<p>At this point, we could say:</p>
+<blockquote><p>"This is a monotonic deque."</p></blockquote>
+<p>But that's not useful yet.</p>
+<p>The name doesn't explain anything.</p>
+<p>Instead, notice what we have discovered naturally.</p>
+<p>We want our candidates to look like:</p>
+<div class="st"><div class="cw"><div class="cell ">largest</div></div><div class="cw"><div class="cell ">smaller</div></div><div class="cw"><div class="cell ">smaller</div></div><div class="cw"><div class="cell ">...</div></div></div>
+<p>For example:</p>
+<div class="st"><div class="cw"><div class="cell ">9</div></div><div class="cw"><div class="cell ">7</div></div><div class="cw"><div class="cell ">5</div></div><div class="cw"><div class="cell ">2</div></div></div>
+<p>The values decrease as we move from front to back.</p>
+<div class="fig" id="v12"></div>
+<p>Why?</p>
+<p>Because then:</p>
+<blockquote><p><strong>The best candidate is always at the front.</strong></p></blockquote>
+<p>And when a new element arrives, we can remove smaller candidates from the back.</p>
+<p>That is the idea we'll formalize in the next article.</p>
+
+<h2 id="s13">13. The Bigger Lesson</h2>
+<p>There is actually a useful DSA principle hiding here.</p>
+<p>We started with:</p>
+<blockquote><p>"I need the maximum of every sliding window."</p></blockquote>
+<p>The naive reaction might be:</p>
+<blockquote><p>"I'll keep the whole window and find the maximum."</p></blockquote>
+<p>Then we asked:</p>
+<blockquote><p>"Do I really need every element?"</p></blockquote>
+<p>And discovered:</p>
+<blockquote><p>No.</p></blockquote>
+<p>Some elements can be permanently ruled out.</p>
+<p>That leads to a broader principle:</p>
+<blockquote><p><strong>Don't maintain information merely because it exists. Maintain information that can still affect the answer.</strong></p></blockquote>
+<p>This is one of the most important ideas behind the monotonic deque.</p>
+<p>The deque is not valuable because it's a deque.</p>
+<p>It's valuable because it gives us a convenient place to maintain our <strong>remaining candidates</strong>.</p>
+
+<h2 id="s14">14. Where We Are Now</h2>
+<p>We have built the idea step by step.</p>
+<h3>First:</h3>
+<p>A queue solves:</p>
+<div class="dg"><pre>first in → first out</pre></div>
+<h3>Then:</h3>
+<p>A deque gives us:</p>
+<div class="dg"><pre>access to both ends</pre></div>
+<h3>Then:</h3>
+<p>Sliding Window gives us:</p>
+<div class="dg"><pre>something leaves from the left
+something enters from the right</pre></div>
+<h3>Then:</h3>
+<p>Sliding Window Maximum gives us a new requirement:</p>
+<div class="dg"><pre>we need the best candidate</pre></div>
+<h3>Then:</h3>
+<p>We discover:</p>
+<div class="dg"><pre>some candidates become permanently useless</pre></div>
+<h3>And finally:</h3>
+<p>We realize we need a structure where we can:</p>
+<div class="dg"><div class="st" style="margin:.2em 0"><div class="cell ">look at the best candidate</div><span style="align-self:center;padding:0 4px;color:var(--mut)">↓</span><div class="cell mv">front</div></div><div class="st" style="margin:.2em 0"><div class="cell ">remove dominated candidates</div><span style="align-self:center;padding:0 4px;color:var(--mut)">↓</span><div class="cell dim">back</div></div><div class="st" style="margin:.2em 0"><div class="cell ">add new candidates</div><span style="align-self:center;padding:0 4px;color:var(--mut)">↓</span><div class="cell ok">back</div></div></div>
+<p>That is exactly the shape of a <strong>monotonic deque</strong>.</p>
+<p>But we haven't formally built the technique yet.</p>
+<p>That's the next step.</p>
+<div class="fig" id="v5"></div>
+</main>
+
+<script>
+/* ===== SHARED HELPERS: do not change ===== */
+var $=function(i){return document.getElementById(i)};
+var L=function(v){return v.toLocaleString('en-US')};
+var num=function(x,y){return x-y};
+function isSorted(a){for(var i=1;i<a.length;i++)if(a[i-1]>a[i])return false;return true}
+
+/* cells(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label above'}, noix:true}) -> row of cells */
+function cells(a,o){o=o||{};var c=o.c||{};return '<div class="row">'+a.map(function(v,i){var g=v===''||v===null;return '<div class="cw"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="cell'+(g?' gap':'')+' '+(c[i]||'')+'">'+(g?'&nbsp;':v)+'</div><span class="ix">'+(o.noix?'':i)+'</span></div>'}).join('')+'</div>'}
+
+/* widget(id, presets, build): Previous/Next stepper.
+   presets = [[buttonLabel, params], ...]; build(params) returns [{h:htmlString, n:noteText}, ...] */
+function widget(id,opts,build){
+  var el=$(id),i=0,st=[];
+  el.innerHTML=(opts.length>1?'<div class="row" style="align-items:center">'+opts.map(function(o,k){return '<button data-k="'+k+'">'+o[0]+'</button>'}).join('')+'</div>':'')+'<div class="scroll v"></div><p class="note" aria-live="polite"></p><div class="ctl"><button class="pv">Previous</button><span class="pos"></span><button class="nx">Next</button><button class="pl">Play</button></div>';
+  var v=el.querySelector('.v'),n=el.querySelector('.note'),p=el.querySelector('.pos'),pv=el.querySelector('.pv'),nx=el.querySelector('.nx'),pl=el.querySelector('.pl'),tm=null;
+  function stop(){if(tm){clearInterval(tm);tm=null}pl.textContent='Play'}
+  function r(){v.innerHTML=st[i].h;n.textContent=st[i].n;p.textContent='Step '+(i+1)+' of '+st.length;pv.disabled=i===0;nx.disabled=i===st.length-1}
+  function pick(k){stop();st=build(opts[k][1]);i=0;[].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.k===k))});r()}
+  [].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.onclick=function(){pick(+b.dataset.k)}});
+  pv.onclick=function(){stop();if(i>0){i--;r()}};nx.onclick=function(){stop();if(i<st.length-1){i++;r()}};
+  pl.onclick=function(){if(tm){stop();return}if(i>=st.length-1){i=0;r()}pl.textContent='Pause';tm=setInterval(function(){if(i<st.length-1){i++;r()}else stop()},1100)};
+  pick(0);
+}
+
+/* tabs(id, labels, fn): tab buttons; fn(k) returns html for tab k */
+function tabs(id,labels,fn){var el=$(id);el.innerHTML='<div class="row" style="align-items:center"></div><div class="tv"></div>';var bar=el.firstChild,tv=el.lastChild;
+  labels.forEach(function(t,k){var b=document.createElement('button');b.textContent=t;b.onclick=function(){[].forEach.call(bar.children,function(x){x.setAttribute('aria-pressed',String(x===b))});tv.innerHTML=fn(k)};b.setAttribute('aria-pressed',String(k===0));bar.appendChild(b)});tv.innerHTML=fn(0)}
+
+/* growth(id, ns, bruteFn, betterFn, header1, header2): log-scale comparison table */
+function growth(id,ns,bf,tp,h1,h2){$(id).innerHTML='<table><tr><th>n</th><th>'+h1+'</th><th>'+h2+'</th></tr>'+ns.map(function(n){var b=bf(n),t=tp(n);return '<tr><td>'+L(n)+'</td><td>'+L(b)+'<div class="bar r" style="width:'+Math.max(1,Math.log10(b)/12*100)+'%;margin-left:auto"></div></td><td>'+L(t)+'<div class="bar g" style="width:'+Math.max(1,Math.log10(t)/12*100)+'%;margin-left:auto"></div></td></tr>'}).join('')+'</table><p class="cap">Bars use a log scale, otherwise the second column would be invisible.</p>'}
+
+/* flow(['step','step',...]) -> vertical arrow flow */
+function flow(a){return '<div class="flow">'+a.map(function(x){return '<div class="cell">'+x+'</div>'}).join('<span>↓</span>')+'</div>'}
+
+/* grid(matrix, {c:function(r,c){return 'ok|now|dim|mv'}, rh:[row headers], ch:[col headers]}) -> 2D table of cells (DP tables, grids, matrices) */
+function grid(m,o){o=o||{};var w=m[0].length,ch=o.ch,rh=o.rh;
+  var h='<div class="mx" style="grid-template-columns:'+(rh?'auto ':'')+'repeat('+w+',minmax(0,1fr))">';
+  if(ch){h+=(rh?'<span></span>':'')+ch.map(function(x){return '<span class="mh">'+x+'</span>'}).join('')}
+  m.forEach(function(r,i){if(rh)h+='<span class="mh">'+rh[i]+'</span>';r.forEach(function(v,j){h+='<div class="cell '+((o.c&&o.c(i,j))||'')+'">'+v+'</div>'})});
+  return h+'</div>'}
+
+/* vbars(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label'}}) -> vertical bar chart of an array (sorting, partitioning, heights) */
+function vbars(a,o){o=o||{};var c=o.c||{},mx=Math.max.apply(null,a.map(Math.abs))||1;
+  return '<div class="vb">'+a.map(function(v,i){return '<div class="vc"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="vbar '+(c[i]||'')+'" style="height:'+Math.max(4,Math.round(Math.abs(v)/mx*110))+'px"></div><span class="ix">'+v+'</span></div>'}).join('')+'</div>'}
+
+/* driver(id, cfg): "you drive the algorithm". The reader picks the move; wrong moves get a teaching message.
+   cfg = {
+     presets:[[label,param],...],
+     init:function(param){return state},
+     view:function(state,done){return html},
+     done:function(state){return bool},
+     prompt:function(state,done){return 'What should we do?'},
+     choices:[['A','button text'],['B','button text'],...],
+     expected:function(state){return 'A'},               // the correct choice id
+     apply:function(state,choiceId){ return 'Right. why it worked'},   // mutate state here
+     hint:function(state){return 'general hint'},
+     wrong:function(state,choiceId){return 'specific message for a tempting wrong choice, or undefined'}
+   } */
+function driver(id,cfg){
+  var el=$(id),k=0,s,msg='';
+  function init(){s=cfg.init(cfg.presets[k][1]);msg='';draw()}
+  function draw(){var done=cfg.done(s);
+    el.innerHTML='<div class="row" style="align-items:center">'+cfg.presets.map(function(p,j){return '<button data-p="'+j+'" aria-pressed="'+(j===k)+'">'+p[0]+'</button>'}).join('')+'</div><div class="scroll">'+cfg.view(s,done)+'</div><p class="note" aria-live="polite"><strong>'+cfg.prompt(s,done)+'</strong></p><div class="ctl">'+cfg.choices.map(function(c){return '<button data-c="'+c[0]+'"'+(done?' disabled':'')+'>'+c[1]+'</button>'}).join('')+'</div><p class="note" aria-live="polite">'+msg+'</p>';
+    [].forEach.call(el.querySelectorAll('button[data-p]'),function(b){b.onclick=function(){k=+b.dataset.p;init()}});
+    [].forEach.call(el.querySelectorAll('button[data-c]'),function(b){b.onclick=function(){choose(b.dataset.c)}})}
+  function choose(c){if(c!==cfg.expected(s)){msg=(cfg.wrong&&cfg.wrong(s,c))||('Not quite. '+cfg.hint(s));draw();return}
+    msg=cfg.apply(s,c)||'Right.';draw()}
+  init()}
+
+/* slider(id, {min,max,value,label,render:function(v){return html}}) -> "drag to see how the cost grows" figure */
+function slider(id,o){var el=$(id);el.innerHTML='<label for="'+id+'S">'+o.label+' = <strong class="so"></strong></label><input id="'+id+'S" type="range" min="'+o.min+'" max="'+o.max+'" value="'+o.value+'"><div class="sv"></div>';
+  var inp=el.querySelector('input'),out=el.querySelector('.so'),sv=el.querySelector('.sv');
+  function u(){out.textContent=inp.value;sv.innerHTML=o.render(+inp.value)}inp.oninput=u;u()}
+
+/* ===== PAGE-SPECIFIC ILLUSTRATIONS GO BELOW ===== */
+/* Colour language for this post:
+   ok (green) = candidate kept, now (yellow) = being compared / entering,
+   mv (blue) = best candidate (front), dim (grey) = leaving / dominated / removed */
+
+var REDUCED=false;try{REDUCED=window.matchMedia('(prefers-reduced-motion: reduce)').matches}catch(e){}
+function anim(node,frames,done){
+  if(REDUCED||!node||!node.animate){if(done)done();return}
+  var a=node.animate(frames,{duration:300,easing:'ease',fill:'forwards'});
+  a.onfinish=function(){if(done)done()};
+}
+function dsub(n){var s={};if(n===1)s[0]='front / back';else if(n>1){s[0]='front';s[n-1]='back'}return s}
+function dqView(items,c){
+  return items.length?cells(items,{sub:dsub(items.length),c:c||{},noix:true}):cells([''],{sub:{0:'empty'},noix:true});
+}
+function lst(a){return '['+a.join(', ')+']'}
+
+/* ---------- Visualization 1 and 2: deque you can operate ---------- */
+function dqPlay(id,o){
+  var el=$(id),items=o.items.slice(),cnt=items.length,locked=!!o.locked,busy=false,msg=o.msg||'';
+  function letter(){return String.fromCharCode(65+(cnt++)%26)}
+  function draw(){
+    var h='<div class="scroll">'+dqView(items)+'</div><p class="note" aria-live="polite">'+msg+'</p><div class="ctl">';
+    o.order.forEach(function(op){
+      var off=locked&&(op==='appendleft'||op==='pop');
+      h+='<button data-op="'+op+'"'+(off?' disabled':'')+'>'+o.labels[op]+(off?' (locked)':'')+'</button>';
+    });
+    if(o.unlockable&&locked)h+='<button data-unlock="1">Unlock the other two operations</button>';
+    h+='<button data-reset="1">Reset</button></div>';
+    el.innerHTML=h;
+    [].forEach.call(el.querySelectorAll('button[data-op]'),function(b){b.onclick=function(){run(b.dataset.op)}});
+    var u=el.querySelector('button[data-unlock]');
+    if(u)u.onclick=function(){locked=false;msg='Both ends are open now. This is a deque.';draw()};
+    el.querySelector('button[data-reset]').onclick=function(){if(busy)return;items=o.items.slice();cnt=items.length;locked=!!o.locked;msg=o.msg||'';draw()};
+  }
+  function run(op){
+    if(busy)return;
+    var n=items.length,right=(op==='append'||op==='pop'),cs,nd,v;
+    if(op==='append'||op==='appendleft'){
+      v=letter();
+      if(right)items.push(v);else items.unshift(v);
+      msg='<code>d.'+op+"('"+v+"')</code>: "+v+' enters at the '+(right?'back':'front')+'.';
+      draw();
+      cs=el.querySelectorAll('.cell');nd=cs[right?items.length-1:0];
+      anim(nd,[{transform:'translateX('+(right?'':'-')+'40px) scale(.7)',opacity:0},{transform:'none',opacity:1}]);
+    }else{
+      if(!n){msg='The deque is empty, so there is nothing to remove.';draw();return}
+      cs=el.querySelectorAll('.cell');nd=cs[right?n-1:0];busy=true;
+      anim(nd,[{transform:'none',opacity:1},{transform:'translateX('+(right?'':'-')+'40px) scale(.7)',opacity:0}],function(){
+        v=right?items.pop():items.shift();
+        msg='<code>d.'+op+'()</code>: '+v+' leaves from the '+(right?'back':'front')+'.';
+        busy=false;draw();
+      });
+    }
+  }
+  draw();
+}
+dqPlay('v1',{items:['A','B','C','D'],locked:true,unlockable:true,
+  msg:'This is a queue: we can only add at the back and remove from the front.',
+  order:['append','popleft','appendleft','pop'],
+  labels:{append:'add → back',popleft:'remove ← front',appendleft:'add → front',pop:'remove ← back'}});
+dqPlay('v2',{items:['A','B','C'],
+  msg:'Try each button and watch which end the element enters or leaves.',
+  order:['append','appendleft','pop','popleft'],
+  labels:{append:'Append Right',appendleft:'Append Left',pop:'Pop Right',popleft:'Pop Left'}});
+
+/* ---------- Visualization 3: sliding window as a deque ---------- */
+widget('v3',[['[2,1,5,3,4], k = 3',[[2,1,5,3,4],3]],['[4,2,1,6], k = 2',[[4,2,1,6],2]]],function(p){
+  var a=p[0],k=p[1],n=a.length,s=[],i,j;
+  function arr(lo,hi,leave,enter){var c={};for(j=0;j<n;j++)c[j]=(j>=lo&&j<=hi)?'ok':'';if(leave>=0)c[leave]='dim';if(enter>=0)c[enter]='now';return '<div class="lbl">Array</div>'+cells(a,{c:c})}
+  for(i=0;i+k<=n;i++){
+    var w=a.slice(i,i+k),last=(i+k>=n);
+    s.push({h:arr(i,i+k-1,-1,-1)+'<div class="lbl">Deque</div>'+dqView(w,{}),n:'The window is '+lst(w)+'. Inside the deque, '+w[0]+' is the oldest (front) and '+w[k-1]+' is the newest (back).'+(last?' No more elements to enter. Every move was one removal at the front and one add at the back.':'')});
+    if(i+k<n){
+      var t=a.slice(i,i+k+1),c={},sub={};c[0]='dim';c[k]='now';sub[0]='leaves';sub[k]='enters';
+      s.push({h:arr(i+1,i+k-1,i,i+k)+'<div class="lbl">Deque</div>'+cells(t,{c:c,sub:sub,noix:true}),n:a[i]+' leaves from the front, '+a[i+k]+' enters at the back.'});
+    }
+  }
+  return s});
+
+/* ---------- Visualization 4a: can the older, smaller element ever win? ---------- */
+driver('v4a',{
+  presets:[['[3, 4]',[3,4]],['[4, 3]',[4,3]]],
+  init:function(p){return {a:p.slice(),r:false}},
+  view:function(s){
+    var q=s.a.indexOf(3),o=1-q,dom=(q===0),c={},sub={0:'older',1:'newer'};
+    c[q]=s.r?(dom?'dim':'ok'):'now';
+    if(s.r&&!dom)c[o]='mv';
+    return cells(s.a,{c:c,sub:sub,noix:true})},
+  done:function(s){return s.r},
+  prompt:function(s){return s.a[0]<s.a[1]?'Can 3 ever become the maximum while 4 is still inside the window?':'Can 3 ever become the maximum of this window?'},
+  choices:[['Y','Yes'],['N','No']],
+  expected:function(s){return s.a[0]<s.a[1]?'N':'Y'},
+  apply:function(s){s.r=true;return s.a[0]<s.a[1]?'No. 3 &lt; 4 and 4 is newer. 3 is dominated, so we cross it out.':'Yes. 4 is older, so it leaves first. Once it expires, 3 can become the maximum, so 3 stays as a candidate.'},
+  wrong:function(s){return s.a[0]<s.a[1]?'Not quite. 3 &lt; 4, and 4 is newer, so 4 is still inside whenever 3 is. 3 can never win.':'Not quite. 4 is older than 3, so 4 leaves first. After that, 3 may be the largest element left.'},
+  hint:function(){return 'Compare the values, then ask which one leaves first.'}
+});
+
+/* ---------- Visualization 4b and 4c: new value arrives, clean the back ---------- */
+var ARR=[[[5,3,2],4],[[9,7,5,2],6],[[5,4,2,1],7]];
+function arrRow(d,rm,v,showV,final){
+  var c={},j,n=d.length;
+  if(final){for(j=0;j<n;j++)c[j]='ok';c[0]='mv';c[n-1]=n>1?'now':'mv'}
+  else if(n&&showV)c[n-1]='now';
+  var h='<div class="lbl">Deque</div>'+dqView(d,c);
+  if(!final)h+='<div class="lbl">New value arriving</div>'+cells([v],{c:{0:'now'},noix:true});
+  if(rm.length){var cc={};rm.forEach(function(x,i){cc[i]='dim'});h+='<div class="lbl">Removed (dominated)</div>'+cells(rm,{c:cc,noix:true})}
+  return h}
+widget('v4b',ARR.map(function(x){return [lst(x[0])+' + '+x[1],x]}),function(p){
+  var d=p[0].slice(),v=p[1],s=[],rm=[],b;
+  s.push({h:arrRow(d,rm,v,false),n:'The deque holds '+lst(d)+'. A new value '+v+' arrives. We compare it with the candidates at the back.'});
+  while(d.length&&d[d.length-1]<v){
+    b=d[d.length-1];
+    s.push({h:arrRow(d,rm,v,true),n:b+' < '+v+': '+b+' is older and smaller, so it is dominated. Remove it from the back.'});
+    d.pop();rm.push(b);
+  }
+  if(d.length){b=d[d.length-1];s.push({h:arrRow(d,rm,v,true),n:b+' > '+v+': '+b+' is older but larger, so it can still matter. Stop.'})}
+  else s.push({h:arrRow(d,rm,v,false),n:'The deque is empty, so there is nothing left to compare with.'});
+  d.push(v);
+  s.push({h:arrRow(d,rm,v,false,true),n:'Add '+v+' at the back. The deque is '+lst(d)+', and the largest useful candidate, '+d[0]+', is at the front.'});
+  return s});
+
+driver('v4c',{
+  presets:ARR.map(function(x){return [lst(x[0])+' + '+x[1],x]}),
+  init:function(p){return {d:p[0].slice(),v:p[1],rm:[],add:false}},
+  view:function(s){return arrRow(s.d,s.rm,s.v,true,s.add)},
+  done:function(s){return s.add},
+  prompt:function(s,done){
+    if(done)return 'Done. The deque is '+lst(s.d)+', with the best candidate at the front.';
+    return s.d.length?'New value '+s.v+' arrives. Compare it with the back ('+s.d[s.d.length-1]+'). What now?':'New value '+s.v+' arrives and the deque is empty. What now?'},
+  choices:[['A','Remove from the back'],['B','Stop and add at the back']],
+  expected:function(s){return (s.d.length&&s.d[s.d.length-1]<s.v)?'A':'B'},
+  apply:function(s,c){
+    var x;
+    if(c==='A'){x=s.d.pop();s.rm.push(x);return 'Right. '+x+' &lt; '+s.v+' and '+s.v+' is newer, so '+x+' is dominated.'}
+    s.d.push(s.v);s.add=true;return 'Right. '+s.v+' joins at the back.'},
+  wrong:function(s,c){
+    var b=s.d[s.d.length-1];
+    if(!s.d.length)return 'Nothing is left to remove. Add the new value.';
+    if(c==='A')return 'Not quite. '+b+' &gt; '+s.v+': '+b+' is older but larger, so it can still be the maximum until it leaves. Removing it would throw away a real candidate.';
+    return 'Not quite. '+b+' &lt; '+s.v+' and '+s.v+' is newer, so '+b+' is dominated. Adding '+s.v+' behind it would keep a useless candidate.'},
+  hint:function(){return 'Compare the back with the new value.'}
+});
+
+/* ---------- Visualization 12: decreasing candidates ---------- */
+$('v12').innerHTML=vbars([9,7,5,2],{c:{0:'mv'},sub:{0:'front',3:'back'}})+'<p class="cap">The values decrease from front to back, so the largest candidate is at the front.</p>';
+
+/* ---------- Visualization 5: the unresolved problem ---------- */
+$('v5').innerHTML='<div class="flow"><div class="cell">Sliding Window</div><span>+</span><div class="cell">Maximum</div><span>↓</span><div class="cell">We need to keep only useful candidates</div><span>↓</span><div class="cell">But how exactly should we maintain them?</div></div>'
+  +'<div class="scroll" style="margin-top:14px">'+cells([5,4,2,1],{c:{0:'mv'},noix:true})+'<div class="cap" style="margin:0 0 0 14px">↑ maximum candidate</div></div>'
+  +'<blockquote><p><strong>How do we guarantee that the largest useful candidate is always at the front?</strong></p></blockquote>';
+
+
+/* ===== CODE TOGGLE AND THEME: do not change ===== */
+var cb=$('codeBtn'),hid=false;
+cb.onclick=function(){hid=!hid;[].forEach.call(document.querySelectorAll('details'),function(d){d.open=!hid});cb.textContent=hid?'Show code':'Hide code'};
+var root=document.documentElement,tb=$('theme');
+function setTheme(t){root.setAttribute('data-theme',t);tb.textContent=t==='dark'?'Light':'Dark'}
+try{var sv=localStorage.getItem('theme');if(sv==='dark'||sv==='light')setTheme(sv)}catch(e){}
+tb.onclick=function(){var t=root.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);try{localStorage.setItem('theme',t)}catch(e){}};
+</script>
+</body>
+</html>

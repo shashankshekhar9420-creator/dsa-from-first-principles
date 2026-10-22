@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Queue: A Data Structure Born From a Constraint</title>
+<style>
+:root{--bg:#fff;--ink:#111;--mut:#555;--line:#ccc;--acc:#1f4e8c;--hi:#fff3b0;--hib:#c9a227;--ok:#dcf0dc;--okb:#3a8a3a;--mv:#e6edf7;--dim:#eee;--card:#fafafa;--red:#b5342b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#121212;--ink:#eee;--mut:#aaa;--line:#3a3a3a;--acc:#8ab4f8;--hi:#4a4220;--hib:#c9a227;--ok:#1d3a22;--okb:#5cb85c;--mv:#1c2a40;--dim:#2a2a2a;--card:#1a1a1a;--red:#ff7b72;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Roman",Times,serif}
+main{max-width:720px;margin:0 auto;padding:40px 20px 80px}
+h1,h2,h3{font-family:inherit;line-height:1.25}
+h1{font-size:2.1rem;margin:.2em 0 .6em}
+h2{font-size:1.5rem;margin:2.6em 0 .6em;padding-top:1.2em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin:1.3em 0 .3em}
+blockquote{margin:1em 0;padding:.4em 1em;border-left:4px solid var(--acc);font-size:1.12rem}
+blockquote p{margin:.3em 0}
+code{font:inherit;background:var(--card);padding:1px 5px;border-radius:4px}
+a{color:var(--acc)}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:1.2em 0}
+.cap{font-size:.9rem;color:var(--mut);margin:.6em 0 0}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:flex-end}
+.cw{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ix{font-size:.8rem;color:var(--mut);min-height:1.1em;font-weight:600}
+.cell{min-width:40px;padding:7px 6px;text-align:center;border:2px solid var(--line);background:var(--bg);border-radius:6px;font-weight:600;transition:background .2s}
+.gap{border-style:dashed;background:transparent}
+.ok{background:var(--ok);border-color:var(--okb)}
+.now{background:var(--hi);border-color:var(--hib)}
+.dim{background:var(--dim);color:var(--mut);border-color:var(--dim)}
+.mv{background:var(--mv);border-color:var(--acc)}
+.mx{display:grid;gap:3px;margin:8px 0}
+.mh{font-size:.8rem;color:var(--mut);text-align:center;align-self:center}
+.mx .cell{min-width:0;padding:3px 0;font-size:.8rem}
+button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
+button:hover:not(:disabled){background:var(--mv)}
+button:disabled{opacity:.4;cursor:default}
+button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--hib);outline-offset:2px}
+.tools{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5;display:flex;gap:8px}
+.ctl{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.pos{color:var(--mut);font-size:.9rem}
+.note{min-height:3em;margin:.4em 0 0;font-weight:500}
+.lbl{font-size:.9rem;margin:8px 0 3px}
+.bar{height:14px;border-radius:4px;background:var(--acc);min-width:3px}
+.bar.g{background:var(--okb)}.bar.r{background:var(--red)}
+input[type=range]{width:100%}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--dim)}
+details{margin:.6em 0 .9em;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+summary{cursor:pointer;padding:8px 12px;font-size:.95rem;color:var(--acc)}
+pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,Menlo,Consolas,monospace}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.two{grid-template-columns:1fr}}
+.flow{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;font-size:.95rem}
+.flow .cell{min-width:140px}
+.zones{display:flex;border:2px solid var(--line);border-radius:6px;overflow:hidden;text-align:center;font-size:.85rem}
+.zones div{padding:10px 6px}
+.flag{font-size:.9rem;color:var(--mut)}
+.tt td:first-child{font-weight:600}
+.tt td{text-align:left}
+p{margin:.7em 0}
+ul,ol{margin:.7em 0}
+li{margin:.15em 0}
+.dg{margin:.4em 0 .9em;padding:.1em 0 .1em 14px;border-left:3px solid var(--line);overflow-x:auto}
+.dg pre{padding:0;font-size:.88rem;line-height:1.45}
+.st{display:flex;gap:5px;flex-wrap:wrap;align-items:flex-end;margin:.4em 0 .9em}
+.st .cell{min-width:38px;padding:3px 10px}
+.st .ix{min-height:0}
+.st-n{display:flex;flex-direction:column;gap:2px;margin:.4em 0 .9em;font-size:.9rem;color:var(--mut)}
+.vb{display:flex;gap:6px;align-items:flex-end;margin:6px 0}
+.vc{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:26px;max-width:60px;justify-content:flex-end}
+.vbar{width:100%;border:2px solid var(--line);background:var(--bg);border-radius:4px 4px 0 0;transition:height .2s,background .2s}
+</style>
+</head>
+<body>
+<div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
+<main>
+
+<h1>Queue: A Data Structure Born From a Constraint</h1>
+<p>So far, we’ve mostly worked with arrays, strings, linked lists, and pointers. Then suddenly, we meet something called a <strong>queue</strong>, and DSA starts to feel like it introduces a new data structure every five minutes. Don’t let that happen. A queue isn’t a mysterious structure you must memorize. It exists because of a very ordinary constraint:</p>
+<blockquote><p><strong>Sometimes, things must leave in the same order in which they arrived.</strong></p></blockquote>
+<p>The data structure is simply a convenient way of enforcing that rule. And that is an idea worth carrying through all of DSA: <strong>data structures are usually born out of constraints.</strong> We don’t invent a structure and then hunt for a problem. We meet a problem, it gives us a constraint, and eventually we think, “I keep needing these same operations in this same order. There should be a simpler way to represent that.” Each section below has a figure you can step through, and the code can be hidden with the button at the top.</p>
+<ol>
+<li><a href="#s1">Start with a line of people</a></li>
+<li><a href="#s2">Why not just use an array?</a></li>
+<li><a href="#s3">The constraint comes first</a></li>
+<li><a href="#s4">The four basic operations</a></li>
+<li><a href="#s5">Queue vs stack</a></li>
+<li><a href="#s6">Python already gives us one</a></li>
+<li><a href="#s7">Why this matters in DSA</a></li>
+<li><a href="#s8">Queues in places you don’t expect</a></li>
+<li><a href="#s9">Queue vs deque</a></li>
+<li><a href="#s10">Why sliding window needed a deque</a></li>
+<li><a href="#s11">What these ideas taught us</a></li>
+<li><a href="#s12">The bigger pattern</a></li>
+<li><a href="#s13">A useful way to recognize a queue</a></li>
+<li><a href="#s14">The evolution of the idea</a></li>
+</ol>
+
+<h2 id="s1">1. Start with a line of people</h2>
+<p>Imagine a line at a ticket counter. Person <code>A</code> arrived first, so <code>A</code> gets served first. Then <code>B</code>, then <code>C</code>. Someone who arrives later doesn’t get to jump in front. If <code>E</code> arrives, <code>E</code> goes to the back. When someone is served, the line shortens from the front.</p>
+<div class="fig" id="line"></div>
+<p>The first person in is the first person out. This rule is called:</p>
+<blockquote><p><strong>FIFO: First In, First Out.</strong> That rule is the entire idea behind a queue.</p></blockquote>
+
+<h2 id="s2">2. Why not just use an array?</h2>
+<p>We could. An array can certainly hold <code>[A, B, C, D]</code>, and to serve <code>A</code> we could remove the first element. Nothing is wrong with the idea. The problem is that a normal array or list isn’t designed around this operation.</p>
+<h3>The naive way</h3>
+<p>In a typical Python list, removing the first element means every remaining element has to shift to fill the empty position. That is unnecessary work if our only requirement is “give me the oldest item.”</p>
+<div class="fig" id="shift"></div>
+<h3>A mismatch of intent</h3>
+<p>Our <strong>problem</strong> says “add at one end, remove from the other.” But our <strong>array</strong> naturally gives us “access by position.” Drag the slider to see how the shifting cost grows with the line length.</p>
+<div class="fig" id="shcost"></div>
+<blockquote><p>A data structure isn’t just about storing data. It is about making the operations we care about natural.</p></blockquote>
+
+<h2 id="s3">3. The constraint comes first</h2>
+<p>Forget the word “queue” for a moment. Suppose I tell you: <em>we have a stream of tasks, new tasks arrive at the back, and we must always process the oldest unfinished task first.</em> What does our structure need?</p>
+<div class="fig" id="cons"></div>
+<ul>
+<li>add at the back</li>
+<li>remove from the front</li>
+<li>look at the front</li>
+</ul>
+<p>The structure almost designs itself. That’s a queue. The name comes <strong>after</strong> the need. A queue exists because we care about <strong>order of processing</strong>, so we can think of it as a container that enforces FIFO order.</p>
+
+<h2 id="s4">4. The four basic operations</h2>
+<p><strong>Enqueue</strong> adds to the back. <strong>Dequeue</strong> removes the oldest item from the front. <strong>Peek</strong> looks at the front without removing it. <strong>Is empty?</strong> checks whether anything is left to process. That is enough for most uses of a basic queue. Now you drive: for each event, pick the operation.</p>
+<div class="fig" id="ops"></div>
+
+<h2 id="s5">5. Queue vs stack</h2>
+<p>A <strong>stack</strong> says the newest thing should come out first (LIFO, Last In First Out). A <strong>queue</strong> says the oldest thing should come out first (FIFO). Same three items, different exit.</p>
+<div class="fig" id="sq"></div>
+<p>Neither is “better.” They represent different constraints. If the problem says “deal with the most recently added thing first,” a stack fits. If it says “deal with the oldest thing first,” a queue fits.</p>
+<blockquote><p>Again, the constraint comes first.</p></blockquote>
+
+<h2 id="s6">6. Python already gives us one</h2>
+<p>Python’s <code>collections</code> module provides <code>deque</code>. The important thing isn’t memorizing method names. It’s understanding the contract: <code>append</code> enters from the back, <code>popleft</code> leaves from the front.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>from collections import deque
+
+queue = deque()
+
+queue.append("A")     # enqueue
+queue.append("B")
+queue.append("C")     # queue is now A B C
+
+queue.popleft()       # dequeue -> "A"
+queue.append("D")     # queue is now B C D
+queue[0]              # peek    -> "B"
+</pre></details>
+<div class="fig" id="py"></div>
+
+<h2 id="s7">7. Why this matters in DSA</h2>
+<p>A queue is rarely only used in problems called “queue problems.” Very often it is a <strong>helper</strong>. You might be solving something about graphs, trees, scheduling, simulations, streams, shortest paths, buffering, or level-by-level processing, and somewhere inside you realize, “I need to process these things in the order they become available.” The queue isn’t the problem. It is the mechanism that satisfies one constraint inside it.</p>
+<h3>A simple example: people entering a building</h3>
+<p>People arrive as <code>A → B → C → D</code> and are processed one at a time. We don’t know how long each takes, but the rule says arrival order. We don’t need to keep thinking about who came first, because the queue remembers.</p>
+<div class="fig" id="bld"></div>
+<blockquote><p>The queue turns an ordering rule into a structure. That’s the real value.</p></blockquote>
+<h3>Storage vs access pattern</h3>
+<p>Arrays, linked lists, stacks, and queues can all store sequences. What changes is the <strong>access pattern we care about</strong>.</p>
+<div class="fig scroll"><table class="tt"><tr><th>Structure</th><th>Useful when we want…</th></tr>
+<tr><td>Array</td><td>“Give me the element at index 7.”</td></tr>
+<tr><td>Linked list</td><td>“Move through connected nodes.”</td></tr>
+<tr><td>Stack</td><td>“Give me the most recently added item.”</td></tr>
+<tr><td>Queue</td><td>“Give me the oldest item.”</td></tr></table></div>
+<p>Instead of memorizing structures as disconnected objects, ask: <strong>what operation does my problem keep demanding?</strong></p>
+
+<h2 id="s8">8. Queues in places you don’t expect</h2>
+<p>When you see <code>from collections import deque</code> in a solution, don’t think “oh no, another structure to learn.” Ask <strong>why this problem needs one</strong>. Take a graph where <code>A</code> connects to <code>B</code>, <code>C</code>, <code>D</code>, and we want to explore level by level. We discover <code>A</code>, then <code>B C D</code>, and want to process them in the order they were discovered.</p>
+<div class="fig" id="bfs"></div>
+<p>Later, when we study <strong>Breadth-First Search</strong>, the queue won’t feel new. It simply answers: “How do I remember what I discovered so I process it in the correct order?”</p>
+<h3>Sometimes the queue is only temporary</h3>
+<p>Queues often aren’t the final answer. They are <strong>working memory</strong>, a waiting room for tasks, nodes, events, requests, and messages.</p>
+<div class="fig" id="wait"></div>
+<blockquote><p>There is work to do, but we need to preserve the order in which that work should be handled.</p></blockquote>
+
+<h2 id="s9">9. Queue vs deque</h2>
+<p>A queue gives us a specific rule: add at the back, remove from the front. A deque gives us more freedom: add and remove at both ends.</p>
+<div class="fig" id="qd"></div>
+<p>A queue is about <strong>FIFO discipline</strong>. A deque is a more general <strong>double-ended container</strong>. That distinction matters when we return to Sliding Window Maximum.</p>
+
+<h2 id="s10">10. Why sliding window needed a deque</h2>
+<p>In a sliding window, a new element enters from the right and an old element leaves from the left. That already resembles a queue. But for the maximum, suppose the window holds <code>[5, 3, 2]</code> and <code>4</code> arrives. Now <code>2</code> and <code>3</code> are no longer useful candidates. We must remove them from the <strong>back</strong>, while still removing expired elements from the <strong>front</strong>. A normal queue isn’t enough. We need a deque, kept ordered so the strongest candidate stays at the front: the <strong>monotonic deque</strong>.</p>
+<p>Here it is on <code>[5, 3, 2, 4, 1]</code> with window size 3. The deque holds candidates, front is the current maximum.</p>
+<div class="fig" id="sw"></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>from collections import deque
+
+def sliding_max(nums, k):
+    dq, out = deque(), []          # dq holds indices
+    for i, x in enumerate(nums):
+        while dq and nums[dq[-1]] &lt;= x:
+            dq.pop()               # useless candidates leave from the back
+        dq.append(i)
+        if dq[0] &lt;= i - k:
+            dq.popleft()           # expired element leaves from the front
+        if i &gt;= k - 1:
+            out.append(nums[dq[0]])
+    return out
+</pre></details>
+<h3>Why not a plain queue?</h3>
+<div class="fig scroll"><table class="tt"><tr><th></th><th>Plain queue</th><th>Deque</th></tr>
+<tr><td>Remove from front</td><td>Yes</td><td>Yes</td></tr>
+<tr><td>Remove from back</td><td>No</td><td>Yes</td></tr>
+<tr><td>Can drop useless candidates</td><td>No</td><td>Yes</td></tr>
+<tr><td>Reasoning</td><td>Keeps arrival order only</td><td>Keeps candidates ordered by usefulness</td></tr></table></div>
+<p>Nothing was introduced randomly. Each structure emerged because the previous one could no longer satisfy the constraints.</p>
+
+<h2 id="s11">11. What these ideas taught us</h2>
+<p>Rather than memorizing a list (array, linked list, stack, queue, deque, heap, hash map, tree, graph…) and when to use each, start with the problem and keep asking questions. Pick a tab to see the chain of reasoning.</p>
+<div class="fig" id="formW"></div>
+
+<h2 id="s12">12. The bigger pattern</h2>
+<p>Don’t think “a queue is a data structure I need to memorize.” Think “a queue is what naturally appears when I need FIFO behavior.” The window itself was never really about the two pointers; they just enforced its movement. Likewise, a queue isn’t really about <code>append()</code> and <code>popleft()</code>. Those are just the mechanics.</p>
+<blockquote><p>What new operation do we need? When the constraint changes, the structure changes.</p></blockquote>
+
+<h2 id="s13">13. A useful way to recognize a queue</h2>
+<p>When you see one in a solution, ask:</p>
+<ol>
+<li><strong>What is waiting?</strong> Tasks, nodes, events, requests, messages.</li>
+<li><strong>Why must it wait?</strong> Because we can only handle one thing at a time.</li>
+<li><strong>Why must this one be processed first?</strong> Because it has been waiting longest.</li>
+<li><strong>What ordering constraint is the queue enforcing?</strong> Usually FIFO, and that explains why the queue is there.</li>
+</ol>
+<div class="fig scroll"><table class="tt"><tr><th>If the answer is…</th><th>Then you probably need</th></tr>
+<tr><td>I need FIFO processing</td><td>A queue</td></tr>
+<tr><td>I need to add and remove at both ends</td><td>A deque</td></tr>
+<tr><td>I need to process nodes level by level</td><td>A queue, maintaining discovery order</td></tr>
+<tr><td>I need the max candidate at one end and to discard useless ones from the other</td><td>A monotonic deque</td></tr></table></div>
+
+<h2 id="s14">14. The evolution of the idea</h2>
+<div class="fig scroll"><table class="tt"><tr><th>Problem</th><th>What it teaches</th></tr>
+<tr><td>Sliding Window</td><td>Things enter on one side and leave on the other</td></tr>
+<tr><td>Queue</td><td>Oldest-first processing is a constraint, FIFO enforces it</td></tr>
+<tr><td>Deque</td><td>Sometimes we also need to remove from the back</td></tr>
+<tr><td>Monotonic Deque</td><td>Keep candidates ordered by usefulness</td></tr>
+<tr><td>The next structure</td><td>Appears when the current one can no longer satisfy the constraint</td></tr></table></div>
+<blockquote><p>Data structures aren’t arbitrary tools handed down from a textbook. They are solutions to recurring constraints. When the existing one becomes insufficient, we don’t memorize another trick. We ask what new operation we need, and that’s exactly how we arrive at the next structure.</p></blockquote>
+</main>
+
+<script>
+/* ===== SHARED HELPERS: do not change ===== */
+var $=function(i){return document.getElementById(i)};
+var L=function(v){return v.toLocaleString('en-US')};
+var num=function(x,y){return x-y};
+function isSorted(a){for(var i=1;i<a.length;i++)if(a[i-1]>a[i])return false;return true}
+
+/* cells(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label above'}, noix:true}) -> row of cells */
+function cells(a,o){o=o||{};var c=o.c||{};return '<div class="row">'+a.map(function(v,i){var g=v===''||v===null;return '<div class="cw"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="cell'+(g?' gap':'')+' '+(c[i]||'')+'">'+(g?'&nbsp;':v)+'</div><span class="ix">'+(o.noix?'':i)+'</span></div>'}).join('')+'</div>'}
+
+/* widget(id, presets, build): Previous/Next stepper.
+   presets = [[buttonLabel, params], ...]; build(params) returns [{h:htmlString, n:noteText}, ...] */
+function widget(id,opts,build){
+  var el=$(id),i=0,st=[];
+  el.innerHTML=(opts.length>1?'<div class="row" style="align-items:center">'+opts.map(function(o,k){return '<button data-k="'+k+'">'+o[0]+'</button>'}).join('')+'</div>':'')+'<div class="scroll v"></div><p class="note" aria-live="polite"></p><div class="ctl"><button class="pv">Previous</button><span class="pos"></span><button class="nx">Next</button><button class="pl">Play</button></div>';
+  var v=el.querySelector('.v'),n=el.querySelector('.note'),p=el.querySelector('.pos'),pv=el.querySelector('.pv'),nx=el.querySelector('.nx'),pl=el.querySelector('.pl'),tm=null;
+  function stop(){if(tm){clearInterval(tm);tm=null}pl.textContent='Play'}
+  function r(){v.innerHTML=st[i].h;n.textContent=st[i].n;p.textContent='Step '+(i+1)+' of '+st.length;pv.disabled=i===0;nx.disabled=i===st.length-1}
+  function pick(k){stop();st=build(opts[k][1]);i=0;[].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.k===k))});r()}
+  [].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.onclick=function(){pick(+b.dataset.k)}});
+  pv.onclick=function(){stop();if(i>0){i--;r()}};nx.onclick=function(){stop();if(i<st.length-1){i++;r()}};
+  pl.onclick=function(){if(tm){stop();return}if(i>=st.length-1){i=0;r()}pl.textContent='Pause';tm=setInterval(function(){if(i<st.length-1){i++;r()}else stop()},1100)};
+  pick(0);
+}
+
+/* tabs(id, labels, fn): tab buttons; fn(k) returns html for tab k */
+function tabs(id,labels,fn){var el=$(id);el.innerHTML='<div class="row" style="align-items:center"></div><div class="tv"></div>';var bar=el.firstChild,tv=el.lastChild;
+  labels.forEach(function(t,k){var b=document.createElement('button');b.textContent=t;b.onclick=function(){[].forEach.call(bar.children,function(x){x.setAttribute('aria-pressed',String(x===b))});tv.innerHTML=fn(k)};b.setAttribute('aria-pressed',String(k===0));bar.appendChild(b)});tv.innerHTML=fn(0)}
+
+/* growth(id, ns, bruteFn, betterFn, header1, header2): log-scale comparison table */
+function growth(id,ns,bf,tp,h1,h2){$(id).innerHTML='<table><tr><th>n</th><th>'+h1+'</th><th>'+h2+'</th></tr>'+ns.map(function(n){var b=bf(n),t=tp(n);return '<tr><td>'+L(n)+'</td><td>'+L(b)+'<div class="bar r" style="width:'+Math.max(1,Math.log10(b)/12*100)+'%;margin-left:auto"></div></td><td>'+L(t)+'<div class="bar g" style="width:'+Math.max(1,Math.log10(t)/12*100)+'%;margin-left:auto"></div></td></tr>'}).join('')+'</table><p class="cap">Bars use a log scale, otherwise the second column would be invisible.</p>'}
+
+/* flow(['step','step',...]) -> vertical arrow flow */
+function flow(a){return '<div class="flow">'+a.map(function(x){return '<div class="cell">'+x+'</div>'}).join('<span>↓</span>')+'</div>'}
+
+/* grid(matrix, {c:function(r,c){return 'ok|now|dim|mv'}, rh:[row headers], ch:[col headers]}) -> 2D table of cells (DP tables, grids, matrices) */
+function grid(m,o){o=o||{};var w=m[0].length,ch=o.ch,rh=o.rh;
+  var h='<div class="mx" style="grid-template-columns:'+(rh?'auto ':'')+'repeat('+w+',minmax(0,1fr))">';
+  if(ch){h+=(rh?'<span></span>':'')+ch.map(function(x){return '<span class="mh">'+x+'</span>'}).join('')}
+  m.forEach(function(r,i){if(rh)h+='<span class="mh">'+rh[i]+'</span>';r.forEach(function(v,j){h+='<div class="cell '+((o.c&&o.c(i,j))||'')+'">'+v+'</div>'})});
+  return h+'</div>'}
+
+/* vbars(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label'}}) -> vertical bar chart of an array (sorting, partitioning, heights) */
+function vbars(a,o){o=o||{};var c=o.c||{},mx=Math.max.apply(null,a.map(Math.abs))||1;
+  return '<div class="vb">'+a.map(function(v,i){return '<div class="vc"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="vbar '+(c[i]||'')+'" style="height:'+Math.max(4,Math.round(Math.abs(v)/mx*110))+'px"></div><span class="ix">'+v+'</span></div>'}).join('')+'</div>'}
+
+/* driver(id, cfg): "you drive the algorithm". The reader picks the move; wrong moves get a teaching message.
+   cfg = {
+     presets:[[label,param],...],
+     init:function(param){return state},
+     view:function(state,done){return html},
+     done:function(state){return bool},
+     prompt:function(state,done){return 'What should we do?'},
+     choices:[['A','button text'],['B','button text'],...],
+     expected:function(state){return 'A'},               // the correct choice id
+     apply:function(state,choiceId){ return 'Right. why it worked'},   // mutate state here
+     hint:function(state){return 'general hint'},
+     wrong:function(state,choiceId){return 'specific message for a tempting wrong choice, or undefined'}
+   } */
+function driver(id,cfg){
+  var el=$(id),k=0,s,msg='';
+  function init(){s=cfg.init(cfg.presets[k][1]);msg='';draw()}
+  function draw(){var done=cfg.done(s);
+    el.innerHTML='<div class="row" style="align-items:center">'+cfg.presets.map(function(p,j){return '<button data-p="'+j+'" aria-pressed="'+(j===k)+'">'+p[0]+'</button>'}).join('')+'</div><div class="scroll">'+cfg.view(s,done)+'</div><p class="note" aria-live="polite"><strong>'+cfg.prompt(s,done)+'</strong></p><div class="ctl">'+cfg.choices.map(function(c){return '<button data-c="'+c[0]+'"'+(done?' disabled':'')+'>'+c[1]+'</button>'}).join('')+'</div><p class="note" aria-live="polite">'+msg+'</p>';
+    [].forEach.call(el.querySelectorAll('button[data-p]'),function(b){b.onclick=function(){k=+b.dataset.p;init()}});
+    [].forEach.call(el.querySelectorAll('button[data-c]'),function(b){b.onclick=function(){choose(b.dataset.c)}})}
+  function choose(c){if(c!==cfg.expected(s)){msg=(cfg.wrong&&cfg.wrong(s,c))||('Not quite. '+cfg.hint(s));draw();return}
+    msg=cfg.apply(s,c)||'Right.';draw()}
+  init()}
+
+/* slider(id, {min,max,value,label,render:function(v){return html}}) -> "drag to see how the cost grows" figure */
+function slider(id,o){var el=$(id);el.innerHTML='<label for="'+id+'S">'+o.label+' = <strong class="so"></strong></label><input id="'+id+'S" type="range" min="'+o.min+'" max="'+o.max+'" value="'+o.value+'"><div class="sv"></div>';
+  var inp=el.querySelector('input'),out=el.querySelector('.so'),sv=el.querySelector('.sv');
+  function u(){out.textContent=inp.value;sv.innerHTML=o.render(+inp.value)}inp.oninput=u;u()}
+
+/* ===== PAGE-SPECIFIC ILLUSTRATIONS GO BELOW ===== */
+function Q(a,c){var sub={};if(a.length){sub[0]='front';sub[a.length-1]=a.length==1?'front/back':'back'}return cells(a.length?a:[''],{noix:true,sub:sub,c:c||{}})}
+
+/* 1. ticket line */
+widget('line',[['Ticket line',0]],function(){return [
+ {h:Q(['A','B','C','D'],{0:'now'}),n:'A arrived first, so A is next to be served.'},
+ {h:Q(['A','B','C','D','E'],{4:'mv'}),n:'E arrives and goes to the back. Nobody jumps the line.'},
+ {h:Q(['B','C','D','E'],{0:'now'}),n:'A is served and leaves from the front. B is next.'},
+ {h:Q(['C','D','E'],{0:'now'}),n:'B is served. First in, first out.'}]});
+
+/* 2. array shifting */
+widget('shift',[['Remove A from a list',0]],function(){return [
+ {h:cells(['A','B','C','D'],{c:{0:'now'}}),n:'A list [A, B, C, D]. We want to serve A.'},
+ {h:cells(['','B','C','D'],{}),n:'A is removed, which leaves a hole at index 0.'},
+ {h:cells(['B','','C','D'],{c:{0:'mv'}}),n:'B shifts left to fill the hole.'},
+ {h:cells(['B','C','','D'],{c:{1:'mv'}}),n:'C shifts left.'},
+ {h:cells(['B','C','D',''],{c:{2:'mv'}}),n:'D shifts left.'},
+ {h:cells(['B','C','D'],{c:{0:'ok',1:'ok',2:'ok'}}),n:'Done, but three elements moved just to serve one person.'}]});
+slider('shcost',{min:2,max:100,value:8,label:'People in line',render:function(v){var t=v*(v-1)/2;return '<p class="lbl">Plain list: one dequeue shifts '+(v-1)+' elements</p><div class="bar r" style="width:'+Math.max(1,(v-1))+'%"></div><p class="lbl">Queue (deque): one dequeue moves 0 elements</p><div class="bar g"></div><p class="cap">Serving all '+v+' people from a plain list costs about '+L(t)+' element moves in total.</p>'}});
+
+/* 3. constraint */
+$('cons').innerHTML='<div class="zones"><div style="flex:1;background:var(--mv)">← oldest task<br>comes out here (front)</div><div style="flex:1.4;font-weight:600;font-size:1.1rem;align-self:center">A &nbsp;B &nbsp;C &nbsp;D</div><div style="flex:1;background:var(--ok)">new task goes here (back) ←</div></div><p class="cap">The needs, drawn as a shape. The structure almost designs itself.</p>';
+
+/* 4. operations driver */
+driver('ops',{
+ presets:[['Morning rush',[['arrive','D'],['serve'],['look'],['arrive','E'],['serve']]],['Quiet hour',[['serve'],['arrive','F'],['look'],['serve'],['arrive','G']]]],
+ init:function(p){return {q:['A','B','C'],ev:p,i:0,done:[]}},
+ view:function(s){return '<p class="lbl">Queue</p>'+Q(s.q,s.q.length?{0:'now'}:{})+'<p class="lbl">Served so far</p>'+cells(s.done.length?s.done:[''],{noix:true})},
+ done:function(s){return s.i>=s.ev.length},
+ prompt:function(s,d){if(d)return 'All events handled. The queue kept the order for us.';var e=s.ev[s.i];return e[0]=='arrive'?'Task '+e[1]+' arrives.':e[0]=='serve'?'A worker is free. Take the next job.':'The manager asks: who is next? (Don’t serve them yet.)'},
+ choices:[['E','Enqueue'],['D','Dequeue'],['P','Peek']],
+ expected:function(s){var t=s.ev[s.i][0];return t=='arrive'?'E':t=='serve'?'D':'P'},
+ apply:function(s,c){var e=s.ev[s.i];s.i++;if(c=='E'){s.q.push(e[1]);return 'Right. '+e[1]+' joins the back of the line.'}if(c=='D'){if(!s.q.length)return 'Nothing was waiting, so nothing to serve. (This is why Is empty? exists.)';s.done.push(s.q.shift());return 'Right. The oldest item leaves from the front.'}return 'Right. Peek reads the front ('+(s.q[0]||'nothing')+') and changes nothing.'},
+ hint:function(){return 'Match the event to the operation: add at back, remove from front, or just look.'},
+ wrong:function(s,c){var t=s.ev[s.i][0];if(c=='D'&&t=='look')return 'Dequeue would remove them. The manager only wants to look: that is peek.';if(c=='E')return 'Nothing is arriving right now, so there is nothing to add at the back.';if(c=='P'&&t=='serve')return 'Peeking doesn’t free up the job. Someone must actually leave the front.'}
+});
+
+/* 5. stack vs queue */
+tabs('sq',['Queue (FIFO)','Stack (LIFO)'],function(k){var o=k?{2:'now'}:{0:'now'},sub=k?{2:'out first'}:{0:'out first'};return cells(['A','B','C'],{noix:true,c:o,sub:sub})+'<p class="note">'+(k?'Pushed A, B, C. The newest (C) pops first.':'Enqueued A, B, C. The oldest (A) dequeues first.')+'</p>'});
+
+/* 6. python deque trace */
+widget('py',[['deque trace',0]],function(){return [
+ {h:Q([]),n:'queue = deque()'},
+ {h:Q(['A']),n:'queue.append("A")'},
+ {h:Q(['A','B','C'],{2:'mv'}),n:'queue.append("B"); queue.append("C")'},
+ {h:Q(['B','C'],{0:'now'}),n:'queue.popleft()  # A leaves from the front'},
+ {h:Q(['B','C','D'],{2:'mv'}),n:'queue.append("D")  # D enters at the back'},
+ {h:Q(['B','C','D'],{0:'now'}),n:'queue[0]  # peek: B, nothing removed'}]});
+
+/* 7. building */
+widget('bld',[['Arrival order',0]],function(){var t={A:3,B:1,C:5,D:2},q=['A','B','C','D'],d=[],s=[];function v(c){var m={};d.forEach(function(x,i){m[i]='ok'});return '<p class="lbl">Waiting</p>'+Q(q,q.length?{0:'now'}:{})+'<p class="lbl">Done</p>'+cells(d.length?d:[''],{noix:true,c:m})}
+ s.push({h:v(),n:'Four people arrive in order. We don’t know how long each will take, but the rule is arrival order.'});
+ while(q.length){var x=q.shift();d.push(x);s.push({h:v(),n:x+' is processed ('+t[x]+' seconds).'+(q.length?' Next up: '+q[0]+'.':' The queue is empty.')})}return s});
+
+/* 8. BFS */
+widget('bfs',[['Level by level',0]],function(){var ch={A:['B','C','D']},q=['A'],seen={A:1},order=[],cur=null,s=[];
+ function cl(n){return cur===n?'now':order.indexOf(n)>-1?'ok':q.indexOf(n)>-1?'mv':'dim'}
+ function v(){return '<p class="lbl">Tree (blue = queued, yellow = current, green = processed)</p>'+cells(['A'],{noix:true,c:{0:cl('A')}})+cells(['B','C','D'],{noix:true,c:{0:cl('B'),1:cl('C'),2:cl('D')}})+'<p class="lbl">Queue</p>'+Q(q,{})+'<p class="lbl">Processed order</p>'+cells(order.length?order:[''],{noix:true})}
+ s.push({h:v(),n:'We discover A and put it in the queue.'});
+ while(q.length){cur=q.shift();order.push(cur);var kids=ch[cur]||[];kids.forEach(function(k){q.push(k)});s.push({h:v(),n:'Process '+cur+'.'+(kids.length?' Discover '+kids.join(', ')+' and add them to the back.':' Nothing new to discover.')});cur=null}
+ return s});
+
+/* waiting room */
+$('wait').innerHTML=flow(['Input','Things waiting to be processed (the queue)','Process one from the front','New things discovered','Put them at the back'])+'<p class="cap">The queue is a waiting room. Work waits its turn, and processing it creates more work that joins the back.</p>';
+
+/* 9. queue vs deque */
+tabs('qd',['Queue','Deque'],function(k){return k?'<div class="zones"><div style="flex:1;background:var(--mv)">add / remove<br>↔</div><div style="flex:2;font-weight:600;font-size:1.1rem;align-self:center">A &nbsp;B &nbsp;C &nbsp;D</div><div style="flex:1;background:var(--mv)">add / remove<br>↔</div></div><p class="note">Deque: freedom at both ends.</p>':'<div class="zones"><div style="flex:1;background:var(--mv)">remove<br>front</div><div style="flex:2;font-weight:600;font-size:1.1rem;align-self:center">A &nbsp;B &nbsp;C &nbsp;D</div><div style="flex:1;background:var(--ok)">add<br>back</div></div><p class="note">Queue: FIFO discipline. Add at the back, remove from the front.</p>'});
+
+/* 10. sliding window monotonic deque */
+widget('sw',[['[5,3,2,4,1], k=3',[5,3,2,4,1]]],function(a){var k=3,dq=[],s=[],out=[];
+ a.forEach(function(x,i){var nt=[];while(dq.length&&a[dq[dq.length-1]]<=x){nt.push('drop '+a[dq.pop()]+' from the back (useless)')}dq.push(i);if(dq[0]<=i-k){nt.push('expired '+a[dq.shift()]+' leaves from the front')}
+  var wc={};for(var j=Math.max(0,i-k+1);j<=i;j++)wc[j]='mv';wc[i]='now';
+  var dv=dq.map(function(j){return a[j]}),dc={0:'ok'};
+  if(i>=k-1)out.push(a[dq[0]]);
+  s.push({h:'<p class="lbl">Array (window in blue)</p>'+cells(a,{c:wc})+'<p class="lbl">Deque of candidates</p>'+cells(dv,{noix:true,c:dc,sub:{0:'front = max',[dv.length-1]:dv.length>1?'back':'front = max'}})+'<p class="lbl">Window maxima so far</p>'+cells(out.length?out:[''],{noix:true}),n:x+' arrives.'+(nt.length?' '+nt.join('; ')+'.':' It is smaller than the back, so it just joins.')+(i>=k-1?' Window max is '+a[dq[0]]+'.':' Window not full yet.')})});
+ return s});
+
+/* 11. formW */
+tabs('formW',['Queue','Sliding window'],function(k){return k?flow(['Sliding window','Enters one side, leaves the other','Queue-like behavior','Also remove useless candidates from the back','Deque','Keep candidates ordered by usefulness','Monotonic deque']):flow(['Requirement: oldest item must leave first','Constraint: FIFO','Operations: add at back, remove from front','Data structure: Queue'])});
+
+/* ===== CODE TOGGLE AND THEME: do not change ===== */
+var cb=$('codeBtn'),hid=false;
+cb.onclick=function(){hid=!hid;[].forEach.call(document.querySelectorAll('details'),function(d){d.open=!hid});cb.textContent=hid?'Show code':'Hide code'};
+var root=document.documentElement,tb=$('theme');
+function setTheme(t){root.setAttribute('data-theme',t);tb.textContent=t==='dark'?'Light':'Dark'}
+try{var sv=localStorage.getItem('theme');if(sv==='dark'||sv==='light')setTheme(sv)}catch(e){}
+tb.onclick=function(){var t=root.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);try{localStorage.setItem('theme',t)}catch(e){}};
+</script>
+</body>
+</html>

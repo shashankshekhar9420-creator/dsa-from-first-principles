@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Linked Lists: Understanding Why They Exist</title>
+<style>
+:root{--bg:#fff;--ink:#111;--mut:#555;--line:#ccc;--acc:#1f4e8c;--hi:#fff3b0;--hib:#c9a227;--ok:#dcf0dc;--okb:#3a8a3a;--mv:#e6edf7;--dim:#eee;--card:#fafafa;--red:#b5342b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#121212;--ink:#eee;--mut:#aaa;--line:#3a3a3a;--acc:#8ab4f8;--hi:#4a4220;--hib:#c9a227;--ok:#1d3a22;--okb:#5cb85c;--mv:#1c2a40;--dim:#2a2a2a;--card:#1a1a1a;--red:#ff7b72;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Roman",Times,serif}
+main{max-width:720px;margin:0 auto;padding:40px 20px 80px}
+h1,h2,h3{font-family:inherit;line-height:1.25}
+h1{font-size:2.1rem;margin:.2em 0 .6em}
+h2{font-size:1.5rem;margin:2.6em 0 .6em;padding-top:1.2em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin:1.6em 0 .4em}
+blockquote{margin:1.2em 0;padding:.4em 1em;border-left:4px solid var(--acc);font-size:1.12rem}
+blockquote p{margin:.3em 0}
+code{font:inherit;background:var(--card);padding:1px 5px;border-radius:4px}
+a{color:var(--acc)}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:1.2em 0}
+.cap{font-size:.9rem;color:var(--mut);margin:.6em 0 0}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:flex-end}
+.cw{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ix{font-size:.8rem;color:var(--mut);min-height:1.1em;font-weight:600}
+.cell{min-width:54px;padding:7px 6px;text-align:center;border:2px solid var(--line);background:var(--bg);border-radius:6px;font-weight:600;transition:background .2s}
+.gap{border-style:dashed;background:transparent}
+.ok{background:var(--ok);border-color:var(--okb)}
+.now{background:var(--hi);border-color:var(--hib)}
+.dim{background:var(--dim);color:var(--mut);border-color:var(--dim)}
+.mv{background:var(--mv);border-color:var(--acc)}
+button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
+button:hover:not(:disabled){background:var(--mv)}
+button:disabled{opacity:.4;cursor:default}
+button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--hib);outline-offset:2px}
+.tools{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5;display:flex;gap:8px}
+.ctl{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.pos{color:var(--mut);font-size:.9rem}
+.note{min-height:3em;margin:.4em 0 0;font-weight:500}
+.lbl{font-size:.9rem;margin:8px 0 3px}
+.bar{height:14px;border-radius:4px;background:var(--acc);min-width:3px}
+.bar.g{background:var(--okb)}.bar.r{background:var(--red)}
+input[type=range]{width:100%}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--dim)}
+details{margin:1em 0;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+summary{cursor:pointer;padding:8px 12px;font-size:.95rem;color:var(--acc)}
+pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,Menlo,Consolas,monospace}
+.flow{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;font-size:.95rem}
+.flow .cell{min-width:140px}
+.tt td{text-align:left}.tt td:first-child{font-weight:600}
+.sv{width:100%;height:auto;display:block}
+.sv .n rect{fill:var(--bg);stroke:var(--line);stroke-width:2}
+.sv .n line{stroke:var(--line);stroke-width:2}
+.sv .n circle{fill:var(--acc)}
+.sv .n text{fill:var(--ink);font:600 15px "Times New Roman",Times,serif;text-anchor:middle}
+.sv .n text.sm{font-size:11px;font-weight:400;fill:var(--mut)}
+.sv .n.now rect{fill:var(--hi);stroke:var(--hib)}
+.sv .n.ok rect{fill:var(--ok);stroke:var(--okb)}
+.sv .n.mv rect{fill:var(--mv);stroke:var(--acc)}
+.sv .n.dim rect{fill:var(--dim);stroke:var(--dim)}
+.sv .n.dim text{fill:var(--mut)}
+.sv .n.p rect{stroke-dasharray:4 3}
+.sv .n.g rect{fill:none;stroke-dasharray:2 4;opacity:.6}
+.sv .e{stroke:var(--ink);stroke-width:2;fill:none}
+.sv .e.new{stroke:var(--okb)}
+.sv .e.old{stroke:var(--red);stroke-dasharray:5 4}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" style="fill:var(--ink)"/></marker>
+<marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" style="fill:var(--okb)"/></marker>
+<marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" style="fill:var(--red)"/></marker>
+</defs></svg>
+<div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
+<main>
+<h1>Linked Lists: Understanding Why They Exist</h1>
+<p>If you learned arrays first, you probably came away with a very convenient mental model:</p>
+<blockquote><p>“I have a collection of things, and I can get any element whenever I want.”</p></blockquote>
+<p>Want <code>C</code> in <code>[A, B, C, D, E]</code>? Go to index <code>2</code>. Want <code>E</code>? Index <code>4</code>. Want to insert something? Well… that’s where things become interesting. Arrays are extremely good at one thing: <strong>putting things in known positions</strong>. But that strength comes with a constraint: the elements live next to each other, and once we change the collection frequently, that constraint starts fighting us.</p>
+<p>This is where the idea of a linked list begins. Not with pointers, not with nodes, not with a class definition. <strong>With a problem.</strong> Every figure below is a stepper or a control you can drive, and code can be hidden with the button at the top.</p>
+<ol>
+<li><a href="#s1">The problem with our beautiful array</a></li>
+<li><a href="#s2">What if elements didn’t have to be neighbours?</a></li>
+<li><a href="#s3">The first big tradeoff</a></li>
+<li><a href="#s4">Changing the structure: insertion and deletion</a></li>
+<li><a href="#s5">The famous “O(1) insertion”</a></li>
+<li><a href="#s6">Arrays vs linked lists: memory and why both exist</a></li>
+<li><a href="#s7">Head, tail and the ends of the list</a></li>
+<li><a href="#s8">Knowing the previous node: doubly and circular lists</a></li>
+<li><a href="#s9">The complete mental model, and complexity</a></li>
+<li><a href="#s10">The deeper lesson</a></li>
+<li><a href="#s11">And now something interesting happens</a></li>
+</ol>
+
+<h2 id="s1">1. The problem with our beautiful array</h2>
+<p>The elements of an array occupy consecutive positions in memory. If each element takes the same amount of space, finding element <code>i</code> is arithmetic:</p>
+<blockquote><p>address = starting_address + i × element_size</p></blockquote>
+<p>That is why <code>arr[3]</code> is so fast. We don’t look at <code>A</code>, <code>B</code> or <code>C</code>; we jump straight to index 3. <strong>Arrays are position-oriented: the position itself tells us where the element is.</strong></p>
+<h3>But now let’s insert something</h3>
+<p>Suppose we want <code>X</code> between <code>B</code> and <code>C</code>. The logical operation sounds trivial: “put X between B and C.” Physically there is a problem: there was no empty space between them, so we need to make room. <code>E</code> moves, <code>D</code> moves, <code>C</code> moves, and then <code>X</code> can occupy the newly created space. The important thing is not that insertion takes <code>O(n)</code>. The important thing is <strong>why</strong>:</p>
+<blockquote><p>The array’s elements are tied to their physical positions. Insert in the middle, and everything after it has to move.</p></blockquote>
+<h3>Try it: insert X into an array</h3>
+<p>Pick an insertion index and step through. Blue cells are elements that physically moved. The small labels above the cells are memory addresses (4 bytes per element). Turn the toggle off to hide them and see only the logical picture.</p>
+<div class="fig"><div class="row" style="align-items:center"><button id="phB" aria-pressed="true">Show physical movement</button></div><div id="iaW"></div></div>
+<p>Compare index <code>5</code> (nothing after it, nothing moves) with index <code>0</code> (everything moves). The cost is not an arbitrary rule about arrays. It is the number of elements that sit after the insertion point.</p>
+
+<h2 id="s2">2. What if elements didn’t have to be neighbours?</h2>
+<p>This question gives birth to the linked list. Imagine memory like this: <code>A</code> at address 1000, <code>B</code> at 2500, <code>C</code> at 1370, <code>D</code> at 4200, <code>E</code> at 1800. These objects are nowhere near each other. If we don’t know where <code>B</code> is, how does <code>A</code> find it? Here is the idea:</p>
+<blockquote><p>Let A remember where B is.</p></blockquote>
+<p>Instead of storing only <code>A</code>, we store <code>A + location of B</code>. And <code>B</code> stores <code>B + location of C</code>, and so on. Now the nodes don’t need to live beside each other. They only need to know <strong>where the next node is</strong>.</p>
+<h3>A new way of organizing data</h3>
+<p>An array says: <em>“My elements are next to each other. Their positions tell you where they are.”</em> A linked list says: <em>“My elements can be anywhere. Each element tells you where the next one is.”</em> The arrow is not just a visual convention. It is an actual relationship: <code>A.next = B</code>, <code>B.next = C</code>, <code>C.next = D</code>, <code>D.next = None</code>.</p>
+<h3>What is a node?</h3>
+<p>Each piece of a linked list is a <strong>node</strong>. It holds two things: the <em>value</em> (left part of the box below) and a reference to the next node (the dot on the right).</p>
+<div class="fig" id="nodeF"></div>
+<p>So a linked list is not fundamentally “a bunch of nodes.” It is more accurately <strong>a chain of nodes connected through references</strong>. That distinction becomes important later.</p>
+<h3>The head</h3>
+<p>If the nodes are scattered around memory, how do we find the first one? We keep one reference, <code>head</code>, which says “this is where the list begins.” We don’t need to know where <code>B</code>, <code>C</code> or <code>D</code> are. We only need to know where <code>A</code> is. Then <code>A</code> tells us where <code>B</code> is, and <code>B</code> tells us where <code>C</code> is.</p>
+<div class="fig" id="chF"></div>
+<h3>Try it: follow the links</h3>
+<p>The nodes below are scattered across a simulated memory space, and the dashed boxes are unused slots. Click <em>Next</em> to traverse. Green nodes are already visited, yellow is where we are now.</p>
+<div class="fig" id="flW"></div>
+<blockquote><p>Physical location doesn’t matter. The links create the order.</p></blockquote>
+
+<h2 id="s3">3. The first big tradeoff</h2>
+<p>We’ve solved one problem, but we’ve created another. With an array we can say “give me element 3” and the computer calculates where it is. With a linked list we have no address formula. We have to follow the chain, and if we want the 1000th element we may have to visit all 1000 nodes. This gives us our first fundamental tradeoff:</p>
+<blockquote><p>Arrays make positions cheap. Linked lists make relationships cheap.</p></blockquote>
+<p>Array: <strong>“Where is the 500th thing?”</strong> Easy. Linked list: <strong>“What comes after this thing?”</strong> Easy, if we already have that node. This distinction explains almost everything that follows.</p>
+<h3>Traversal and search</h3>
+<p>To traverse, set <code>current = head</code> and repeat: process <code>current</code>, then <code>current = current.next</code>. It takes <code>O(n)</code> not because “linked lists are O(n)” (too vague) but because:</p>
+<blockquote><p>To move from one node to the next we follow one link, and to visit n nodes we follow roughly n links.</p></blockquote>
+<p>Searching is the same story. To find <code>D</code> in <code>A → B → C → D → E</code> we ask “A? No. B? No. C? No. D? Yes.” In the worst case we inspect everything, because <strong>there is no direct way to jump to an arbitrary node</strong>. The reason matters more than the number.</p>
+
+<h2 id="s4">4. Changing the structure: insertion and deletion</h2>
+<p>Remember why we invented this thing: we wanted to avoid physically moving elements when the structure changes. Take <code>A → B → C → D</code> and suppose we want <code>A → B → X → C → D</code>. Where does <code>X</code> live? <em>Anywhere.</em> We don’t move <code>C</code> or <code>D</code>. We simply change the relationships: <code>B → C</code> becomes <code>B → X → C</code>. The nodes haven’t moved. Only the links changed.</p>
+<h3>Try it: insert a node</h3>
+<div class="fig" id="inW"></div>
+<h3>Deletion has the same story</h3>
+<p>With an array, removing <code>C</code> from <code>A B C D E</code> means <code>D</code> and <code>E</code> have to shift left. With a linked list, <code>B → C → D</code> becomes <code>B → D</code> by setting <code>B.next = D</code>. <code>C</code> no longer belongs to the chain. Choose a node to delete and compare the two structures side by side:</p>
+<div class="fig" id="deW"></div>
+<blockquote><p>Array: move data. Linked list: change relationships.</p></blockquote>
+
+<h2 id="s5">5. The famous “O(1) insertion”</h2>
+<p>This is where linked lists are often taught badly. You’ll hear “insertion in a linked list is O(1).” That’s not always true. If we already hold a reference to <code>C</code> and want to insert <code>X</code> after it, we change <code>C → D</code> into <code>C → X → D</code>: constant work. But if we only know “insert X after the 10,000th node,” we first have to <em>find</em> node 10,000:</p>
+<div class="fig scroll"><table class="tt"><tr><td>find the location</td><td>O(n)</td></tr><tr><td>perform the insertion</td><td>O(1)</td></tr><tr><th>total</th><th style="text-align:left">O(n)</th></tr></table></div>
+<blockquote><p>An operation can be cheap once we reach the right location, while reaching that location can still be expensive.</p></blockquote>
+<p>This idea appears throughout DSA. Slide <code>k</code> in a list or array of <code>n = 1000</code> elements and watch where the cost actually lives:</p>
+<div class="fig"><label for="ceS">k = <strong id="ceO"></strong></label><input id="ceS" type="range" min="1" max="1000" value="500"><div id="ceV"></div><p class="cap">Bars are linear, out of 1000 steps. Green rows are cheap, red rows are not.</p></div>
+
+<h2 id="s6">6. Arrays vs linked lists: memory and why both exist</h2>
+<h3>The central tradeoff</h3>
+<p>If linked lists make insertion and deletion so easy, why not use them for everything? Because we’ve been paying for those cheap modifications. We traded <strong>fast random access</strong> for <strong>cheap structural changes</strong>.</p>
+<div class="fig scroll"><table class="tt"><tr><th></th><th>Array</th><th>Linked list</th></tr><tr><td>The structure answers</td><td>“Where is position i?”</td><td>“Where do I go next?”</td></tr><tr><td>Random access</td><td>O(1): calculate the address</td><td>O(n): walk there</td></tr><tr><td>Insert at a known location</td><td>elements after it may move</td><td>reconnect a few links</td></tr><tr><td>Extra memory per element</td><td>none</td><td>one reference (<code>next</code>)</td></tr></table></div>
+<h3>The computer doesn’t only care about Big-O</h3>
+<p>Array elements are close together in memory. When the CPU reads one, nearby data is often brought into the cache as well. Linked-list nodes can be scattered everywhere, so following the chain may mean jumping around memory. Even if both traversals are <code>O(n)</code>, their real performance can differ significantly. That is one reason arrays are often faster in practice than Big-O alone suggests.</p>
+<blockquote><p>Big-O tells us how work scales. It does not tell us everything about the cost of performing that work on real hardware.</p></blockquote>
+<h3>Try it: memory layout</h3>
+<p>Switch between the two. Arrows show the <em>logical</em> order. Compare it with the <em>physical</em> order, meaning the order of the addresses.</p>
+<div class="fig" id="memW"></div>
+<h3>Why would anyone want this?</h3>
+<p>Linked lists aren’t “better arrays.” They solve a different problem. If your workload is read by index, read by index, read by index, an array is usually a much better fit. If it repeatedly changes the structure and you already know where those changes happen, a linked list can be useful. The question is not “which data structure is better?” but:</p>
+<blockquote><p>What operations does my problem need to be good at?</p></blockquote>
+
+<h2 id="s7">7. Head, tail and the ends of the list</h2>
+<p>Sometimes we also keep a <code>tail</code> reference. Without it, finding the last node means walking the entire list. This is another recurring idea in data structures: <strong>sometimes we store extra information so that an operation becomes cheaper later</strong>. We spend a tiny amount of memory to remember something we’d otherwise have to rediscover.</p>
+<p>Operations at the ends are where linked lists shine. Inserting at the head is <code>X.next = A; head = X</code>. Deleting from the head is <code>head = B</code>. Inserting at the tail, with a tail pointer, is <code>D.next = X; tail = X</code>. Each is <code>O(1)</code>: no shifting, no copying, no touching the rest of the list.</p>
+<div class="fig" id="hdW"></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>class Node:
+    def __init__(self, value):
+        self.value = value
+        self.next = None
+
+def traverse(head):
+    current = head
+    while current:
+        print(current.value)
+        current = current.next
+
+def insert_at_head(head, value):
+    node = Node(value)
+    node.next = head
+    return node              # the new head
+
+def insert_after(node, value):   # O(1): we already hold `node`
+    new = Node(value)
+    new.next = node.next         # 1. the new node points onward first
+    node.next = new              # 2. then the chain points to it
+
+def delete_after(node):          # O(1): we hold the predecessor
+    if node.next:
+        node.next = node.next.next</pre></details>
+<p>Notice the order inside <code>insert_after</code>. If we set <code>node.next = new</code> first, nothing would remember where the rest of the list is.</p>
+
+<h2 id="s8">8. Knowing the previous node: doubly and circular lists</h2>
+<p>Deleting the <em>last</em> node is more interesting. To delete <code>D</code> from <code>A → B → C → D</code>, we need <code>C.next</code> to become <code>None</code>. But how do we find <code>C</code>? In a <strong>singly linked list</strong>, <code>D</code> doesn’t know who points to it, so we walk from the beginning: <code>O(n)</code>. What if nodes also knew their previous node? Each node would store <code>prev | value | next</code>. This is a <strong>doubly linked list</strong>. Compare the two:</p>
+<div class="fig" id="dtW"></div>
+<blockquote><p>Extra information can buy cheaper operations.</p></blockquote>
+<h3>Three variations</h3>
+<div class="fig" id="vaW"></div>
+<p>A <strong>singly</strong> list is smaller, simpler and has fewer links to maintain, but it can’t move backward and some deletions need the predecessor. A <strong>doubly</strong> list moves in both directions and deletes a known node easily, at the cost of extra memory, more pointer updates and more opportunities for implementation mistakes. A <strong>circular</strong> list connects the last node back to the first (<code>C.next = A</code>), so there is no <code>None</code>. It fits situations with no natural end, such as repeatedly rotating through <code>A → B → C → A → B → …</code>. Each variation exists because of a requirement, not because textbooks needed another type. The right question is always: <strong>do we need the extra relationship badly enough to pay for it?</strong></p>
+
+<h2 id="s9">9. The complete mental model, and complexity</h2>
+<p>At this point a linked list should no longer look like <code>class Node: ...</code>. It should look like this:</p>
+<div class="fig" id="mmF"></div>
+<p><strong>Node</strong> stores data and a reference. <strong>Head</strong> tells us where the chain begins. <strong>Next</strong> tells each node where to go. <strong>None</strong> marks the end of a normal singly linked list. Traversal follows the references. Insertion and deletion change references.</p>
+<h3>Complexity, derived instead of memorized</h3>
+<div class="fig scroll"><table class="tt"><tr><th>Operation</th><th>Why?</th><th>Time</th></tr>
+<tr><td>Access by index</td><td>Must follow links</td><td>O(n)</td></tr>
+<tr><td>Search</td><td>May inspect every node</td><td>O(n)</td></tr>
+<tr><td>Traverse</td><td>Visit every node</td><td>O(n)</td></tr>
+<tr><td>Insert at head</td><td>Change head and one link</td><td>O(1)</td></tr>
+<tr><td>Delete at head</td><td>Move head</td><td>O(1)</td></tr>
+<tr><td>Insert after known node</td><td>Change a constant number of links</td><td>O(1)</td></tr>
+<tr><td>Delete known node*</td><td>Constant link changes, but we may need to locate the predecessor</td><td>O(1) or O(n), depending on what is known</td></tr>
+<tr><td>Insert at tail</td><td>Tail pointer is maintained</td><td>O(1)</td></tr>
+<tr><td>Delete at tail</td><td>Need the predecessor in a singly list</td><td>O(n)</td></tr></table></div>
+<p>The asterisk matters, which is why complexity tables without context can be misleading. The better statement is:</p>
+<blockquote><p>Insertion is O(1) once we already have the relevant position or node. Finding that position may cost O(n).</p></blockquote>
+
+<h2 id="s10">10. The deeper lesson</h2>
+<p>Linked lists teach us something much bigger than linked lists. We started with “arrays are convenient.” Then we noticed a limitation: changing their structure can require moving many elements. So we asked, <em>what if elements didn’t have to be next to each other?</em> Then each element needs some way to find the next one, which produced <strong>nodes + references</strong>. That decision created new consequences: we can’t jump to arbitrary positions. So we gained <strong>cheap structural changes</strong> at the cost of <strong>expensive random access, extra memory and poorer locality</strong>.</p>
+<p>This is what designing a data structure really is. You are not looking for a magical structure that makes everything fast. You are deciding:</p>
+<blockquote><p>Which operations should be cheap, and what am I willing to sacrifice to make them cheap?</p></blockquote>
+
+<h2 id="s11">11. And now something interesting happens</h2>
+<p>Remember where our DSA journey started: <strong>two pointers</strong>. We learned that it isn’t really a pattern. It is the idea of maintaining two positions with different jobs. With arrays those positions were <code>left</code> and <code>right</code>, or <code>read</code> and <code>write</code>. A linked list has no index-based jumping, but we can still have two positions moving through the structure. What happens if one moves one step at a time while another moves two?</p>
+<div class="fig" id="sfW"></div>
+<p>At first this may seem like a strange thing to do. Why deliberately move two pointers at different speeds? That question is exactly where the next chapter begins.</p>
+<h3>The journey so far</h3>
+<p>We can see our DSA journey as a sequence of problems rather than a sequence of patterns:</p>
+<div class="fig" id="jrF"></div>
+<p>We haven’t memorized a linked-list pattern. We’ve built a reason for its existence. We understand what it gives us and what it takes away, and when we meet algorithms involving linked lists, the structure itself will tell us which strategies are possible. That is the real purpose of learning a data structure.</p>
+</main>
+<script>
+var $=function(i){return document.getElementById(i)};
+function cells(a,o){o=o||{};var c=o.c||{};return '<div class="row">'+a.map(function(v,i){var g=v==='';return '<div class="cw"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="cell'+(g?' gap':'')+' '+(c[i]||'')+'">'+(g?'&nbsp;':v)+'</div><span class="ix">'+(o.noix?'':i)+'</span></div>'}).join('')+'</div>'}
+function flow(a){return '<div class="flow">'+a.map(function(x){return '<div class="cell">'+x+'</div>'}).join('<span>↓</span>')+'</div>'}
+function widget(id,opts,build){
+  var el=$(id),i=0,st=[],cur=0;
+  el.innerHTML=(opts.length>1?'<div class="row" style="align-items:center">'+opts.map(function(o,k){return '<button data-k="'+k+'">'+o[0]+'</button>'}).join('')+'</div>':'')+'<div class="scroll v"></div><p class="note" aria-live="polite"></p><div class="ctl"><button class="pv">Previous</button><span class="pos"></span><button class="nx">Next</button></div>';
+  var v=el.querySelector('.v'),n=el.querySelector('.note'),p=el.querySelector('.pos'),pv=el.querySelector('.pv'),nx=el.querySelector('.nx');
+  function r(){v.innerHTML=st[i].h;n.textContent=st[i].n;p.textContent='Step '+(i+1)+' of '+st.length;pv.disabled=i===0;nx.disabled=i===st.length-1}
+  function pick(k){cur=k;st=build(opts[k][1]);i=0;[].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.k===k))});r()}
+  [].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.onclick=function(){pick(+b.dataset.k)}});
+  pv.onclick=function(){if(i>0){i--;r()}};nx.onclick=function(){if(i<st.length-1){i++;r()}};pick(0);
+  return {re:function(){var j=i;pick(cur);i=Math.min(j,st.length-1);r()}};
+}
+function tabs(id,labels,fn){var el=$(id);el.innerHTML='<div class="row" style="align-items:center"></div><div class="tv"></div>';var bar=el.firstChild,tv=el.lastChild;
+  labels.forEach(function(t,k){var b=document.createElement('button');b.textContent=t;b.onclick=function(){[].forEach.call(bar.children,function(x){x.setAttribute('aria-pressed',String(x===b))});tv.innerHTML=fn(k)};b.setAttribute('aria-pressed',String(k===0));bar.appendChild(b)});tv.innerHTML=fn(0)}
+
+// ---- SVG graph renderer: nodes {l,x,y,c,t,a,s}, edges [from,to,class,yOffset,curve] ----
+function G(N,E,o){o=o||{};var W=o.w||640,H=o.h||110,h='<div class="scroll"><svg class="sv" viewBox="0 0 '+W+' '+H+'" style="min-width:'+(o.m||520)+'px" role="img" aria-label="'+(o.al||'Linked list diagram')+'">',k;
+  function dm(n){return n.t==='p'?[n.w||46,26]:[64,38]}
+  E.forEach(function(e){var a=N[e[0]],b=N[e[1]],da=dm(a),db=dm(b),of=e[3]||0,bx=b.x+db[0]/2,by=b.y+db[1]/2+of,sx,sy,mk='#ar'+(e[2]==='new'?'g':e[2]==='old'?'r':'');
+    if(e[4]){sx=a.x+da[0]/2;sy=a.y+da[1];var ex=bx,ey=b.y+db[1]+3;h+='<path class="e '+(e[2]||'')+'" d="M'+sx+' '+sy+' Q'+(sx+ex)/2+' '+(sy+75)+' '+ex+' '+ey+'" marker-end="url('+mk+')"/>';return}
+    sy=a.y+da[1]/2+of;sx=a.t==='p'?a.x+da[0]/2:(bx<a.x?a.x+11:a.x+da[0]-11);
+    var dx=bx-sx,dy=by-sy,L=Math.sqrt(dx*dx+dy*dy)||1,ux=dx/L,uy=dy/L,t=Math.min((db[0]/2+4)/(Math.abs(ux)||.001),(db[1]/2+4)/(Math.abs(uy)||.001));
+    h+='<line class="e '+(e[2]||'')+'" x1="'+sx+'" y1="'+sy+'" x2="'+(bx-ux*t)+'" y2="'+(by-uy*t)+'" marker-end="url('+mk+')"/>'});
+  for(k in N){var n=N[k],d=dm(n),mid=n.y+d[1]/2,c=(n.c||'')+(n.t==='p'?' p':'')+(n.t==='g'?' g':'');
+    h+='<g class="n '+c+'"><rect x="'+n.x+'" y="'+n.y+'" width="'+d[0]+'" height="'+d[1]+'" rx="6"/>';
+    if(n.t!=='g'){
+      if(!n.t)h+='<line x1="'+(n.x+d[0]-22)+'" x2="'+(n.x+d[0]-22)+'" y1="'+n.y+'" y2="'+(n.y+d[1])+'"/><circle cx="'+(n.x+d[0]-11)+'" cy="'+mid+'" r="3.5"/>';
+      h+='<text x="'+(n.x+(n.t?d[0]/2:(d[0]-22)/2))+'" y="'+(mid+5)+'">'+n.l+'</text>';
+      if(n.a)h+='<text class="sm" x="'+(n.x+d[0]/2)+'" y="'+(n.y+d[1]+14)+'">'+n.a+'</text>';
+      if(n.s)h+='<text class="sm" x="'+(n.x+d[0]/2)+'" y="'+(n.y-6)+'">'+n.s+'</text>'}
+    h+='</g>'}
+  return h+'</svg></div>'}
+function ch(N,E,ids,x,y,g,nil){ids.forEach(function(k,i){N[k]=N[k]||{l:k};N[k].x=x+i*g;N[k].y=y;if(i)E.push([ids[i-1],k])});if(nil){N.nil={l:'None',t:'p',x:x+ids.length*g,y:y+6};E.push([ids[ids.length-1],'nil'])}}
+function chain(ids,hd){var N={},E=[];ch(N,E,ids,90,35,105,1);N.head={l:'head',t:'p',x:20,y:41};E.push(['head',ids[0]]);return G(N,E,{h:90,m:560})}
+
+// ---- static figures ----
+$('nodeF').innerHTML=G({A:{l:'A',x:40,y:20,a:'value | next'},B:{l:'B',x:220,y:20,a:'the next node'}},[['A','B']],{h:80,m:360})+'<p class="cap">Left of the divider: the data. The dot: a reference to the next node.</p>';
+$('chF').innerHTML=chain(['A','B','C','D'])+'<p class="cap">We reach every other node by repeatedly following next.</p>';
+$('mmF').innerHTML=chain(['A','B','C'])+'<p class="cap">Nodes hold data and a reference. head says where to start. None marks the end.</p>';
+$('jrF').innerHTML=flow(['Arrays: “I want direct access to positions.”','Arrays: “But changing the structure can require moving elements.”','Linked lists: “Let’s connect elements instead.”','Linked lists: “Now random access is expensive, but changing relationships is cheap.”','Two pointers: “Can two moving positions reveal information without examining everything?”','Slow + fast pointers'])+'';
+
+// ---- 1. insert into array ----
+var phys=true;
+var ia=widget('iaW',[0,1,2,3,4,5].map(function(p){return ['index '+p,p]}),function(p){
+  var a=['A','B','C','D','E'],n=5,s=[],c={},k,moved=0;
+  function V(){var sb={};if(phys)a.forEach(function(_,i){sb[i]='@'+(1000+4*i)});return cells(a,{c:c,sub:sb})}
+  s.push({h:V(),n:'We want X at index '+p+'. The array has 5 elements in 5 consecutive slots, with no free space anywhere.'});
+  a.push('');c[p]='now';
+  s.push({h:V(),n:p<n?'Index '+p+' is occupied by '+a[p]+'. To open a gap there, everything from index '+p+' onward must move one slot right. We first claim one slot at the end.':'Index 5 is the free slot we just claimed at the end. Nothing sits after it.'});
+  for(k=n-1;k>=p;k--){a[k+1]=a[k];a[k]='';c[k+1]=phys?'mv':'';moved++;
+    s.push({h:V(),n:a[k+1]+' moves from index '+k+' to index '+(k+1)+(phys?' (address @'+(1000+4*k)+' to @'+(1000+4*(k+1))+')':'')+'. Elements moved so far: '+moved+'.'})}
+  a[p]='X';c[p]='ok';
+  s.push({h:V(),n:moved?'X fits. The data changed position because the elements must remain contiguous. '+moved+' of 5 elements moved, which is where the O(n) comes from.':'X fits with no movement at all: nothing sat after index 5. The cost depends on how many elements are after the insertion point.'});
+  return s});
+$('phB').onclick=function(){phys=!phys;this.setAttribute('aria-pressed',String(phys));ia.re()};
+
+// ---- 2. follow the links ----
+widget('flW',[['t',0]],function(){
+  var P={A:[10,70,'@1000'],B:[290,140,'@2500'],C:[170,10,'@1370'],D:[430,70,'@4200'],E:[540,140,'@1800']},ids=['A','B','C','D','E'],s=[],j,k,N,E;
+  function mk(u){N={};E=[];var gx,gy,hit;for(k=0;k<24;k++){gx=6+(k%8)*78;gy=6+Math.floor(k/8)*66;hit=ids.some(function(m){return Math.abs(P[m][0]-gx)<72&&Math.abs(P[m][1]-gy)<50});if(!hit)N['g'+k]={t:'g',x:gx,y:gy}}
+    ids.forEach(function(m,i){N[m]={l:m,x:P[m][0],y:P[m][1],a:P[m][2],c:i<u?'ok':i===u?'now':''};if(i)E.push([ids[i-1],m])});
+    N.nil={l:'None',t:'p',x:590,y:10,c:u===5?'now':''};E.push(['E','nil']);N.head={l:'head',t:'p',x:10,y:20,c:u<0?'now':''};E.push(['head','A']);
+    return G(N,E,{h:215,m:560})}
+  s.push({h:mk(-1),n:'The only thing we are given is head. It says: the list begins at A (address 1000).'});
+  for(j=0;j<5;j++)s.push({h:mk(j),n:j?ids[j-1]+'.next holds the address '+P[ids[j]][2].slice(1)+', so we go to '+ids[j]+'. Visited so far: '+ids.slice(0,j+1).join(' → ')+'.':'head → A. We are at A (address 1000).'});
+  s.push({h:mk(5),n:'E.next is None: the end. The nodes were scattered across memory, yet the links alone gave us the order A → B → C → D → E.'});
+  return s});
+
+// ---- 4. insert / delete node ----
+widget('inW',[['x',0]],function(){
+  var s=[];
+  function mk(st){var N={},E=[],cn=function(l){return '<div class="lbl"><strong>Nodes moved: 0 &nbsp;|&nbsp; Links changed: '+l+'</strong></div>'};ch(N,E,['A','B','C','D'],30,15,120,1);N.X={l:'X',x:210,y:95,c:'now'};
+    if(st===1)E.push(['X','C','new']);
+    if(st===2){E[1]=['B','C','old'];E.push(['X','C','new'],['B','X','new'])}
+    if(st===3){E.splice(1,1);E.push(['X','C'],['B','X'])}
+    return G(N,E,{h:150,m:520})+cn(st===0?0:st===1?1:2)}
+  var m=['Four nodes, and a new node X living somewhere else in memory. Nothing links to it yet.','First, X.next = C. X now points at C. Order matters: if we changed B.next first, nothing would remember where C is.','Now B.next = X. The old link B → C (red, dashed) is replaced by B → X.','Done: A → B → X → C → D. Two links changed and no existing node moved. The advantage isn’t that insertion is magically O(1). The advantage is that we don’t have to move the existing elements.'];
+  m.forEach(function(t,i){s.push({h:mk(i),n:t})});return s});
+
+widget('deW',[['Delete B','B'],['Delete C','C'],['Delete D','D']],function(t){
+  var ids=['A','B','C','D','E'],ti=ids.indexOf(t),p=ids[ti-1],q=ids[ti+1],s=[],sh=4-ti;
+  function mk(st){var N={},E=[],a=ids.slice(),c={},i;ch(N,E,ids,30,15,105,1);
+    if(st===0){N[t].c='now';c[ti]='now'}
+    if(st===1){N[t].c='dim';E[ti-1]=[p,t,'old'];E[ti]=[t,q,'old'];E.push([p,q,'new']);a[ti]='';c[ti]='dim'}
+    if(st===2){delete N[t];E=E.filter(function(e){return e[0]!==t&&e[1]!==t});E.push([p,q]);a=ids.filter(function(x){return x!==t}).concat(['']);for(i=ti;i<4;i++)c[i]='mv'}
+    return '<div class="lbl"><strong>Linked list</strong></div>'+G(N,E,{h:75,m:560})+'<div class="lbl"><strong>Array</strong></div>'+cells(a,{c:c,noix:true})}
+  s.push({h:mk(0),n:'Delete '+t+'. We already know the node before it ('+p+'), because its next is the link that must change.'});
+  s.push({h:mk(1),n:p+'.next = '+q+'. The old links (red) are bypassed. In the array, '+t+' is gone and a hole is left in the middle.'});
+  s.push({h:mk(2),n:'List: '+t+' is no longer in the chain and no node moved. Array: '+sh+' element'+(sh>1?'s':'')+' had to shift left (blue). Array: move data. Linked list: change relationships.'});
+  return s});
+
+// ---- 5. cost explorer ----
+function ce(){var k=+$('ceS').value,n=1000,R=[['Array: read arr[k]',1,'g'],['List: reach the k-th node',k,'r'],['List: insert after a node we already hold',2,'g'],['List: insert after the k-th node (find, then relink)',k+2,'r'],['Array: insert at index k (elements shifted)',n-k,'r']];
+  $('ceO').textContent=k;$('ceV').innerHTML=R.map(function(r){return '<div class="lbl">'+r[0]+': <strong>'+r[1]+'</strong></div><div class="bar '+r[2]+'" style="width:'+Math.max(.5,r[1]/10)+'%"></div>'}).join('')}
+$('ceS').oninput=ce;ce();
+
+// ---- 6. memory layout ----
+tabs('memW',['Array','Linked list'],function(k){
+  var M='ABCDEFG'.split(''),pos=k?{A:10,B:21,C:2,D:12,E:17,F:5,G:23}:{A:0,B:1,C:2,D:3,E:4,F:5,G:6},N={},E=[],i;
+  for(i=0;i<24;i++)N['g'+i]={t:'g',x:12+(i%8)*78,y:10+Math.floor(i/8)*58};
+  M.forEach(function(m,j){delete N['g'+pos[m]];N[m]={l:m,x:12+(pos[m]%8)*78,y:10+Math.floor(pos[m]/8)*58,c:'mv',a:'@'+(1000+4*pos[m])};if(j)E.push([M[j-1],m])});
+  var ph=M.slice().sort(function(x,y){return pos[x]-pos[y]}).join(' ');
+  return G(N,E,{w:640,h:190,m:560,al:'Memory layout'})+'<div class="lbl"><strong>Physical order (by address):</strong> '+ph+'</div><div class="lbl"><strong>Logical order (by the links):</strong> A B C D E F G</div><p class="note">'+(k?'In a linked list, logical order comes from the links, not from physical proximity.':'In an array, physical order and logical order naturally coincide.')+'</p>'});
+
+// ---- 7. head / tail operations ----
+widget('hdW',[['Insert at head',0],['Delete at head',1],['Insert at tail (with tail pointer)',2]],function(m){
+  var s=[],T=[['Before: head points at A. We want X at the front.','X.next = A. X now points into the list, but head still points at A.','head = X. Done: only B and C were never touched. 2 pointer updates, O(1).'],['Before: head points at A. Remove A.','head = B. head now skips A.','A is no longer reachable from head. 1 pointer update, O(1). No shifting, no copying.'],['Before: head and tail both known. We want X after D.','D.next = X. We found D instantly because tail told us where the end is.','tail = X. 2 pointer updates, O(1). Without a tail pointer we would first have to walk to D.']][m];
+  function mk(st){var N={},E=[],ids=m===2?['A','B','C','D']:['A','B','C'],x0=m===0?135:30,fx,tx;
+    ch(N,E,ids,x0,60,105,0);
+    if(m===0){N.X={l:'X',x:20,y:60,c:'now'};fx=st===2?'X':'A';if(st>0)E.push(['X','A',st===1?'new':'']);E=E.filter(function(e){return 1});N.head={l:'head',t:'p',x:N[fx].x+9,y:8,c:st===2?'now':''};E.push(['head',fx,st===2?'new':''])}
+    if(m===1){fx=st===0?'A':'B';if(st===1)N.A.c='dim';if(st===2){delete N.A;E=E.filter(function(e){return e[0]!=='A'})}N.head={l:'head',t:'p',x:N[fx].x+9,y:8};E.push(['head',fx,st===1?'new':''])}
+    if(m===2){N.X={l:'X',x:450,y:60,c:'now'};if(st>0)E.push(['D','X',st===1?'new':'']);N.head={l:'head',t:'p',x:39,y:8};E.push(['head','A']);tx=st===2?'X':'D';N.tail={l:'tail',t:'p',x:N[tx].x+9,y:8,c:st===2?'now':''};E.push(['tail',tx,st===2?'new':''])}
+    return G(N,E,{h:115,m:560})}
+  T.forEach(function(t,i){s.push({h:mk(i),n:t})});return s});
+
+// ---- 8. delete tail: singly vs doubly ----
+widget('dtW',[['Singly linked',0],['Doubly linked',1]],function(dbl){
+  var ids=['A','B','C','D'],s=[];
+  function mk(st,walk,gone){var N={},E=[],i,last=gone?'C':'D';ch(N,E,ids,30,35,120,0);E=[];
+    for(i=1;i<4;i++){if(gone&&i===3)break;E.push([ids[i-1],ids[i],'',dbl?-7:0]);if(dbl)E.push([ids[i],ids[i-1],'',7])}
+    N.nil={l:'None',t:'p',x:30+(gone?3:4)*120,y:41};E.push([last,'nil',gone?'new':'']);
+    if(gone)delete N.D;else N.D.c='now';
+    for(i=0;i<walk;i++)N[ids[i]].c=i===walk-1?'now':'ok';
+    return G(N,E,{h:100,m:560})+'<div class="lbl"><strong>Nodes walked to find the predecessor: '+(dbl?0:walk)+'</strong></div>'}
+  s.push({h:mk(0,0),n:'We hold the tail D and want to delete it. C.next must become None, but who points at D?'+(dbl?' Here every node also stores prev.':' D only has a next link, so it can’t tell us.')});
+  if(!dbl){for(var w=1;w<=3;w++)s.push({h:mk(0,w),n:w<3?ids[w-1]+'.next is '+ids[w]+', not D. Keep walking.':'C.next is D: found the predecessor, after walking 3 nodes. For n nodes that is n − 1 steps.'})}
+  else s.push({h:mk(0,0),n:'D.prev is C. We found the predecessor in one hop, without walking from A.'});
+  s.push({h:mk(1,0,1),n:'C.next = None'+(dbl?', and tail = C':'')+'. D is gone. '+(dbl?'O(1) instead of O(n): we paid for an extra reference in every node, and bought a cheaper operation.':'The deletion itself was trivial. Finding C was the expensive part.')});
+  return s});
+
+tabs('vaW',['Singly','Doubly','Circular'],function(k){var N={},E=[],ids=['A','B','C'],i;
+  if(k===0){ch(N,E,ids,40,20,120,1);return G(N,E,{h:75,m:520})+'<p class="note">Each node knows next.</p>'}
+  if(k===1){ch(N,E,ids,120,20,120,0);E=[];N.nl={l:'None',t:'p',x:20,y:26};N.nr={l:'None',t:'p',x:480,y:26};E.push(['A','nl',''],['nl','A','',0]);E=[['A','nl','',7]];for(i=1;i<3;i++)E.push([ids[i-1],ids[i],'',-7],[ids[i],ids[i-1],'',7]);E.push(['C','nr','',-7]);return G(N,E,{h:75,m:520})+'<p class="note">Each node knows prev and next. Forward and backward traversal both work.</p>'}
+  ch(N,E,ids,40,20,120,0);E.push(['C','A','',0,1]);return G(N,E,{h:125,m:520})+'<p class="note">C.next = A. There is no None, so the list has no natural end.</p>'});
+
+// ---- 11. slow and fast preview ----
+widget('sfW',[['t',0]],function(){
+  var ids='ABCDEFG'.split(''),pr=[[0,0],[1,2],[2,4],[3,6]],M=['Both pointers start at A.','slow moves 1 step, fast moves 2.','Again: slow one step, fast two.','fast has reached the last node, G, and slow is at D: exactly the middle. We never counted the nodes or asked for the length. Why this works is where the next chapter begins.'];
+  return pr.map(function(p,i){var N={},E=[];ch(N,E,ids,18,35,87,0);ids.forEach(function(m,j){var sl=j===p[0],fa=j===p[1];if(sl)N[m].c='mv';if(fa)N[m].c='now';if(sl||fa)N[m].s=sl&&fa?'slow, fast':sl?'slow':'fast'});return {h:G(N,E,{h:90,m:560}),n:M[i]}})});
+
+// code toggle and theme
+var cb=$('codeBtn'),hid=false;
+cb.onclick=function(){hid=!hid;[].forEach.call(document.querySelectorAll('details'),function(d){d.open=!hid});cb.textContent=hid?'Show code':'Hide code'};
+var root=document.documentElement,tb=$('theme');
+function setTheme(t){root.setAttribute('data-theme',t);tb.textContent=t==='dark'?'Light':'Dark'}
+try{var sv=localStorage.getItem('theme');if(sv==='dark'||sv==='light')setTheme(sv)}catch(e){}
+tb.onclick=function(){var t=root.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);try{localStorage.setItem('theme',t)}catch(e){}};
+</script>
+</body>
+</html>

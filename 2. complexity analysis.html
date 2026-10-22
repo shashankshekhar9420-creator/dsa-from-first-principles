@@ -50,22 +50,11 @@ svg line{stroke:var(--mut);stroke-width:2}
 .mem .cell{min-width:26px;padding:3px;font-size:.8rem}
 .mem{gap:4px}
 .flag{font-size:.9rem;color:var(--mut)}
-.top-nav{display:flex;align-items:center;gap:8px;font-size:.95rem;margin-bottom:20px;color:var(--mut)}
-.top-nav a{color:var(--acc);text-decoration:none}
-.top-nav a:hover{text-decoration:underline}
-.nav-sep{color:var(--line)}
-.nav-current{color:var(--mut)}
-.article-nav{display:flex;justify-content:space-between;gap:16px;margin-top:48px;padding-top:24px;border-top:1px solid var(--line);flex-wrap:wrap}
-.article-nav a{display:flex;flex-direction:column;padding:12px 16px;border:1px solid var(--line);border-radius:6px;background:var(--card);text-decoration:none;color:var(--ink);transition:border-color .15s,background .15s;flex:1;min-width:200px}
-.article-nav a:hover{border-color:var(--acc);background:var(--mv)}
-.article-nav .an-sub{font-size:.8rem;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
-.article-nav .an-title{font-weight:600;color:var(--acc)}
 </style>
 </head>
 <body>
 <button class="theme" id="theme" aria-label="Switch colour theme">Dark</button>
 <main>
-<nav class="top-nav"><a href="index.html">← DSA from First Principles</a> <span class="nav-sep">/</span> <span class="nav-current">Essay 02 · Complexity Analysis</span></nav>
 <h1>Complexity Analysis from First Principles</h1>
 <p>In the previous article we looked at DSA from the ground up, starting with one idea:</p>
 <blockquote><p>Data structures are ways of organizing information so that the operations we care about become easier.</p></blockquote>
@@ -224,16 +213,6 @@ svg line{stroke:var(--mut);stroke-width:2}
 <p>Mentally grow the problem: 10, 100, 1,000, 10,000, 100,000, 1,000,000… and ask, <strong>“How does the work grow?”</strong> Asymptotic notation is the language for that.</p>
 <ul><li><strong>Big-O:</strong> how fast can the work grow?</li><li><strong>Big-Ω:</strong> how slowly can the work grow?</li><li><strong>Big-Θ:</strong> what is the actual asymptotic growth, when upper and lower bounds match?</li></ul>
 <p>Once you think this way, O(n), O(log n), O(n²), Ω(n) and Θ(n) stop being mysterious symbols. They become a language for describing <strong>how algorithms grow</strong>.</p>
-<div class="article-nav">
-  <a href="introduction.html">
-    <span class="an-sub">Previous Essay · 01</span>
-    <span class="an-title">← DSA from First Principles</span>
-  </a>
-  <a href="arrays/arrays%20introduction%20and%20basics.html" style="text-align:right">
-    <span class="an-sub">Next Essay · 03</span>
-    <span class="an-title">Arrays from First Principles →</span>
-  </a>
-</div>
 </main>
 <script>
 var $=function(i){return document.getElementById(i)};

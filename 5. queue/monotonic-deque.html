@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Monotonic Deque: Keeping Only What Can Still Win</title>
+<style>
+:root{--bg:#fff;--ink:#111;--mut:#555;--line:#ccc;--acc:#1f4e8c;--hi:#fff3b0;--hib:#c9a227;--ok:#dcf0dc;--okb:#3a8a3a;--mv:#e6edf7;--dim:#eee;--card:#fafafa;--red:#b5342b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#121212;--ink:#eee;--mut:#aaa;--line:#3a3a3a;--acc:#8ab4f8;--hi:#4a4220;--hib:#c9a227;--ok:#1d3a22;--okb:#5cb85c;--mv:#1c2a40;--dim:#2a2a2a;--card:#1a1a1a;--red:#ff7b72;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Roman",Times,serif}
+main{max-width:720px;margin:0 auto;padding:40px 20px 80px}
+h1,h2,h3{font-family:inherit;line-height:1.25}
+h1{font-size:2.1rem;margin:.2em 0 .6em}
+h2{font-size:1.5rem;margin:2.6em 0 .6em;padding-top:1.2em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin:1.6em 0 .4em}
+blockquote{margin:1.2em 0;padding:.4em 1em;border-left:4px solid var(--acc);font-size:1.12rem}
+blockquote p{margin:.3em 0}
+code{font:inherit;background:var(--card);padding:1px 5px;border-radius:4px}
+a{color:var(--acc)}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:1.2em 0}
+.cap{font-size:.9rem;color:var(--mut);margin:.6em 0 0}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:flex-end}
+.cw{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ix{font-size:.8rem;color:var(--mut);min-height:1.1em;font-weight:600}
+.cell{min-width:54px;padding:7px 6px;text-align:center;border:2px solid var(--line);background:var(--bg);border-radius:6px;font-weight:600;transition:background .2s}
+.gap{border-style:dashed;background:transparent}
+.ok{background:var(--ok);border-color:var(--okb)}
+.now{background:var(--hi);border-color:var(--hib)}
+.dim{background:var(--dim);color:var(--mut);border-color:var(--dim)}
+.mv{background:var(--mv);border-color:var(--acc)}
+.mx{display:grid;gap:3px;margin:8px 0}
+.mh{font-size:.8rem;color:var(--mut);text-align:center;align-self:center}
+.mx .cell{min-width:0;padding:3px 0;font-size:.8rem}
+button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
+button:hover:not(:disabled){background:var(--mv)}
+button:disabled{opacity:.4;cursor:default}
+button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--hib);outline-offset:2px}
+.tools{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5;display:flex;gap:8px}
+.ctl{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.pos{color:var(--mut);font-size:.9rem}
+.note{min-height:3em;margin:.4em 0 0;font-weight:500}
+.lbl{font-size:.9rem;margin:8px 0 3px}
+.bar{height:14px;border-radius:4px;background:var(--acc);min-width:3px}
+.bar.g{background:var(--okb)}.bar.r{background:var(--red)}
+input[type=range]{width:100%}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--dim)}
+details{margin:1em 0;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+summary{cursor:pointer;padding:8px 12px;font-size:.95rem;color:var(--acc)}
+pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,Menlo,Consolas,monospace}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.two{grid-template-columns:1fr}}
+.flow{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;font-size:.95rem}
+.flow .cell{min-width:140px}
+.zones{display:flex;border:2px solid var(--line);border-radius:6px;overflow:hidden;text-align:center;font-size:.85rem}
+.zones div{padding:10px 6px}
+.flag{font-size:.9rem;color:var(--mut)}
+.tt td:first-child{font-weight:600}
+.tt td{text-align:left}
+.vb{display:flex;gap:6px;align-items:flex-end;margin:6px 0}
+.vc{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:26px;max-width:60px;justify-content:flex-end}
+.vbar{width:100%;border:2px solid var(--line);background:var(--bg);border-radius:4px 4px 0 0;transition:height .2s,background .2s}
+</style>
+</head>
+<body>
+<div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
+<main>
+
+<h1>Monotonic Deque: Keeping Only What Can Still Win</h1>
+<p>In the previous article we reached an important realization. The problem with <strong>Sliding Window Maximum</strong> was not that we did not know how to find a maximum. The problem was that the window keeps moving. When the current maximum leaves, we need to know who is the next element that could possibly become the maximum. Remembering everything makes us scan again, and remembering only the current maximum leaves us stuck when it expires.</p>
+<p>So we arrived at the idea of <strong>candidates</strong>: instead of remembering every element, keep only the elements that can still matter. Now we can finally give that idea a name.</p>
+<blockquote><p>Monotonic Deque: keep only the candidates that can still win, best one at the front.</p></blockquote>
+<p>Each idea has a figure to step through, drag or drive, and the code can be hidden with the button at the top.</p>
+<ol>
+<li><a href="#s1">The problem</a></li>
+<li><a href="#s2">First, remember what a candidate is</a></li>
+<li><a href="#s3">The deque gives us exactly what we need</a></li>
+<li><a href="#s4">Why we store indices, not just values</a></li>
+<li><a href="#s5">What does "monotonic" mean?</a></li>
+<li><a href="#s6">The two reasons an element can leave</a></li>
+<li><a href="#s7">The invariant</a></li>
+<li><a href="#s8">Walk through the entire algorithm</a></li>
+<li><a href="#s9">The algorithm</a></li>
+<li><a href="#s10">Why remove expired elements first?</a></li>
+<li><a href="#s11">What about equal values?</a></li>
+<li><a href="#s12">Why is this actually O(n)?</a></li>
+<li><a href="#s13">Compare the three approaches</a></li>
+<li><a href="#s14">The deeper idea: compressing information</a></li>
+<li><a href="#s15">Why does the deque stay ordered?</a></li>
+<li><a href="#s16">The minimum version</a></li>
+<li><a href="#s17">What these problems taught us</a></li>
+<li><a href="#s18">The bigger pattern: the final toolkit</a></li>
+<li><a href="#s19">A useful way to recognize these problems</a></li>
+<li><a href="#s20">The evolution of the idea</a></li>
+</ol>
+
+<!-- ===== 1 ===== -->
+<h2 id="s1">1. The problem</h2>
+<p>Given an array and a window size <code>k</code>, find the maximum value in every window. For <code>nums = [2, 1, 5, 3, 4, 6]</code> and <code>k = 3</code> the windows have maxima <code>5, 5, 5, 6</code>, so the answer is <code>[5, 5, 5, 6]</code>.</p>
+<div class="fig" id="stWins"></div>
+<p>The windows overlap heavily: only one element enters and one leaves as the window moves. The question is how to use that overlap instead of repeatedly scanning it.</p>
+
+<!-- ===== 2 ===== -->
+<h2 id="s2">2. First, remember what a candidate is</h2>
+<p>Suppose the window is <code>[5, 3, 2]</code> and <code>4</code> enters. Can <code>2</code> ever become the maximum again? No. <code>4</code> is newer and larger, and because <code>4</code> entered later, <code>2</code> will leave the window before <code>4</code> does. While <code>4</code> is alive, <code>2</code> can never win. The same is true for <code>3</code>. So after adding <code>4</code> we do not need <code>5, 3, 2, 4</code>. We only need <code>5, 4</code>. These are the <strong>candidates</strong>: the elements that could still become the maximum at some future point.</p>
+<div class="fig" id="stCand"></div>
+
+<!-- ===== 3 ===== -->
+<h2 id="s3">3. The deque gives us exactly what we need</h2>
+<p>We need two things. The best candidate should be easy to access, so we keep the strongest candidate at the <strong>front</strong>. And when a new, larger value arrives, weaker candidates are removed from the <strong>back</strong>. A deque gives us exactly these operations.</p>
+<div class="fig" id="fig3"></div>
+<blockquote><p>Look at the best candidate from one end, while eliminating useless candidates from the other.</p></blockquote>
+<p>We did not pick the deque because "Sliding Window Maximum uses a deque". We arrived at it because the problem requires working at both ends.</p>
+
+<!-- ===== 4 ===== -->
+<h2 id="s4">4. Why we store indices, not just values</h2>
+<p>This is an important detail. We do not store <code>[5, 4, 3]</code>; we store their <strong>indices</strong>. For <code>nums = [2, 1, 5, 3, 4, 6]</code> a deque of <code>[2, 4]</code> means the values <code>[5, 4]</code>. Why bother? Because values tell us <em>how large</em> something is, and indices tell us <em>whether it is still inside the window</em>.</p>
+<p>Take <code>nums = [5, 3, 4]</code> and <code>k = 2</code>. The window moves from <code>[5, 3]</code> to <code>[3, 4]</code>, and the <code>5</code> is no longer inside. Compare what each design knows:</p>
+<div class="fig" id="stIdx"></div>
+<blockquote><p>Values help us decide who is stronger. Indices help us decide who is still alive.</p></blockquote>
+
+<!-- ===== 5 ===== -->
+<h2 id="s5">5. What does "monotonic" mean?</h2>
+<p>For a maximum problem, the values in our deque <strong>decrease</strong> from front to back, for example <code>[5, 4, 2, 1]</code>, and the largest is always at the front. That is all "monotonic" means here. It does <strong>not</strong> mean the original array is sorted; it can be completely unsorted, like <code>[2, 1, 5, 3, 4, 6]</code>. Only the <em>candidates inside the deque</em> are kept in monotonic order. Drag to process the array one element at a time with <code>k = 3</code>.</p>
+<div class="fig" id="slMono"></div>
+
+<!-- ===== 6 ===== -->
+<h2 id="s6">6. The two reasons an element can leave</h2>
+<p>An element can leave our deque for exactly two conceptual reasons.</p>
+<div class="fig" id="tbLeave"></div>
+<blockquote><p>Front: expiration. Back: domination. That is the heart of the algorithm.</p></blockquote>
+
+<!-- ===== 7 ===== -->
+<h2 id="s7">7. The invariant</h2>
+<p>At every point, our deque maintains four properties. In the walkthrough below, the checks are evaluated for real after each element is processed, so you can watch them hold.</p>
+<div class="fig scroll"><table class="tt"><tr><th>#</th><th>Property</th><th>Why it holds</th></tr>
+<tr><td>1</td><td>Every index is inside the current window</td><td>no expired candidates remain</td></tr>
+<tr><td>2</td><td>Indices are increasing</td><td>elements arrive left to right</td></tr>
+<tr><td>3</td><td>Values are decreasing</td><td>dominated candidates were removed</td></tr>
+<tr><td>4</td><td>The front is the maximum</td><td>so <code>nums[dq[0]]</code> is the answer</td></tr></table></div>
+<p>Once these are maintained, finding the maximum becomes trivial.</p>
+
+<!-- ===== 8 ===== -->
+<h2 id="s8">8. Walk through the entire algorithm</h2>
+<p>Use <code>nums = [2, 1, 5, 3, 4, 6]</code> and <code>k = 3</code>. The deque holds <strong>indices</strong>; the cells show their values with the index below as <code>#</code>. The blue cells are the window, yellow is the new element, green is the front (the maximum). At the end of each element the four invariants are checked. Other presets include the equal-values case and a strictly increasing array.</p>
+<div class="fig" id="stWalk"></div>
+<h3>Now you drive</h3>
+<p>For each entering element choose the next move. Rule 1 comes first (expired front), then Rule 2 (dominated back), then append. Note that an <em>equal</em> back value counts as dominated here, which we explain in section 11.</p>
+<div class="fig" id="drvMon"></div>
+
+<!-- ===== 9 ===== -->
+<h2 id="s9">9. The algorithm</h2>
+<p>Now that the reasoning is clear, the code becomes surprisingly small.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>from collections import deque
+
+
+def max_sliding_window(nums, k):
+    dq = deque()
+    result = []
+
+    for right, value in enumerate(nums):
+
+        # Remove indices that have left the window.
+        while dq and dq[0] &lt;= right - k:
+            dq.popleft()
+
+        # Remove candidates that can never beat the new value.
+        while dq and nums[dq[-1]] &lt;= value:
+            dq.pop()
+
+        dq.append(right)
+
+        # The window is complete.
+        if right &gt;= k - 1:
+            result.append(nums[dq[0]])
+
+    return result</pre></details>
+<p>There is no magic hiding in it. Every line corresponds to one piece of reasoning we already discovered: expired means remove from the front, dominated means remove from the back, a new candidate is appended, and when the window is ready the front is the answer. Here is the code executing; the highlighted line is the one running.</p>
+<div class="fig" id="stCode"></div>
+
+<!-- ===== 10 ===== -->
+<h2 id="s10">10. Why remove expired elements first?</h2>
+<p>Suppose the front contains an element that has already left the window. We must not treat it as the maximum, so before using the front as the answer we make sure it is a currently alive candidate. The ordering is naturally: remove dead candidates, remove dominated candidates, add the new candidate, read the best candidate. The exact implementation can vary slightly, but the invariant must hold before we read the front. Compare the correct algorithm with one that never checks for expiry:</p>
+<div class="fig" id="tbOrder"></div>
+
+<!-- ===== 11 ===== -->
+<h2 id="s11">11. What about equal values?</h2>
+<p>We used <code>nums[dq[-1]] &lt;= value</code> rather than <code>&lt;</code>. Why? Consider <code>[5, 5]</code>. The newer <code>5</code> is at least as good as the older one, and it stays in the window longer, so the older <code>5</code> is dominated and can safely go. Using <code>&lt;</code> would keep equal values too. That also works, but it stores more candidates than necessary. Compare the two on a run of equal values:</p>
+<div class="fig" id="stEq"></div>
+<blockquote><p>For a maximum, a newer value that is greater than or equal to an older value makes the older candidate unnecessary.</p></blockquote>
+
+<!-- ===== 12 ===== -->
+<h2 id="s12">12. Why is this actually O(n)?</h2>
+<p>At first glance the code has a <code>while</code> inside a loop, which might look like we repeatedly scan many elements. But notice that an element can be appended once, removed from the back at most once, and removed from the front at most once. Once removed, it never comes back: <em>append, remove, gone forever</em>. Across the whole array the number of deque operations is proportional to the number of elements. Count the real operations on several arrays:</p>
+<div class="fig" id="tbOps"></div>
+<p>The time is <code>O(n)</code> with <code>O(k)</code> space in the worst case. The intuition is not "while loops somehow become O(n)". It is that every element enters once and can leave only once.</p>
+<blockquote><p>There is no endless rework.</p></blockquote>
+
+<!-- ===== 13 ===== -->
+<h2 id="s13">13. Compare the three approaches</h2>
+<div class="fig scroll"><table class="tt"><tr><th></th><th>Scan every window</th><th>Heap</th><th>Monotonic deque</th></tr>
+<tr><td>Idea</td><td>find the max of each window</td><td>keep large values, discard stale entries lazily</td><td>a newer larger element permanently dominates an older smaller one</td></tr>
+<tr><td>Time</td><td>O(nk)</td><td>O(n log k)</td><td>O(n)</td></tr>
+<tr><td>Weakness</td><td>same elements examined repeatedly</td><td>entries linger in the heap after leaving the window</td><td>specialized: relies on dominance</td></tr></table></div>
+<p>Drag <code>k</code> for an array of 100,000 elements:</p>
+<div class="fig" id="slApp"></div>
+<p>The deque is not a universal replacement for a heap. It works because the sliding-window maximum problem has a special form of <strong>dominance</strong>.</p>
+
+<!-- ===== 14 ===== -->
+<h2 id="s14">14. The deeper idea: compressing information</h2>
+<p>This is perhaps the most important lesson. The window might contain <code>[2, 1, 5, 3, 4]</code>, but we do not need all of it. After processing, we might only need <code>[5, 4]</code>. We have compressed the window into the information that can still affect the future answer.</p>
+<div class="fig" id="slComp"></div>
+<blockquote><p>When a problem keeps moving through overlapping data, ask whether some pieces of information can be permanently discarded.</p></blockquote>
+
+<!-- ===== 15 ===== -->
+<h2 id="s15">15. Why does the deque stay ordered?</h2>
+<p>Imagine the deque contains <code>[8, 6, 3]</code> and <code>7</code> arrives. From the back: <code>3 &lt; 7</code> remove, <code>6 &lt; 7</code> remove, <code>8 &gt; 7</code> stop. Then <code>[8, 7]</code> is still decreasing. Why remove from the back rather than somewhere in the middle? Because the new element can only dominate candidates that are weaker than it, and those are precisely at the back. The monotonic ordering makes them easy to eliminate, and that ordering is what turns the deque into a useful structure rather than a generic double-ended queue.</p>
+<div class="fig" id="stOrd"></div>
+
+<!-- ===== 16 ===== -->
+<h2 id="s16">16. The minimum version</h2>
+<p>The exact same reasoning works for the minimum of every window. We simply reverse the dominance relationship.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre># Maximum: the deque is decreasing, the front is the largest
+while dq and nums[dq[-1]] &lt;= value:
+    dq.pop()
+
+# Minimum: the deque is increasing, the front is the smallest
+while dq and nums[dq[-1]] &gt;= value:
+    dq.pop()</pre></details>
+<div class="fig" id="stMin"></div>
+<blockquote><p>Remove candidates that can no longer win.</p></blockquote>
+
+<!-- ===== 17 ===== -->
+<h2 id="s17">17. What these problems taught us</h2>
+<p>Do not memorize "monotonic deque = decreasing queue". That is the implementation detail. The deeper model is a chain of reasoning:</p>
+<div class="fig" id="flMod"></div>
+<h3>The complete mental model, in layers</h3>
+<p>After all the sliding-window articles, you can think about the pattern in layers. Pick one:</p>
+<div class="fig" id="tbLayer"></div>
+<h3>The final mental model</h3>
+<p>The entire sliding-window idea compresses into four sentences: <strong>right explores</strong>, <strong>left repairs</strong>, <strong>state remembers</strong>, <strong>the constraint decides</strong>. And when the answer itself needs ordered candidates: the deque remembers only who can still win.</p>
+<div class="fig" id="flFinal"></div>
+<blockquote><p>The window decides who is alive. The deque decides who is still capable of winning.</p></blockquote>
+<p>We did not really learn a "deque trick". We learned a way of thinking about data. When information becomes permanently irrelevant, delete it. When several pieces of information remain possible, organize them so the most useful one is easy to access. When the problem moves forward, do not recompute everything from scratch; maintain the useful state.</p>
+
+<!-- ===== 18 ===== -->
+<h2 id="s18">18. The bigger pattern: the final toolkit</h2>
+<p>The monotonic deque is a beautiful ending to sliding window, because it takes the original idea, reuse the overlap between windows, and pushes it one step further: reuse the overlap <em>and</em> discard information that can never matter again. That is where the linear-time solution comes from. Here is the whole toolkit:</p>
+<div class="fig" id="tbKit"></div>
+
+<!-- ===== 19 ===== -->
+<h2 id="s19">19. A useful way to recognize these problems</h2>
+<p>The pattern is no longer "I see a sliding-window problem, so I use technique X". Ask these questions instead.</p>
+<ol>
+<li><strong>What changes when the window moves?</strong> One element leaves, one enters.</li>
+<li><strong>What information do I need to preserve?</strong> A sum, counts, or the best candidates.</li>
+<li><strong>What information has become useless?</strong> Something a newer, better element makes irrelevant.</li>
+<li><strong>Can I discard it permanently?</strong> If a newer element dominates an older one forever, yes.</li>
+<li><strong>Which end is each removal from?</strong> Expired from the front, dominated from the back.</li>
+<li><strong>Do I need indices?</strong> If I must know whether a candidate is still alive, yes.</li>
+<li><strong>Maximum or minimum?</strong> That decides whether the deque is decreasing or increasing.</li>
+</ol>
+
+<!-- ===== 20 ===== -->
+<h2 id="s20">20. The evolution of the idea</h2>
+<div class="fig scroll"><table class="tt"><tr><th>Idea</th><th>What it teaches</th></tr>
+<tr><td>Fixed window</td><td>Maintain state while the window moves.</td></tr>
+<tr><td>Variable window</td><td>Expand, violate, shrink.</td></tr>
+<tr><td>Frequency / state window</td><td>Maintain counts as elements enter and leave.</td></tr>
+<tr><td>Pattern matching, required content</td><td>Compare the current state to a required state; shrink aggressively once satisfied.</td></tr>
+<tr><td>Monotonic deque</td><td>Keep only candidates that can still affect the answer, ordered so the best is at the front.</td></tr></table></div>
+<p>The questions that matter are far more valuable than memorizing a pattern name: what changes when the window moves, what information do I need to preserve, what information has become useless, and can I discard it permanently?</p>
+<blockquote><p>Reuse the overlap, and discard information that can never matter again. That is where the linear-time solution comes from.</p></blockquote>
+</main>
+
+<script>
+/* ===== SHARED HELPERS: do not change ===== */
+var $=function(i){return document.getElementById(i)};
+var L=function(v){return v.toLocaleString('en-US')};
+var num=function(x,y){return x-y};
+function isSorted(a){for(var i=1;i<a.length;i++)if(a[i-1]>a[i])return false;return true}
+
+/* cells(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label above'}, noix:true}) -> row of cells */
+function cells(a,o){o=o||{};var c=o.c||{};return '<div class="row">'+a.map(function(v,i){var g=v===''||v===null;return '<div class="cw"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="cell'+(g?' gap':'')+' '+(c[i]||'')+'">'+(g?'&nbsp;':v)+'</div><span class="ix">'+(o.noix?'':i)+'</span></div>'}).join('')+'</div>'}
+
+/* widget(id, presets, build): Previous/Next stepper.
+   presets = [[buttonLabel, params], ...]; build(params) returns [{h:htmlString, n:noteText}, ...] */
+function widget(id,opts,build){
+  var el=$(id),i=0,st=[];
+  el.innerHTML=(opts.length>1?'<div class="row" style="align-items:center">'+opts.map(function(o,k){return '<button data-k="'+k+'">'+o[0]+'</button>'}).join('')+'</div>':'')+'<div class="scroll v"></div><p class="note" aria-live="polite"></p><div class="ctl"><button class="pv">Previous</button><span class="pos"></span><button class="nx">Next</button><button class="pl">Play</button></div>';
+  var v=el.querySelector('.v'),n=el.querySelector('.note'),p=el.querySelector('.pos'),pv=el.querySelector('.pv'),nx=el.querySelector('.nx'),pl=el.querySelector('.pl'),tm=null;
+  function stop(){if(tm){clearInterval(tm);tm=null}pl.textContent='Play'}
+  function r(){v.innerHTML=st[i].h;n.textContent=st[i].n;p.textContent='Step '+(i+1)+' of '+st.length;pv.disabled=i===0;nx.disabled=i===st.length-1}
+  function pick(k){stop();st=build(opts[k][1]);i=0;[].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.k===k))});r()}
+  [].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.onclick=function(){pick(+b.dataset.k)}});
+  pv.onclick=function(){stop();if(i>0){i--;r()}};nx.onclick=function(){stop();if(i<st.length-1){i++;r()}};
+  pl.onclick=function(){if(tm){stop();return}if(i>=st.length-1){i=0;r()}pl.textContent='Pause';tm=setInterval(function(){if(i<st.length-1){i++;r()}else stop()},1100)};
+  pick(0);
+}
+
+/* tabs(id, labels, fn): tab buttons; fn(k) returns html for tab k */
+function tabs(id,labels,fn){var el=$(id);el.innerHTML='<div class="row" style="align-items:center"></div><div class="tv"></div>';var bar=el.firstChild,tv=el.lastChild;
+  labels.forEach(function(t,k){var b=document.createElement('button');b.textContent=t;b.onclick=function(){[].forEach.call(bar.children,function(x){x.setAttribute('aria-pressed',String(x===b))});tv.innerHTML=fn(k)};b.setAttribute('aria-pressed',String(k===0));bar.appendChild(b)});tv.innerHTML=fn(0)}
+
+/* growth(id, ns, bruteFn, betterFn, header1, header2): log-scale comparison table */
+function growth(id,ns,bf,tp,h1,h2){$(id).innerHTML='<table><tr><th>n</th><th>'+h1+'</th><th>'+h2+'</th></tr>'+ns.map(function(n){var b=bf(n),t=tp(n);return '<tr><td>'+L(n)+'</td><td>'+L(b)+'<div class="bar r" style="width:'+Math.max(1,Math.log10(b)/12*100)+'%;margin-left:auto"></div></td><td>'+L(t)+'<div class="bar g" style="width:'+Math.max(1,Math.log10(t)/12*100)+'%;margin-left:auto"></div></td></tr>'}).join('')+'</table><p class="cap">Bars use a log scale, otherwise the second column would be invisible.</p>'}
+
+/* flow(['step','step',...]) -> vertical arrow flow */
+function flow(a){return '<div class="flow">'+a.map(function(x){return '<div class="cell">'+x+'</div>'}).join('<span>↓</span>')+'</div>'}
+
+/* grid(matrix, {c:function(r,c){return 'ok|now|dim|mv'}, rh:[row headers], ch:[col headers]}) -> 2D table of cells (DP tables, grids, matrices) */
+function grid(m,o){o=o||{};var w=m[0].length,ch=o.ch,rh=o.rh;
+  var h='<div class="mx" style="grid-template-columns:'+(rh?'auto ':'')+'repeat('+w+',minmax(0,1fr))">';
+  if(ch){h+=(rh?'<span></span>':'')+ch.map(function(x){return '<span class="mh">'+x+'</span>'}).join('')}
+  m.forEach(function(r,i){if(rh)h+='<span class="mh">'+rh[i]+'</span>';r.forEach(function(v,j){h+='<div class="cell '+((o.c&&o.c(i,j))||'')+'">'+v+'</div>'})});
+  return h+'</div>'}
+
+/* vbars(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label'}}) -> vertical bar chart of an array (sorting, partitioning, heights) */
+function vbars(a,o){o=o||{};var c=o.c||{},mx=Math.max.apply(null,a.map(Math.abs))||1;
+  return '<div class="vb">'+a.map(function(v,i){return '<div class="vc"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="vbar '+(c[i]||'')+'" style="height:'+Math.max(4,Math.round(Math.abs(v)/mx*110))+'px"></div><span class="ix">'+v+'</span></div>'}).join('')+'</div>'}
+
+/* driver(id, cfg): "you drive the algorithm". The reader picks the move; wrong moves get a teaching message.
+   cfg = {
+     presets:[[label,param],...],
+     init:function(param){return state},
+     view:function(state,done){return html},
+     done:function(state){return bool},
+     prompt:function(state,done){return 'What should we do?'},
+     choices:[['A','button text'],['B','button text'],...],
+     expected:function(state){return 'A'},               // the correct choice id
+     apply:function(state,choiceId){ return 'Right. why it worked'},   // mutate state here
+     hint:function(state){return 'general hint'},
+     wrong:function(state,choiceId){return 'specific message for a tempting wrong choice, or undefined'}
+   } */
+function driver(id,cfg){
+  var el=$(id),k=0,s,msg='';
+  function init(){s=cfg.init(cfg.presets[k][1]);msg='';draw()}
+  function draw(){var done=cfg.done(s);
+    el.innerHTML='<div class="row" style="align-items:center">'+cfg.presets.map(function(p,j){return '<button data-p="'+j+'" aria-pressed="'+(j===k)+'">'+p[0]+'</button>'}).join('')+'</div><div class="scroll">'+cfg.view(s,done)+'</div><p class="note" aria-live="polite"><strong>'+cfg.prompt(s,done)+'</strong></p><div class="ctl">'+cfg.choices.map(function(c){return '<button data-c="'+c[0]+'"'+(done?' disabled':'')+'>'+c[1]+'</button>'}).join('')+'</div><p class="note" aria-live="polite">'+msg+'</p>';
+    [].forEach.call(el.querySelectorAll('button[data-p]'),function(b){b.onclick=function(){k=+b.dataset.p;init()}});
+    [].forEach.call(el.querySelectorAll('button[data-c]'),function(b){b.onclick=function(){choose(b.dataset.c)}})}
+  function choose(c){if(c!==cfg.expected(s)){msg=(cfg.wrong&&cfg.wrong(s,c))||('Not quite. '+cfg.hint(s));draw();return}
+    msg=cfg.apply(s,c)||'Right.';draw()}
+  init()}
+
+/* slider(id, {min,max,value,label,render:function(v){return html}}) -> "drag to see how the cost grows" figure */
+function slider(id,o){var el=$(id);el.innerHTML='<label for="'+id+'S">'+o.label+' = <strong class="so"></strong></label><input id="'+id+'S" type="range" min="'+o.min+'" max="'+o.max+'" value="'+o.value+'"><div class="sv"></div>';
+  var inp=el.querySelector('input'),out=el.querySelector('.so'),sv=el.querySelector('.sv');
+  function u(){out.textContent=inp.value;sv.innerHTML=o.render(+inp.value)}inp.oninput=u;u()}
+
+/* ===== PAGE-SPECIFIC ILLUSTRATIONS GO BELOW ===== */
+
+function ttl(t){return '<p class="lbl"><strong>'+t+'</strong></p>'}
+/* wv(array, l, r, {now:index, ok:[indices], sub:{}}) -> window view */
+function wv(a,l,r,o){o=o||{};var c={},sub={},i;
+  for(i=0;i<a.length;i++)c[i]=(r>=0&&i>=l&&i<=r)?'mv':'dim';
+  if(o.ok)for(i=0;i<o.ok.length;i++)c[o.ok[i]]='ok';
+  if(o.now!=null)c[o.now]='now';
+  if(o.sub)for(i in o.sub)sub[i]=o.sub[i];
+  return cells(a,{c:c,sub:sub})}
+/* cv(values, {mark, sub}) -> deque of candidate values, front on the left, front highlighted */
+function cv(v,o){o=o||{};var c={},s={},i;
+  if(v.length){c[0]='ok';s[0]=v.length===1?'front, back':'front';if(v.length>1)s[v.length-1]='back'}
+  if(o.mark)for(i in o.mark)c[i]=o.mark[i];
+  if(o.sub)for(i in o.sub)s[i]=o.sub[i];
+  return cells(v.length?v:[''],{c:c,sub:s,noix:true})}
+function argmax(a,l,r){var m=l,j;for(j=l;j<=r;j++)if(a[j]>a[m])m=j;return m}
+/* dqCells(indices, nums, markIndexInDeque) -> deque of indices, drawn with their values and #index labels */
+function dqCells(dq,a,mark){var m={},s={},v=dq.map(function(j){return a[j]}),i;
+  if(v.length){s[0]=v.length===1?'front, back #'+dq[0]:'front #'+dq[0];if(v.length>1)s[v.length-1]='back #'+dq[v.length-1]}
+  for(i=1;i<v.length-1;i++)s[i]='#'+dq[i];
+  if(mark!=null){m[mark]='dim'}
+  return cv(v,{mark:m,sub:s})}
+
+/* ---------- core: the monotonic deque over indices ---------- */
+/* o = {min:bool, strict:bool (pop only when strictly worse), noExpire:bool, code:bool} */
+function dom(a,b,x,o){o=o||{};return o.min?(o.strict?a[b]>x:a[b]>=x):(o.strict?a[b]<x:a[b]<=x)}
+function domSym(o){o=o||{};return o.min?(o.strict?'>':'>='):(o.strict?'<':'<=')}
+function dqRun(a,k,o){o=o||{};var dq=[],out=[],st={app:0,pb:0,pf:0},maxLen=0,i;
+  for(i=0;i<a.length;i++){
+    while(!o.noExpire&&dq.length&&dq[0]<=i-k){dq.shift();st.pf++}
+    while(dq.length&&dom(a,dq[dq.length-1],a[i],o)){dq.pop();st.pb++}
+    dq.push(i);st.app++;if(dq.length>maxLen)maxLen=dq.length;
+    if(i>=k-1)out.push(a[dq[0]])}
+  return {out:out,st:st,maxLen:maxLen,dq:dq}}
+function dqAfter(a,k,t,o){return dqRun(a.slice(0,t),k,o).dq}
+function brute(a,k,min){var o=[],l;for(l=0;l+k<=a.length;l++)o.push(Math[min?'min':'max'].apply(null,a.slice(l,l+k)));return o}
+
+var CODE=[
+ 'for right, value in enumerate(nums):',
+ '    while dq and dq[0] &lt;= right - k:          # expired?',
+ '        dq.popleft()',
+ '    while dq and nums[dq[-1]] &lt;= value:       # dominated?',
+ '        dq.pop()',
+ '    dq.append(right)',
+ '    if right &gt;= k - 1:                        # window complete?',
+ '        result.append(nums[dq[0]])'];
+function codeView(line){return '<pre style="padding:6px 0">'+CODE.map(function(t,i){return '<span style="display:block;padding:0 14px'+(i===line?';background:var(--hi)':'')+'">'+t+'</span>'}).join('')+'</pre>'}
+function invHtml(dq,a,i,k,o){
+  var l=Math.max(0,i-k+1),j,inw=true,inc=true,mono=true,front=true,m;
+  for(j=0;j<dq.length;j++)if(dq[j]<l||dq[j]>i)inw=false;
+  for(j=1;j<dq.length;j++){if(dq[j-1]>=dq[j])inc=false;if(o.min?a[dq[j-1]]>a[dq[j]]:a[dq[j-1]]<a[dq[j]])mono=false}
+  m=a.slice(l,i+1);var best=Math[o.min?'min':'max'].apply(null,m);if(!dq.length||a[dq[0]]!==best)front=false;
+  function f(b,t){return (b?'✓ ':'✗ ')+t}
+  return '<p class="lbl">Invariants: '+[f(inw,'all indices inside the window'),f(inc,'indices increasing'),f(mono,'values '+(o.min?'increasing':'decreasing')),f(front,'front is the '+(o.min?'minimum':'maximum'))].join(' · ')+'</p>'}
+
+function dsim(a,k,o){o=o||{};var dq=[],out=[],st=[],i,stats={app:0,pb:0,pf:0},maxLen=0,what=o.min?'minimum':'maximum';
+  function view(i,mark,line,inv){var l=Math.max(0,i-k+1);
+    return wv(a,l,i,{now:i})+ttl('Candidate deque (indices; values shown, index below as #)')+dqCells(dq,a,mark)+ttl('Output so far')+cells(out.length?out:[''],{noix:true})+
+      (o.code?codeView(line):'')+(inv?invHtml(dq,a,i,k,o):'')}
+  for(i=0;i<a.length;i++){var x=a[i],l=Math.max(0,i-k+1);
+    st.push({h:view(i,null,0),n:'index '+i+', value '+x+' enters. Window: [ '+a.slice(l,i+1).join(', ')+' ].'});
+    while(!o.noExpire&&dq.length&&dq[0]<=i-k){
+      st.push({h:view(i,0,2),n:'Expired? Index '+dq[0]+' <= right − k = '+(i-k)+', so it has left the window. popleft().'});dq.shift();stats.pf++}
+    while(dq.length&&dom(a,dq[dq.length-1],x,o)){
+      var b=dq[dq.length-1];
+      st.push({h:view(i,dq.length-1,4),n:'Dominated? Back value '+a[b]+' '+domSym(o)+' '+x+', so it can never win while '+x+' is alive. pop().'});dq.pop();stats.pb++}
+    dq.push(i);stats.app++;if(dq.length>maxLen)maxLen=dq.length;
+    var full=i>=k-1;
+    if(o.code){
+      st.push({h:view(i,null,5),n:'Nothing else to remove. append('+i+').'});
+      if(full){out.push(a[dq[0]]);st.push({h:view(i,null,7,true),n:'The window is complete. The front is index '+dq[0]+', so the '+what+' is '+a[dq[0]]+'.'})}
+      else st.push({h:view(i,null,6,true),n:'right >= k − 1 is false: the window is not full yet, so no answer.'})}
+    else{
+      if(full)out.push(a[dq[0]]);
+      st.push({h:view(i,null,null,true),n:'Append index '+i+'. '+(full?'The window is complete: the front is index '+dq[0]+', so the '+what+' is '+a[dq[0]]+'.':'The window is not full yet.')})}
+  }
+  st.push({h:ttl('Result')+cells(out,{noix:true}),n:'Done. '+what.charAt(0).toUpperCase()+what.slice(1)+' of every window: ['+out.join(', ')+']. Appended '+stats.app+', popped from the back '+stats.pb+', from the front '+stats.pf+'. Largest deque: '+maxLen+'.'});
+  st.out=out;st.stats=stats;st.maxLen=maxLen;
+  return st}
+
+/* ---------- section 1 ---------- */
+function winSteps(a,k){var out=[],st=[],l;
+  for(l=0;l+k<=a.length;l++){var m=argmax(a,l,l+k-1);out.push(a[m]);
+    st.push({h:wv(a,l,l+k-1,{ok:[m]})+ttl('Maxima so far')+cells(out,{noix:true}),n:'Window [ '+a.slice(l,l+k).join(', ')+' ] has maximum '+a[m]+'.'})}
+  return st}
+widget('stWins',[['[2,1,5,3,4,6], k=3',[[2,1,5,3,4,6],3]],['[4,1,3,7,2], k=2',[[4,1,3,7,2],2]]],function(p){return winSteps(p[0],p[1])});
+
+/* ---------- section 2: candidates ---------- */
+function pushSim(dq0,x){
+  var dq=dq0.slice(),st=[];
+  function nw(){return '<p class="lbl">New element: <strong>'+x+'</strong></p>'}
+  st.push({h:nw()+ttl('Candidates')+cv(dq),n:'Candidates, decreasing: ['+dq.join(', ')+']. The front is the maximum ('+dq[0]+'). Now '+x+' arrives.'});
+  while(dq.length&&dq[dq.length-1]<=x){
+    var b=dq[dq.length-1],mk={},sb={};mk[dq.length-1]='dim';sb[dq.length-1]='remove';
+    st.push({h:nw()+ttl('Candidates')+cv(dq,{mark:mk,sub:sb}),n:'Back is '+b+' <= '+x+'. '+x+' is newer and at least as large, so '+b+' can never win while '+x+' is alive. Remove it.'});
+    dq.pop()}
+  if(dq.length)st.push({h:nw()+ttl('Candidates')+cv(dq),n:'Back is '+dq[dq.length-1]+' > '+x+'. It is larger, so it can still be the maximum. We stop removing.'});
+  dq.push(x);var mk2={};mk2[dq.length-1]='now';if(dq.length===1)mk2[0]='ok';
+  st.push({h:ttl('After appending '+x)+cv(dq,{mark:mk2}),n:'Append '+x+'. Candidates: ['+dq.join(', ')+']. The front ('+dq[0]+') is the maximum.'});
+  return st}
+widget('stCand',[['[5,3,2] + 4',[[5,3,2],4]],['[5,3,2] + 1',[[5,3,2],1]],['[5,3,2] + 6',[[5,3,2],6]]],function(p){return pushSim(p[0],p[1])});
+
+/* ---------- section 3 ---------- */
+$('fig3').innerHTML=ttl('Candidates')+cv([5,4,3])+
+  '<div class="two"><div><p class="lbl"><strong>Front</strong></p><p>Holds the strongest candidate. Remove expired candidates here.</p></div><div><p class="lbl"><strong>Back</strong></p><p>Holds the weakest candidates. Remove dominated candidates here, then append the new one.</p></div></div>';
+
+/* ---------- section 4: indices vs values ---------- */
+widget('stIdx',[['nums=[5,3,4], k=2',null]],function(){
+  var a=[5,3,4];
+  return [
+    {h:wv(a,0,1,{now:1})+ttl('Deque of values only')+cv([5,3])+ttl('Deque of indices (values shown, index below)')+dqCells([0,1],a),n:'Window [5, 3]. Both designs hold the same candidates. Front = 5.'},
+    {h:wv(a,1,2,{now:2,sub:{0:'left the window'}})+ttl('Deque of values only')+cv([5,3],{sub:{0:'still alive?'}})+ttl('Deque of indices (values shown, index below)')+dqCells([0,1],a),n:'The window moves to [3, 4]. Values only: is that 5 still inside? The deque cannot tell. Indices: front index 0 <= right − k = 2 − 2 = 0, so it expired.'},
+    {h:wv(a,1,2,{now:2})+ttl('Deque of indices after processing 4')+dqCells([2],a),n:'With indices: popleft() removes index 0 (expired), then 3 <= 4 pops index 1, and we append index 2. The front is 4, the true maximum.'}]});
+
+/* ---------- section 5: monotonic ---------- */
+slider('slMono',{min:1,max:6,value:3,label:'elements processed',render:function(t){
+  var a=[2,1,5,3,4,6],k=3,dq=dqAfter(a,k,t),c={},i;
+  for(i=0;i<a.length;i++)c[i]=i>=t?'dim':(i>=t-k?'mv':'');
+  c[t-1]='now';
+  return ttl('Original array (unsorted!)')+cells(a,{c:c})+ttl('Deque')+dqCells(dq,a)+
+    '<p class="cap">Values in the deque: ['+dq.map(function(j){return a[j]}).join(', ')+'], always decreasing from front to back. The front is the maximum of the current window.</p>'}});
+
+/* ---------- section 6: leaving ---------- */
+tabs('tbLeave',['Reason 1: expired (front)','Reason 2: became useless (back)'],function(k){
+  if(k===0)return wv([5,3,4],1,2,{sub:{0:'expired'}})+'<p class="note">The element is no longer inside the sliding window. It leaves from the <strong>front</strong>.</p>';
+  return ttl('[5, 3, 2] and 4 arrives')+cv([5,3,2],{mark:{1:'dim',2:'dim'},sub:{1:'remove',2:'remove'}})+ttl('Result')+cv([5,4])+'<p class="note">A newer element is at least as large, so the old candidate can never win again. It leaves from the <strong>back</strong>: 2 is dominated, 3 is dominated.</p>'});
+
+/* ---------- section 8: walk-through ---------- */
+widget('stWalk',[
+  ['[2,1,5,3,4,6], k=3',[[2,1,5,3,4,6],3]],
+  ['[1,3,-1,-3,5,3,6,7], k=3',[[1,3,-1,-3,5,3,6,7],3]],
+  ['Equal values [4,4,4,2]',[[4,4,4,2],3]],
+  ['Increasing [1,2,3,4,5]',[[1,2,3,4,5],3]]
+],function(p){return dsim(p[0],p[1],{})});
+
+driver('drvMon',{
+  presets:[['[2,1,5,3,4,6], k=3',[[2,1,5,3,4,6],3]],['Ties [4,4,4,2], k=3',[[4,4,4,2],3]],['[1,3,-1,-3,5,3], k=3',[[1,3,-1,-3,5,3],3]]],
+  init:function(p){return {a:p[0],k:p[1],i:0,dq:[],out:[]}},
+  view:function(s,done){var i=Math.min(s.i,s.a.length-1),l=Math.max(0,i-s.k+1);
+    return (done?wv(s.a,0,-1):wv(s.a,l,i,{now:i}))+ttl('Candidate deque (indices; values shown)')+dqCells(s.dq,s.a)+ttl('Output so far')+cells(s.out.length?s.out:[''],{noix:true})},
+  done:function(s){return s.i>=s.a.length},
+  prompt:function(s,done){
+    if(done)return 'Done. The maximum of every window is ['+s.out.join(', ')+'].';
+    var x=s.a[s.i];
+    if(s.dq.length&&s.dq[0]<=s.i-s.k)return x+' (index '+s.i+') enters. The front candidate (index '+s.dq[0]+') is outside the window. What now?';
+    if(s.dq.length&&s.a[s.dq[s.dq.length-1]]<=x)return x+' (index '+s.i+') enters. The back candidate ('+s.a[s.dq[s.dq.length-1]]+') is not larger than '+x+'. What now?';
+    return x+' (index '+s.i+') enters. The front is alive and the back is larger. What now?'},
+  choices:[['F','popleft (front)'],['B','pop (back)'],['A','Append the new index']],
+  expected:function(s){var x=s.a[s.i];
+    if(s.dq.length&&s.dq[0]<=s.i-s.k)return 'F';
+    if(s.dq.length&&s.a[s.dq[s.dq.length-1]]<=x)return 'B';
+    return 'A'},
+  apply:function(s,c){
+    if(c==='F'){var f=s.dq.shift();return 'Right. Index '+f+' has left the window, so it cannot be the answer. Expired candidates leave from the front.'}
+    if(c==='B'){var b=s.dq.pop();return 'Right. '+s.a[b]+' is older and no larger than the new value, so it can never win. Dominated candidates leave from the back.'}
+    s.dq.push(s.i);var full=s.i>=s.k-1;if(full)s.out.push(s.a[s.dq[0]]);s.i++;
+    return 'Right. Appended. '+(full?'The front is the maximum of this window, so it joins the output.':'The window is not full yet, so no answer yet.')},
+  hint:function(){return 'Expired front? Then popleft. Back not larger than the new value? Then pop. Otherwise append.'},
+  wrong:function(s,c){var x=s.a[s.i],has=s.dq.length>0,exp=has&&s.dq[0]<=s.i-s.k,dm=has&&s.a[s.dq[s.dq.length-1]]<=x;
+    if(c==='A'&&exp)return 'The front index has already left the window. Remove expired candidates first, or we might report a maximum that is no longer there.';
+    if(c==='A'&&dm)return (s.a[s.dq[s.dq.length-1]]===x?'The back value equals the new one. Equal counts as dominated: the newer one lasts longer.':'The back candidate is smaller than the new value.')+' Remove it first, or the deque stops being decreasing and the front is no longer the maximum.';
+    if(!has)return 'The deque is empty, so there is nothing to remove. Just append.';
+    if(c==='F')return 'The front candidate is still inside the window. Removing it would throw away a valid candidate, perhaps the current maximum.';
+    if(exp)return 'Rule 1 comes first: the front has expired. Remove it before looking at the back.';
+    return 'The back value is larger than the new one, so it can still become the maximum. Keep it.'}
+});
+
+/* ---------- section 9: code trace ---------- */
+widget('stCode',[
+  ['[2,1,5,3,4,6], k=3',[[2,1,5,3,4,6],3]],
+  ['[1,3,-1,-3,5,3,6,7], k=3',[[1,3,-1,-3,5,3,6,7],3]]
+],function(p){return dsim(p[0],p[1],{code:true})});
+
+/* ---------- section 10: order matters ---------- */
+tabs('tbOrder',['Correct algorithm','Never check expiry'],function(k){
+  var cases=[[[5,3,4],2],[[2,1,5,3,4,6],3],[[1,3,-1,-3,5,3,6,7],3]];
+  var rows=cases.map(function(c){var r=dqRun(c[0],c[1],k===1?{noExpire:true}:{}).out,e=brute(c[0],c[1]),ok=r.join()===e.join();
+    return '<tr><td>['+c[0].join(', ')+'], k='+c[1]+'</td><td>['+r.join(', ')+'] '+(ok?'✓':'✗')+'</td><td>['+e.join(', ')+']</td></tr>'}).join('');
+  return '<table class="tt"><tr><th>Input</th><th>Output</th><th>Expected</th></tr>'+rows+'</table><p class="cap">'+(k===0?'Removing expired indices first keeps the front alive, so every answer is right.':'Without the expiry rule, a maximum that has already left the window keeps being reported as the answer.')+'</p>'});
+
+/* ---------- section 11: equal values ---------- */
+widget('stEq',[
+  ['[5,5,5,5], k=3 pop on <=',[[5,5,5,5],3,false]],
+  ['[5,5,5,5], k=3 pop on <',[[5,5,5,5],3,true]],
+  ['[4,2,4,2,4], k=3 pop on <=',[[4,2,4,2,4],3,false]],
+  ['[4,2,4,2,4], k=3 pop on <',[[4,2,4,2,4],3,true]]
+],function(p){var s=dsim(p[0],p[1],{strict:p[2]});s[s.length-1].n+=' Rule: pop when back '+(p[2]?'<':'<=')+' new. Same answers either way, but fewer stored candidates with <=.';return s});
+
+/* ---------- section 12: operation counts ---------- */
+tabs('tbOps',['Random','Increasing','Decreasing','Zig-zag'],function(k){
+  var a=[[7,2,9,4,4,8,1,6,3,9,5,2],[1,2,3,4,5,6,7,8,9,10,11,12],[12,11,10,9,8,7,6,5,4,3,2,1],[1,9,2,8,3,7,4,6,5,5,6,4]][k],kk=3,r=dqRun(a,kk),n=a.length,tot=r.st.app+r.st.pb+r.st.pf;
+  return cells(a,{noix:true})+'<table class="tt"><tr><td>Elements n</td><td>'+n+'</td></tr><tr><td>Appended (once each)</td><td>'+r.st.app+'</td></tr><tr><td>Removed from the back</td><td>'+r.st.pb+'</td></tr><tr><td>Removed from the front</td><td>'+r.st.pf+'</td></tr><tr><td>Total deque operations</td><td><strong>'+tot+'</strong> (never more than 3n = '+(3*n)+')</td></tr><tr><td>Naive scan looks, k = '+kk+'</td><td>'+((n-kk+1)*kk)+'</td></tr></table>'+
+    '<p class="cap">Each element is appended once and removed at most once, from one end or the other. That is why the nested while loops do not make it quadratic.</p>'});
+
+/* ---------- section 13: comparing approaches ---------- */
+slider('slApp',{min:1,max:1000,value:50,label:'window size k (n = 100,000)',render:function(k){
+  var n=100000,naive=(n-k+1)*k,heap=Math.max(n,Math.round(n*Math.log(Math.max(k,2))/Math.log(2))),dq=n;
+  function bar(v,cl){return '<div class="bar '+cl+'" style="width:'+Math.max(1,Math.log(v)/Math.log(10)/9*100)+'%"></div>'}
+  return '<div class="lbl">Scan every window, O(nk): about <strong>'+L(naive)+'</strong></div>'+bar(naive,'r')+
+    '<div class="lbl">Heap, O(n log k): about <strong>'+L(heap)+'</strong></div>'+bar(heap,'')+
+    '<div class="lbl">Monotonic deque, O(n): about <strong>'+L(dq)+'</strong> (at most 3n operations)</div>'+bar(dq,'g')+
+    '<p class="cap">Bars use a log scale so all three are visible. Heap and deque are in the same ballpark here; the deque wins by dropping the log factor.</p>'}});
+
+/* ---------- section 14: compression ---------- */
+slider('slComp',{min:1,max:5,value:5,label:'elements processed',render:function(t){
+  var a=[2,1,5,3,4],dq=[],dm={},i,x,c={},s={},why=[];
+  for(i=0;i<t;i++){x=a[i];while(dq.length&&a[dq[dq.length-1]]<=x){dm[dq[dq.length-1]]=x;dq.pop()}dq.push(i)}
+  for(i=0;i<a.length;i++){
+    if(i>=t){c[i]='dim';s[i]=''}
+    else if(dm[i]!=null){c[i]='dim';s[i]='gone';why.push(a[i]+' (beaten by '+dm[i]+')')}
+    else{c[i]='ok';s[i]='kept'}}
+  return ttl('Window')+cells(a,{c:c,sub:s})+ttl('What we actually store')+dqCells(dq,a)+
+    '<p class="cap">Stored '+dq.length+' of '+t+' elements. '+(why.length?'Discarded: '+why.join(', ')+'.':'Nothing discarded yet.')+'</p>'}});
+
+/* ---------- section 15: stays ordered ---------- */
+widget('stOrd',[['[8,6,3] + 7',[[8,6,3],7]],['[8,6,3] + 6',[[8,6,3],6]],['[8,6,3] + 9',[[8,6,3],9]]],function(p){return pushSim(p[0],p[1])});
+
+/* ---------- section 16: minimum ---------- */
+widget('stMin',[
+  ['[2,1,5,3,4,6], k=3',[[2,1,5,3,4,6],3]],
+  ['[4,2,12,3,5,1], k=3',[[4,2,12,3,5,1],3]]
+],function(p){return dsim(p[0],p[1],{min:true})});
+
+/* ---------- section 17: mental model ---------- */
+$('flMod').innerHTML=flow(['Sliding window','Some elements leave','Some elements can never matter again','Discard them permanently','Keep only viable candidates','Keep candidates ordered by usefulness','Best candidate stays at the front']);
+$('flFinal').innerHTML=flow(['Window','Who is still alive?','Remove expired candidates from the front','Who can no longer win?','Remove dominated candidates from the back','Front = current winner']);
+tabs('tbLayer',['1. The window','2. The constraint','3. The state','4. The candidates'],function(k){
+  var d=[
+    ['What range of elements am I currently considering?','the two pointers: left ───── right'],
+    ['What makes this window valid or invalid?','sum >= target, distinct <= k, product < target, contains required characters. It decides when left moves.'],
+    ['What information do I need to remember about the current window?','sum, frequency map, distinct count, zero count, character frequency'],
+    ['Which elements are still capable of becoming the answer?','Sometimes the obvious state is not enough (the maximum can leave), so we keep a monotonic deque of candidates.']][k];
+  return '<table class="tt"><tr><td>Ask</td><td>'+d[0]+'</td></tr><tr><td>Examples</td><td>'+d[1]+'</td></tr></table>'});
+
+/* ---------- section 18: the toolkit ---------- */
+tabs('tbKit',['Fixed window','Variable window','Frequency / state','Pattern matching','Required content','Monotonic deque'],function(k){
+  var d=[
+    ['Fixed window','Maintain state while the window moves.'],
+    ['Variable window','Expand, violate, shrink.'],
+    ['Frequency / state window','Maintain counts or information as elements enter and leave.'],
+    ['Pattern matching window','Compare the current state against the required state.'],
+    ['Required-content window','Satisfy the requirement, then shrink aggressively.'],
+    ['Monotonic deque','Keep only the candidates that can still affect the answer.']][k];
+  return flow([d[0],d[1]])+'<p class="cap">'+(k===5?'Reuse the overlap, and also discard information that can never matter again.':'Same pointers, different state and rule.')+'</p>'});
+
+/* ===== CODE TOGGLE AND THEME: do not change ===== */
+var cb=$('codeBtn'),hid=false;
+cb.onclick=function(){hid=!hid;[].forEach.call(document.querySelectorAll('details'),function(d){d.open=!hid});cb.textContent=hid?'Show code':'Hide code'};
+var root=document.documentElement,tb=$('theme');
+function setTheme(t){root.setAttribute('data-theme',t);tb.textContent=t==='dark'?'Light':'Dark'}
+try{var sv=localStorage.getItem('theme');if(sv==='dark'||sv==='light')setTheme(sv)}catch(e){}
+tb.onclick=function(){var t=root.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);try{localStorage.setItem('theme',t)}catch(e){}};
+</script>
+</body>
+</html>

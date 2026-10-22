@@ -1,0 +1,1251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Fast and Slow Pointers</title>
+<style>
+:root{--bg:#fff;--ink:#111;--mut:#555;--line:#ccc;--acc:#1f4e8c;--hi:#fff3b0;--hib:#c9a227;--ok:#dcf0dc;--okb:#3a8a3a;--mv:#e6edf7;--dim:#eee;--card:#fafafa;--red:#b5342b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#121212;--ink:#eee;--mut:#aaa;--line:#3a3a3a;--acc:#8ab4f8;--hi:#4a4220;--hib:#c9a227;--ok:#1d3a22;--okb:#5cb85c;--mv:#1c2a40;--dim:#2a2a2a;--card:#1a1a1a;--red:#ff7b72;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Roman",Times,serif}
+main{max-width:720px;margin:0 auto;padding:40px 20px 80px}
+h1,h2,h3,h4{font-family:inherit;line-height:1.25}
+h1{font-size:2.1rem;margin:.2em 0 .6em}
+h2{font-size:1.55rem;margin:2.4em 0 .5em;padding-top:1.1em;border-top:1px solid var(--line)}
+h3{font-size:1.2rem;margin:1.6em 0 .4em;color:var(--acc)}
+h4{font-size:1.02rem;margin:1.2em 0 .3em}
+blockquote{margin:1.2em 0;padding:.4em 1em;border-left:4px solid var(--acc);font-size:1.12rem}
+blockquote p{margin:.3em 0}
+code{font:inherit;background:var(--card);padding:1px 5px;border-radius:4px}
+a{color:var(--acc)}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:1.2em 0}
+.cap{font-size:.9rem;color:var(--mut);margin:.6em 0 0}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:flex-end}
+.cw{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ix{font-size:.8rem;color:var(--mut);min-height:1.1em;font-weight:600}
+.cell{min-width:54px;padding:7px 6px;text-align:center;border:2px solid var(--line);background:var(--bg);border-radius:6px;font-weight:600;transition:background .2s}
+.gap{border-style:dashed;background:transparent}
+.ok{background:var(--ok);border-color:var(--okb)}
+.now{background:var(--hi);border-color:var(--hib)}
+.dim{background:var(--dim);color:var(--mut);border-color:var(--dim)}
+.mv{background:var(--mv);border-color:var(--acc)}
+button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
+button:hover:not(:disabled){background:var(--mv)}
+button:disabled{opacity:.4;cursor:default}
+button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--hib);outline-offset:2px}
+.tools{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5;display:flex;gap:8px}
+.ctl{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.pos{color:var(--mut);font-size:.9rem}
+.note{min-height:3em;margin:.4em 0 0;font-weight:500}
+.lbl{font-size:.9rem;margin:8px 0 3px}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--dim)}
+details{margin:1em 0;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+summary{cursor:pointer;padding:8px 12px;font-size:.95rem;color:var(--acc)}
+pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,Menlo,Consolas,monospace}
+.flow{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;font-size:.95rem}
+.flow .cell{min-width:140px}
+.tt td{text-align:left}.tt td:first-child{font-weight:600}
+.sv{width:100%;height:auto;display:block}
+.sv .n rect{fill:var(--bg);stroke:var(--line);stroke-width:2}
+.sv .n line{stroke:var(--line);stroke-width:2}
+.sv .n circle{fill:var(--acc)}
+.sv .n text{fill:var(--ink);font:600 15px "Times New Roman",Times,serif;text-anchor:middle}
+.sv .n text.sm{font-size:11px;font-weight:400;fill:var(--mut)}
+.sv .n.now rect{fill:var(--hi);stroke:var(--hib)}
+.sv .n.ok rect{fill:var(--ok);stroke:var(--okb)}
+.sv .n.mv rect{fill:var(--mv);stroke:var(--acc)}
+.sv .n.dim rect{fill:var(--dim);stroke:var(--dim)}
+.sv .n.dim text{fill:var(--mut)}
+.sv .n.p rect{stroke-dasharray:4 3}
+.sv .n.g rect{fill:none;stroke-dasharray:2 4;opacity:.6}
+.sv .e{stroke:var(--ink);stroke-width:2;fill:none}
+.sv .e.new{stroke:var(--okb)}
+.sv .e.old{stroke:var(--red);stroke-dasharray:5 4}
+.sv .e.mv{stroke:var(--acc)}
+.panel-tag{display:inline-block;padding:2px 8px;border-radius:4px;font-family:ui-monospace,Menlo,monospace;font-size:.85rem;background:var(--dim);color:var(--ink);margin-right:8px}
+.tag-acc{background:var(--mv);color:var(--acc);font-weight:600}
+.tag-ok{background:var(--ok);color:var(--okb);font-weight:600}
+.tag-hi{background:var(--hi);color:var(--hib);font-weight:600}
+.math-box{background:var(--card);border:1px solid var(--line);border-radius:6px;padding:10px 14px;margin:10px 0;font-family:ui-monospace,Menlo,monospace;font-size:0.9rem;line-height:1.6}
+.math-hl{color:var(--acc);font-weight:bold}
+.math-ok{color:var(--okb);font-weight:bold}
+.toc-list{margin:1em 0;padding-left:1.4em;line-height:1.7}
+.toc-list ol{padding-left:1.2em;margin:.3em 0}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" style="fill:var(--ink)"/></marker>
+<marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" style="fill:var(--okb)"/></marker>
+<marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" style="fill:var(--red)"/></marker>
+<marker id="arm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" style="fill:var(--acc)"/></marker>
+</defs></svg>
+<div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
+<main>
+<h1>Fast and Slow Pointers</h1>
+<p>So far, we have used two pointers in a few different ways. Sometimes they started at opposite ends:</p>
+<blockquote><p><code>L → &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ← R</code></p></blockquote>
+<p>Sometimes they both moved forward, but for different purposes:</p>
+<blockquote><p><code>slow →</code><br><code>fast →</code></p></blockquote>
+<p>The important lesson from two pointers was not: <em>“Use two variables called <code>left</code> and <code>right</code>.”</em> It was:</p>
+<blockquote><p><strong>Keep track of two positions when the relationship between those positions gives you information.</strong></p></blockquote>
+<p>Fast and slow pointers are simply another application of that idea. Here, the relationship is not usually <em>where the pointers are</em>. It is: <strong>how far each pointer has travelled</strong>.</p>
+<p>One pointer moves slowly. The other moves quickly. And surprisingly, that difference in speed can reveal structural properties that would otherwise require extra memory or repeated traversal.</p>
+
+<ol class="toc-list">
+<li><a href="#t1"><strong>The Core Intuition: Relative Speed as an Information Probe</strong></a>
+  <ol>
+  <li><a href="#t1-1">The Basic Idea & Linear Traversal</a></li>
+  <li><a href="#t1-2">What Happens in a Cycle: The Circular Track</a></li>
+  <li><a href="#t1-3">Mathematical Derivation: Why Fast Must Catch Slow</a></li>
+  </ol>
+</li>
+<li><a href="#t2"><strong>Problem 1: Linked List Cycle Detection</strong></a>
+  <ol>
+  <li><a href="#t2-1">The Problem Statement</a></li>
+  <li><a href="#t2-2">Set of Visited Nodes vs Movement</a></li>
+  <li><a href="#t2-3">Floyd's Cycle Finding Algorithm</a></li>
+  <li><a href="#t2-4">Interactive Simulation: Catching the Slow Pointer</a></li>
+  <li><a href="#t2-5">Complexity & Boundary Safety</a></li>
+  </ol>
+</li>
+<li><a href="#t3"><strong>Problem 2: Finding the Start of the Cycle</strong></a>
+  <ol>
+  <li><a href="#t3-1">Why the Meeting Point Is Not the Entrance</a></li>
+  <li><a href="#t3-2">Thinking in Distances: Defining a, b, and c</a></li>
+  <li><a href="#t3-3">Interactive Derivation: Visualizing a ≡ c (mod L)</a></li>
+  <li><a href="#t3-4">The Second Phase: Aligning the Dual Race</a></li>
+  <li><a href="#t3-5">Full Implementation & Verification</a></li>
+  </ol>
+</li>
+<li><a href="#t4"><strong>Generalizing to State Machines: Problem 3 — Happy Number</strong></a>
+  <ol>
+  <li><a href="#t4-1">The Happy Number Problem</a></li>
+  <li><a href="#t4-2">The Hidden Linked List: Computed Next Pointers</a></li>
+  <li><a href="#t4-3">Interactive State Machine: 19 vs Unhappy Cycle</a></li>
+  </ol>
+</li>
+<li><a href="#t5"><strong>Array as an Implicit Graph: Problem 4 — Find the Duplicate Number</strong></a>
+  <ol>
+  <li><a href="#t5-1">The Problem and Special Constraints</a></li>
+  <li><a href="#t5-2">Mapping Indices to Values (i → nums[i])</a></li>
+  <li><a href="#t5-3">Pigeonhole Principle: Why Duplicates Guarantee a Cycle</a></li>
+  <li><a href="#t5-4">Interactive Array-to-Graph Jump Visualizer</a></li>
+  <li><a href="#t5-5">Comparing Hash Sets, Sorting, and Floyd's Algorithm</a></li>
+  </ol>
+</li>
+<li><a href="#t6"><strong>Beyond Cycles: Problem 5 — Middle of the Linked List</strong></a>
+  <ol>
+  <li><a href="#t6-1">Single-Pass Midpoint Discovery</a></li>
+  <li><a href="#t6-2">The 2:1 Invariant: Halfway Across the Structure</a></li>
+  <li><a href="#t6-3">Interactive Midpoint Explorer: Odd vs Even Lengths</a></li>
+  <li><a href="#t6-4">A Foundational Primitive: Splitting the List</a></li>
+  </ol>
+</li>
+<li><a href="#t7"><strong>Algorithmic Decomposition: Problem 6 — Palindrome Linked List</strong></a>
+  <ol>
+  <li><a href="#t7-1">Why Singly Linked Lists Cannot Traverse Backward</a></li>
+  <li><a href="#t7-2">The 3-Step Pipeline: Find Middle → Reverse → Compare</a></li>
+  <li><a href="#t7-3">Interactive Palindrome Decomposition Stepper</a></li>
+  <li><a href="#t7-4">In-Place Mutation and Production Restoration</a></li>
+  </ol>
+</li>
+<li><a href="#t8"><strong>Problem 7: Rearrange / Reorder a Linked List</strong></a>
+  <ol>
+  <li><a href="#t8-1">The Problem: Alternating First and Last Nodes</a></li>
+  <li><a href="#t8-2">Why Naive Traversal Becomes O(n²)</a></li>
+  <li><a href="#t8-3">Interactive 3-Phase Weaving Pipeline</a></li>
+  <li><a href="#t8-4">Complete Implementation</a></li>
+  </ol>
+</li>
+<li><a href="#t9"><strong>Problem 8: Cycle in a Circular Array</strong></a>
+  <ol>
+  <li><a href="#t9-1">Array Traversal with Modulo Arithmetic</a></li>
+  <li><a href="#t9-2">Constraints: Direction Consistency & Self-Loop Rejection</a></li>
+  <li><a href="#t9-3">Interactive Circular Array Stepper</a></li>
+  <li><a href="#t9-4">Full Implementation</a></li>
+  </ol>
+</li>
+<li><a href="#t10"><strong>The Deeper Pattern: Movement as Information</strong></a>
+  <ol>
+  <li><a href="#t10-1">The Two Major Superpowers</a></li>
+  <li><a href="#t10-2">Master Complexity Summary Table</a></li>
+  <li><a href="#t10-3">Fast/Slow vs Ordinary Two Pointers</a></li>
+  <li><a href="#t10-4">The 5-Step Mental Framework for New Problems</a></li>
+  </ol>
+</li>
+</ol>
+
+<h2 id="t1">1. The Core Intuition: Relative Speed as an Information Probe</h2>
+<h3 id="t1-1">The Basic Idea & Linear Traversal</h3>
+<p>Imagine an ordinary linear linked list:</p>
+<blockquote><p><code>1 → 2 → 3 → 4 → 5 → 6 → None</code></p></blockquote>
+<p>Suppose we advance two pointers from the head, but with different step sizes:</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>slow = head
+fast = head
+
+while fast and fast.next:
+    slow = slow.next
+    fast = fast.next.next</pre></details>
+<p>Their trajectories unfold side-by-side:</p>
+<blockquote>
+<p><code>slow: 1 → 2 → 3 → 4 → 5 → 6</code></p>
+<p><code>fast: 1 → 3 → 5 → None</code></p>
+</blockquote>
+<p>The two pointers travel through the <strong>exact same structure</strong>, but at different rates. If the structure is finite and linear, <code>fast</code> simply reaches <code>None</code> twice as fast as <code>slow</code>. But what happens if the structure contains a <strong>cycle</strong>?</p>
+
+<h3 id="t1-2">What Happens in a Cycle: The Circular Track</h3>
+<p>Consider a list where node 6 connects back to node 3:</p>
+<div class="fig" id="cycleIntroF"></div>
+<p>Once both pointers enter the cycle, neither pointer can escape. <code>slow</code> moves 1 step per turn (<code>→ → → →</code>), while <code>fast</code> moves 2 steps per turn (<code>→→ →→</code>). This is identical to two runners on a circular running track:</p>
+<blockquote><p><strong>If one runner runs twice as fast as another on a closed loop, the faster runner must eventually lap and catch the slower runner.</strong></p></blockquote>
+
+<h3 id="t1-3">Mathematical Derivation: Why Fast Must Catch Slow</h3>
+<p>Why can't <code>fast</code> jump cleanly over <code>slow</code> and skip it forever? The answer lies in <strong>relative distance</strong>:</p>
+<div class="math-box">
+Let the cycle contain <span class="math-hl">L</span> nodes.<br>
+In each iteration, slow advances <span class="math-hl">+1</span> step.<br>
+In each iteration, fast advances <span class="math-hl">+2</span> steps.<br>
+Relative speed: <span class="math-ok">2 - 1 = +1 node / iteration</span>.<br>
+If the distance behind slow is <span class="math-hl">d</span>, then after 1 turn the distance is <span class="math-ok">d - 1</span>.<br>
+After 2 turns: <span class="math-ok">d - 2</span> ... until <span class="math-ok">d = 0 (Collision!)</span>.
+</div>
+<p>Because the gap decreases by <strong>strictly 1 unit at each iteration</strong>, it is mathematically impossible for the gap to transition from 1 to negative without landing squarely on 0. They cannot skip past each other!</p>
+
+<h4>Derive it interactively: watch the gap decrease</h4>
+<p>Select different initial gap distances below and step forward. Watch the distance counter tick down by 1 in every single iteration until collision:</p>
+<div class="fig" id="gapDecrW"></div>
+<blockquote><p><strong>Different speeds turn a hidden cycle into a visible, guaranteed collision.</strong></p></blockquote>
+
+<h2 id="t2">2. Problem 1: Linked List Cycle Detection</h2>
+<h3 id="t2-1">The Problem Statement</h3>
+<p>Given the head of a linked list, determine whether the linked list contains a cycle. For example:</p>
+<blockquote><p><code>1 → 2 → 3 → 4 → 5 → 3 ... (Cycle detected: return True)</code></p></blockquote>
+<p>Whereas <code>1 → 2 → 3 → 4 → 5 → None</code> terminates (return False).</p>
+
+<h3 id="t2-2">Set of Visited Nodes vs Movement</h3>
+<p>The naive approach uses a hash set to record every visited node:</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def has_cycle_set(head):
+    seen = set()
+    current = head
+    while current:
+        if current in seen:
+            return True
+        seen.add(current)
+        current = current.next
+    return False</pre></details>
+<p>The reasoning is intuitive: <em>“If I ever see the same node reference twice, I must have traversed a cycle.”</em> However, if the list contains <code>n</code> nodes, the set consumes <code>O(n)</code> auxiliary memory. Can we detect the cycle with <strong>zero extra memory</strong>?</p>
+
+<h3 id="t2-3">Floyd's Cycle Finding Algorithm</h3>
+<p>Instead of remembering every visited node in memory, we maintain two moving pointers: <code>slow</code> and <code>fast</code>. If <code>fast</code> encounters <code>None</code>, the list is acyclic. If <code>slow is fast</code> at any point, a cycle exists.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def has_cycle(head):
+    slow = head
+    fast = head
+
+    while fast and fast.next:
+        slow = slow.next
+        fast = fast.next.next
+
+        if slow is fast:
+            return True
+
+    return False</pre></details>
+<p>Notice we use <code>slow is fast</code> (reference identity), not <code>slow == fast</code>. We verify whether they point to the <strong>exact same memory address</strong>, not whether two separate nodes happen to hold equal values.</p>
+
+<h3 id="t2-4">Interactive Simulation: Catching the Slow Pointer</h3>
+<p>Step through Floyd's algorithm on the cyclic list below. Watch how <code>fast</code> enters the cycle, loops through node 6 back to 3, and steadily closes the distance behind <code>slow</code> until they meet at node 5:</p>
+<div class="fig" id="cycDetectW"></div>
+
+<h3 id="t2-5">Complexity & Boundary Safety</h3>
+<div class="fig scroll"><table class="tt">
+<tr><th>Approach</th><th>Time Complexity</th><th>Space Complexity</th></tr>
+<tr><td>Hash Set of visited nodes</td><td>O(n)</td><td>O(n)</td></tr>
+<tr><td>Floyd's Fast & Slow Pointers</td><td>O(n)</td><td>O(1)</td></tr>
+</table></div>
+<p>The while condition <code>while fast and fast.next:</code> guarantees that we never access <code>.next</code> on a <code>None</code> object, terminating cleanly in acyclic lists.</p>
+<blockquote><p><strong>Sometimes we can replace stored history with carefully designed movement.</strong></p></blockquote>
+
+<h2 id="t3">3. Problem 2: Finding the Start of the Cycle</h2>
+<h3 id="t3-1">Why the Meeting Point Is Not the Entrance</h3>
+<p>Knowing that a cycle exists is useful, but many real-world problems require finding the <strong>exact entrance node</strong> where the cycle begins:</p>
+<blockquote><p><code>1 → 2 → 3 → 4 → 5 → 6 → 3</code> &nbsp;(Cycle entrance is <strong>node 3</strong>)</p></blockquote>
+<p>Notice that in Problem 1, <code>slow</code> and <code>fast</code> collided at <strong>node 5</strong>. The meeting point is almost never the entrance! Why should this collision help us locate the entrance? It doesn't directly — until we analyze the distance geometry.</p>
+
+<h3 id="t3-2">Thinking in Distances: Defining a, b, and c</h3>
+<p>Let's partition the linked list into three precise distances:</p>
+<ul>
+<li><strong><code>a</code></strong>: Distance from <code>head</code> to the cycle entrance.</li>
+<li><strong><code>b</code></strong>: Distance from the cycle entrance to the meeting point.</li>
+<li><strong><code>c</code></strong>: Remaining distance from the meeting point back to the cycle entrance.</li>
+</ul>
+<p>The total length of the cycle is <strong><code>L = b + c</code></strong>.</p>
+<div class="fig" id="distBreakdownF"></div>
+
+<h3 id="t3-3">Interactive Derivation: Visualizing a ≡ c (mod L)</h3>
+<p>Let's derive the algebraic relationship step-by-step:</p>
+<div class="math-box">
+1. When slow and fast meet:<br>
+   Distance travelled by slow: <span class="math-hl">D_slow = a + b</span><br>
+   Distance travelled by fast: <span class="math-hl">D_fast = 2 × D_slow = 2(a + b)</span><br><br>
+2. Fast has also looped around the cycle k times (where k ≥ 1):<br>
+   <span class="math-hl">D_fast = a + b + k × L</span><br><br>
+3. Equating both expressions for D_fast:<br>
+   <span class="math-hl">2(a + b) = a + b + k × L</span><br>
+   <span class="math-hl">a + b = k × L</span><br><br>
+4. Express L as (b + c):<br>
+   <span class="math-hl">a + b = (k - 1)L + b + c</span><br><br>
+5. Subtract b from both sides:<br>
+   <span class="math-ok">a = (k - 1)L + c</span>
+</div>
+<p>This is the fundamental formula of Floyd's Cycle Detection. For <var>k</var> = 1 (the most common case where fast laps slow once), this simplifies directly to: <strong><code>a = c</code></strong>!</p>
+<blockquote><p><strong>The distance from the head to the cycle start (a) is identical to the distance from the meeting point back to the cycle start (c)!</strong></p></blockquote>
+
+<h4>Derive it interactively: see why a = c aligns the dual race</h4>
+<p>Adjust the parameters below. Watch how moving one pointer <var>a</var> steps from <code>head</code> and another pointer <var>c</var> steps from the <code>meeting point</code> brings both pointers to the entrance at the exact same moment:</p>
+<div class="fig" id="floydMathW"></div>
+
+<h3 id="t3-4">The Second Phase: Aligning the Dual Race</h3>
+<p>The algebraic equivalence <var>a</var> = <var>c</var> gives us an elegant two-phase algorithm:</p>
+<ol>
+<li><strong>Phase 1:</strong> Run <code>slow</code> (1 step) and <code>fast</code> (2 steps) until they collide inside the cycle.</li>
+<li><strong>Phase 2:</strong> Leave <code>fast</code> at the meeting point. Reset <code>slow</code> back to <code>head</code>. Now advance <strong>both one step at a time</strong>.</li>
+<li>Because both pointers must travel identical distances (<var>a</var> = <var>c</var>), they will collide at the <strong>cycle entrance</strong>!</li>
+</ol>
+
+<h3 id="t3-5">Full Implementation & Verification</h3>
+<details open><summary>Python code (click to hide or show)</summary><pre>def detect_cycle(head):
+    slow = head
+    fast = head
+
+    # Phase 1: detect meeting point
+    while fast and fast.next:
+        slow = slow.next
+        fast = fast.next.next
+        if slow is fast:
+            break
+    else:
+        return None  # No cycle exists
+
+    # Phase 2: find cycle entrance
+    slow = head
+    while slow is not fast:
+        slow = slow.next
+        fast = fast.next
+
+    return slow</pre></details>
+<h3>Try it: step through the two-phase algorithm</h3>
+<div class="fig" id="cycStartW"></div>
+
+<h2 id="t4">4. Generalizing to State Machines: Problem 3 — Happy Number</h2>
+<h3 id="t4-1">The Happy Number Problem</h3>
+<p>Take any positive integer. Replace the number by the sum of the squares of its digits, and repeat:</p>
+<blockquote><p><code>19 → 1² + 9² = 82 → 8² + 2² = 68 → 6² + 8² = 100 → 1² + 0² + 0² = 1 (Happy!)</code></p></blockquote>
+<p>If the sequence reaches <code>1</code>, the number is happy. But what happens if we start with <code>2</code>?</p>
+<blockquote><p><code>2 → 4 → 16 → 37 → 58 → 89 → 145 → 42 → 20 → 4 ...</code></p></blockquote>
+<p>The computation loops endlessly in an 8-number cycle: <code>4 → 16 → 37 → 58 → 89 → 145 → 42 → 20 → 4</code>.</p>
+
+<h3 id="t4-2">The Hidden Linked List: Computed Next Pointers</h3>
+<p>Notice that every number has exactly <strong>one deterministic next number</strong>: <code>next_state = sum_of_squared_digits(n)</code>. We don't need actual <code>Node</code> objects in memory. The computational function <code>f(n)</code> acts as the <code>node.next</code> reference!</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def next_number(n):
+    total = 0
+    while n:
+        digit = n % 10
+        total += digit * digit
+        n //= 10
+    return total
+
+def is_happy(n):
+    slow = n
+    fast = n
+
+    while True:
+        slow = next_number(slow)
+        fast = next_number(next_number(fast))
+        if slow == fast:
+            break
+
+    return slow == 1</pre></details>
+
+<h3 id="t4-3">Interactive State Machine: 19 vs Unhappy Cycle</h3>
+<p>Step through both numbers below. Watch how <code>fast</code> and <code>slow</code> converge on 1 for 19, and detect the loop collision at 20 for 2:</p>
+<div class="fig" id="happyW"></div>
+
+<h2 id="t5">5. Array as an Implicit Graph: Problem 4 — Find the Duplicate Number</h2>
+<h3 id="t5-1">The Problem and Special Constraints</h3>
+<p>Given an array of integers <code>nums</code> containing <code>n + 1</code> integers where each integer is in the range <code>[1, n]</code> inclusive. There is only one repeated number. Find the duplicate without modifying the array and using only <code>O(1)</code> extra space.</p>
+<blockquote><p><code>nums = [1, 3, 4, 2, 2] &nbsp; (n = 4, length = 5, duplicate = 2)</code></p></blockquote>
+
+<h3 id="t5-2">Mapping Indices to Values (i → nums[i])</h3>
+<p>Because every value in <code>nums</code> is between <code>1</code> and <code>n</code>, each value can be interpreted as a <strong>valid index</strong> in the array! If we define: <code>current_node = i</code> and <code>next_node = nums[i]</code>, the array transforms into a directed graph:</p>
+<blockquote><p><code>Index 0 → nums[0]=1 → nums[1]=3 → nums[3]=2 → nums[2]=4 → nums[4]=2 → nums[2]=4 ...</code></p></blockquote>
+
+<h3 id="t5-3">Pigeonhole Principle: Why Duplicates Guarantee a Cycle</h3>
+<p>The array has <var>n</var> + 1 indices pointing to only <var>n</var> distinct target values. By the Pigeonhole Principle, at least two separate indices must contain the same value. That means two directed arrows merge into the same node! Once two paths merge, they enter a cycle. <strong>The entrance to that cycle is the duplicate value.</strong></p>
+
+<h3 id="t5-4">Interactive Array-to-Graph Jump Visualizer</h3>
+<p>Step through tracing <code>nums = [1, 3, 4, 2, 2]</code>. Watch Phase 1 find the collision inside the cycle, and Phase 2 identify the cycle entrance: value 2!</p>
+<div class="fig" id="dupGraphW"></div>
+
+<h3 id="t5-5">Comparing Hash Sets, Sorting, and Floyd's Algorithm</h3>
+<div class="fig scroll"><table class="tt">
+<tr><th>Method</th><th>Time</th><th>Space</th><th>Modifies Input?</th></tr>
+<tr><td>Hash Set</td><td>O(n)</td><td>O(n)</td><td>No</td></tr>
+<tr><td>Sorting</td><td>O(n log n)</td><td>O(1)*</td><td>Yes (violates constraint)</td></tr>
+<tr><td>Floyd's Algorithm</td><td>O(n)</td><td>O(1)</td><td>No (optimal)</td></tr>
+</table></div>
+
+<h2 id="t6">6. Beyond Cycles: Problem 5 — Middle of the Linked List</h2>
+<h3 id="t6-1">Single-Pass Midpoint Discovery</h3>
+<p>Suppose: <code>1 → 2 → 3 → 4 → 5</code>. We want node <code>3</code> without counting the total length first. The standard two-pass approach traverses once to count <var>n</var>, then traverses <var>n</var>/2 steps in a second pass. Fast and slow pointers find the middle in <strong>exactly one pass</strong>.</p>
+
+<h3 id="t6-2">The 2:1 Invariant: Halfway Across the Structure</h3>
+<div class="math-box">
+Speed of fast = 2 × Speed of slow.<br>
+Distance of fast = 2 × Distance of slow.<br>
+When fast reaches the end (Distance = n), slow must have travelled <span class="math-ok">n / 2</span> steps!
+</div>
+<details open><summary>Python code (click to hide or show)</summary><pre>def middle_node(head):
+    slow = head
+    fast = head
+
+    while fast and fast.next:
+        slow = slow.next
+        fast = fast.next.next
+
+    return slow</pre></details>
+
+<h3 id="t6-3">Interactive Midpoint Explorer: Odd vs Even Lengths</h3>
+<p>Toggle between an odd-length list (5 nodes) and an even-length list (6 nodes):</p>
+<div class="fig" id="midListW"></div>
+<p class="cap">For odd lists, fast lands on the last node (fast.next is None). For even lists, fast reaches None, returning the second middle node (node 4).</p>
+
+<h3 id="t6-4">A Foundational Primitive: Splitting the List</h3>
+<p>Finding the midpoint in <var>O</var>(<var>n</var>) time and <var>O</var>(1) space is a cornerstone primitive in DSA. It allows splitting a singly linked list into two equal halves without auxiliary arrays, serving as the basis for merge sort, palindrome checking, and list reordering.</p>
+
+<h2 id="t7">7. Algorithmic Decomposition: Problem 6 — Palindrome Linked List</h2>
+<h3 id="t7-1">Why Singly Linked Lists Cannot Traverse Backward</h3>
+<p>In an array <code>[1, 2, 3, 2, 1]</code>, we can place two pointers at the ends (<code>L → &nbsp; ← R</code>) and compare inward. But in a singly linked list, there are no backward pointers!</p>
+
+<h3 id="t7-2">The 3-Step Pipeline: Find Middle → Reverse → Compare</h3>
+<p>We decompose the problem into three reusable building blocks:</p>
+<ol>
+<li><strong>Find the middle:</strong> Use fast/slow pointers to find the midpoint in one pass.</li>
+<li><strong>Reverse the second half:</strong> Invert the next pointers of the second half in place.</li>
+<li><strong>Compare halves:</strong> Move <code>first</code> from head and <code>second</code> from the reversed tail. If all values match, it is a palindrome!</li>
+</ol>
+<details open><summary>Python code (click to hide or show)</summary><pre>def is_palindrome(head):
+    slow = head
+    fast = head
+
+    # 1. Find middle
+    while fast and fast.next:
+        slow = slow.next
+        fast = fast.next.next
+
+    # 2. Reverse second half
+    prev = None
+    curr = slow
+    while curr:
+        nxt = curr.next
+        curr.next = prev
+        prev = curr
+        curr = nxt
+
+    # 3. Compare halves
+    first = head
+    second = prev
+    while second:
+        if first.val != second.val:
+            return False
+        first = first.next
+        second = second.next
+
+    return True</pre></details>
+
+<h3 id="t7-3">Interactive Palindrome Decomposition Stepper</h3>
+<div class="fig" id="palListW"></div>
+
+<h3 id="t7-4">In-Place Mutation and Production Restoration</h3>
+<p>Operating in <var>O</var>(1) space temporarily mutates the list's second half. In production environments, it is good practice to run the reverse function on the second half once more before returning to restore the list to its original state.</p>
+
+<h2 id="t8">8. Problem 7: Rearrange / Reorder a Linked List</h2>
+<h3 id="t8-1">The Problem: Alternating First and Last Nodes</h3>
+<p>Given <code>1 → 2 → 3 → 4 → 5 → 6</code>, reorder the list into: <code>1 → 6 → 2 → 5 → 3 → 4</code> (first, last, second, second-last...).</p>
+
+<h3 id="t8-2">Why Naive Traversal Becomes O(n²)</h3>
+<p>Because singly linked lists cannot jump to the tail, finding the last node repeatedly costs <var>O</var>(<var>n</var>) work per node, totaling <var>O</var>(<var>n</var>^2).</p>
+
+<h3 id="t8-3">Interactive 3-Phase Weaving Pipeline</h3>
+<p>We decompose the task into three linear-time operations:</p>
+<ol>
+<li>Find middle: <code>1 → 2 → 3</code> and <code>4 → 5 → 6</code></li>
+<li>Reverse second half: <code>6 → 5 → 4</code></li>
+<li>Weave nodes alternately: <code>1 → 6 → 2 → 5 → 3 → 4</code></li>
+</ol>
+<div class="fig" id="reorderW"></div>
+
+<h3 id="t8-4">Complete Implementation</h3>
+<details open><summary>Python code (click to hide or show)</summary><pre>def reorder_list(head):
+    if not head or not head.next:
+        return
+
+    # 1. Find middle
+    slow = head
+    fast = head
+    while fast and fast.next:
+        slow = slow.next
+        fast = fast.next.next
+
+    # 2. Reverse second half
+    prev = None
+    curr = slow.next
+    slow.next = None
+    while curr:
+        nxt = curr.next
+        curr.next = prev
+        prev = curr
+        curr = nxt
+
+    # 3. Weave alternate links
+    first = head
+    second = prev
+    while second:
+        tmp1 = first.next
+        tmp2 = second.next
+        first.next = second
+        second.next = tmp1
+        first = tmp1
+        second = tmp2</pre></details>
+
+<h2 id="t9">9. Problem 8: Cycle in a Circular Array</h2>
+<h3 id="t9-1">Array Traversal with Modulo Arithmetic</h3>
+<p>Suppose <code>nums = [2, -1, 1, 2, 2]</code>. Each value indicates jump distance (positive = forward, negative = backward). The array wraps around circularly: <code>next_index = (i + nums[i]) % n</code>.</p>
+
+<h3 id="t9-2">Constraints: Direction Consistency & Self-Loop Rejection</h3>
+<p>Unlike normal cycle finding, a valid loop must fulfill two critical criteria:</p>
+<ul>
+<li><strong>Single Direction:</strong> The cycle must move exclusively forward or exclusively backward (no direction flips).</li>
+<li><strong>Cycle Length &gt; 1:</strong> Single-element self-loops (<code>nums[i] % n == 0</code>) do not count.</li>
+</ul>
+
+<h3 id="t9-3">Interactive Circular Array Stepper</h3>
+<div class="fig" id="circArrayW"></div>
+
+<h3 id="t9-4">Full Implementation</h3>
+<details open><summary>Python code (click to hide or show)</summary><pre>def circular_array_loop(nums):
+    n = len(nums)
+
+    def next_index(i, direction):
+        if nums[i] * direction <= 0:
+            return -1  # Direction mismatch
+        nxt = (i + nums[i]) % n
+        return -1 if nxt == i else nxt  # Reject self-loops
+
+    for i in range(n):
+        direction = 1 if nums[i] > 0 else -1
+        slow = i
+        fast = i
+
+        while True:
+            slow = next_index(slow, direction)
+            if slow == -1: break
+            fast = next_index(fast, direction)
+            if fast == -1: break
+            fast = next_index(fast, direction)
+            if fast == -1: break
+            if slow == fast:
+                return True
+
+    return False</pre></details>
+
+<h2 id="t10">10. The Deeper Pattern: Movement as Information</h2>
+<h3 id="t10-1">The Two Major Superpowers</h3>
+<div class="fig scroll"><table class="tt">
+<tr><th>Superpower</th><th>Speed Ratio</th><th>Information Extracted</th></tr>
+<tr><td>Cycle Detection</td><td>2:1 (Fast laps Slow)</td><td>Detects periodicity, finds collision, isolates entrance</td></tr>
+<tr><td>Midpoint Discovery</td><td>2:1 (Fast reaches End)</td><td>Identifies boundary for splits, reversals, and merges</td></tr>
+</table></div>
+
+<h3 id="t10-2">Master Complexity Summary Table</h3>
+<div class="fig scroll"><table class="tt">
+<tr><th>Problem</th><th>Key Idea</th><th>Time</th><th>Space</th></tr>
+<tr><td>Linked List Cycle</td><td>Fast catches slow</td><td>O(n)</td><td>O(1)</td></tr>
+<tr><td>Start of Cycle</td><td>Phase 1 collision + Phase 2 dual race</td><td>O(n)</td><td>O(1)</td></tr>
+<tr><td>Happy Number</td><td>Number sequence forms cycle</td><td>O(log n)</td><td>O(1)</td></tr>
+<tr><td>Find Duplicate</td><td>Array acts as implicit graph</td><td>O(n)</td><td>O(1)</td></tr>
+<tr><td>Middle of List</td><td>Fast travels twice as far</td><td>O(n)</td><td>O(1)</td></tr>
+<tr><td>Palindrome List</td><td>Middle + reverse + compare</td><td>O(n)</td><td>O(1)</td></tr>
+<tr><td>Rearrange List</td><td>Middle + reverse + weave</td><td>O(n)</td><td>O(1)</td></tr>
+<tr><td>Circular Array Cycle</td><td>Implicit graph + direction checks</td><td>O(n²)</td><td>O(1)</td></tr>
+</table></div>
+
+<h3 id="t10-3">Fast/Slow vs Ordinary Two Pointers</h3>
+<blockquote>
+<p><strong>Two pointers:</strong> Two positions whose values help us make decisions (e.g. sum too large → decrement right).</p>
+<p><strong>Fast/slow:</strong> Two positions whose speed ratio reveals hidden structural properties (e.g. cycle existence, midpoint).</p>
+</blockquote>
+
+<h3 id="t10-4">The 5-Step Mental Framework for New Problems</h3>
+<div class="fig" id="mentalModelF"></div>
+
+<h2>Final Picture</h2>
+<p>Fast and slow pointers are not really about pointers. They are about <strong>using controlled motion to extract information from a structure</strong>.</p>
+<p>Sometimes the smartest thing you can do is let one pointer walk while another runs. And sometimes, the distance between them tells you everything you need to know.</p>
+</main>
+
+<script>
+var $ = function(i){return document.getElementById(i)};
+function cells(a,o){o=o||{};var c=o.c||{};return '<div class="row">'+a.map(function(v,i){var g=v==='';return '<div class="cw"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="cell'+(g?' gap':'')+' '+(c[i]||'')+'">'+(g?'&nbsp;':v)+'</div><span class="ix">'+(o.noix?'':i)+'</span></div>'}).join('')+'</div>'}
+function flow(a){return '<div class="flow">'+a.map(function(x){return '<div class="cell">'+x+'</div>'}).join('<span>↓</span>')+'</div>'}
+
+function widget(id,opts,build){
+  var el=$(id);if(!el)return;
+  var i=0,st=[],cur=0;
+  el.innerHTML=(opts.length>1?'<div class="row" style="align-items:center;margin-bottom:8px">'+opts.map(function(o,k){return '<button data-k="'+k+'">'+o[0]+'</button>'}).join('')+'</div>':'')+'<div class="scroll v"></div><p class="note" aria-live="polite"></p><div class="ctl"><button class="pv">Previous</button><span class="pos"></span><button class="nx">Next</button></div>';
+  var v=el.querySelector('.v'),n=el.querySelector('.note'),p=el.querySelector('.pos'),pv=el.querySelector('.pv'),nx=el.querySelector('.nx');
+  function r(){v.innerHTML=st[i].h;n.innerHTML=st[i].n;p.textContent='Step '+(i+1)+' of '+st.length;pv.disabled=i===0;nx.disabled=i===st.length-1}
+  function getK(b){return b.dataset&&b.dataset.k!==undefined?+b.dataset.k:+b.getAttribute('data-k')}
+  function pick(k){cur=k;st=build(opts[k][1]);i=0;[].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.setAttribute('aria-pressed',String(getK(b)===k))});r()}
+  [].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.onclick=function(){pick(getK(b))}});
+  pv.onclick=function(){if(i>0){i--;r()}};nx.onclick=function(){if(i<st.length-1){i++;r()}};pick(0);
+  return {re:function(){var j=i;pick(cur);i=Math.min(j,st.length-1);r()}};
+}
+
+// SVG graph renderer
+function G(N,E,o){
+  o=o||{};var W=o.w||660,H=o.h||120,h='<div class="scroll"><svg class="sv" viewBox="0 0 '+W+' '+H+'" style="min-width:'+(o.m||540)+'px" role="img" aria-label="'+(o.al||'Diagram')+'">';
+  function dm(n){return n.t==='p'?[n.w||52,26]:[64,38]}
+  E.forEach(function(e){
+    var a=N[e[0]],b=N[e[1]];if(!a||!b)return;
+    var da=dm(a),db=dm(b),of=e[3]||0,bx=b.x+db[0]/2,by=b.y+db[1]/2+of,sx,sy,
+        mk='#ar'+(e[2]==='new'?'g':e[2]==='old'?'r':e[2]==='mv'?'m':'');
+    if(e[4]){
+      var crv=typeof e[4]==='number'?e[4]:70;
+      if(crv<0){
+        sx=a.t==='p'?a.x+da[0]/2:(a.x+da[0]-11);sy=a.y;
+        var ex=bx,ey=b.y;
+        h+='<path class="e '+(e[2]||'')+'" d="M'+sx+' '+sy+' Q'+(sx+ex)/2+' '+(sy+crv)+' '+ex+' '+ey+'" marker-end="url('+mk+')"/>';
+      }else{
+        sx=a.t==='p'?a.x+da[0]/2:(bx<a.x?a.x+11:a.x+da[0]-11);sy=a.y+da[1];
+        var ex=bx,ey=b.y+db[1];
+        h+='<path class="e '+(e[2]||'')+'" d="M'+sx+' '+sy+' Q'+(sx+ex)/2+' '+(sy+crv)+' '+ex+' '+ey+'" marker-end="url('+mk+')"/>';
+      }
+      return;
+    }
+    if(a.t==='p'){
+      if(b.y>=a.y+da[1]-2){sx=a.x+da[0]/2;sy=a.y+da[1]}
+      else if(b.y+db[1]<=a.y+2){sx=a.x+da[0]/2;sy=a.y}
+      else{sx=bx<a.x?a.x:a.x+da[0];sy=a.y+da[1]/2+of}
+    }else{
+      sy=a.y+da[1]/2+of;sx=bx<a.x?a.x+11:a.x+da[0]-11;
+    }
+    var dx=bx-sx,dy=by-sy,L=Math.sqrt(dx*dx+dy*dy)||1,ux=dx/L,uy=dy/L,
+        t=Math.min((db[0]/2+4)/(Math.abs(ux)||.001),(db[1]/2+4)/(Math.abs(uy)||.001));
+    h+='<line class="e '+(e[2]||'')+'" x1="'+sx+'" y1="'+sy+'" x2="'+(bx-ux*t)+'" y2="'+(by-uy*t)+'" marker-end="url('+mk+')"/>';
+  });
+  for(var k in N){
+    var n=N[k],d=dm(n),mid=n.y+d[1]/2,c=(n.c||'')+(n.t==='p'?' p':'')+(n.t==='g'?' g':'');
+    h+='<g class="n '+c+'"><rect x="'+n.x+'" y="'+n.y+'" width="' + d[0] + '" height="' + d[1] + '" rx="6"/>';
+    if(n.t!=='g'){
+      if(!n.t){h+='<line x1="'+(n.x+d[0]-22)+'" x2="'+(n.x+d[0]-22)+'" y1="'+n.y+'" y2="'+(n.y+d[1])+'"/><circle cx="'+(n.x+d[0]-11)+'" cy="'+mid+'" r="3.5"/>'}
+      h+='<text x="'+(n.x+(n.t?d[0]/2:(d[0]-22)/2))+'" y="'+(mid+5)+'">'+n.l+'</text>';
+      if(n.a)h+='<text class="sm" x="'+(n.x+d[0]/2)+'" y="'+(n.y+d[1]+14)+'">'+n.a+'</text>';
+      if(n.s)h+='<text class="sm" x="'+(n.x+d[0]/2)+'" y="'+(n.y-6)+'">'+n.s+'</text>';
+    }
+    h+='</g>';
+  }
+  return h+'</svg></div>';
+}
+
+function chList(N,E,items,x,y,g,hasNil){
+  var ids=[];
+  items.forEach(function(item,i){
+    var id=typeof item==='object'?item.id:'n'+item;
+    var lbl=typeof item==='object'?item.l:String(item);
+    var cls=typeof item==='object'?(item.c||''):'';
+    ids.push(id);
+    N[id]={l:lbl,x:x+i*g,y:y,c:cls};
+    if(typeof item==='object'){
+      if(item.s)N[id].s=item.s;
+      if(item.a)N[id].a=item.a;
+    }
+    if(i>0)E.push([ids[i-1],id]);
+  });
+  if(hasNil&&ids.length){
+    N.nil={l:'None',t:'p',x:x+ids.length*g,y:y+6};
+    E.push([ids[ids.length-1],'nil']);
+  }
+  return ids;
+}
+
+// Static diagrams
+(function(){
+  var N={},E=[];
+  chList(N,E,[1,2,3,4,5,6],40,40,95,false);
+  E.push(['n6','n3','mv',0,55]);
+  $('cycleIntroF').innerHTML=G(N,E,{w:640,h:120,m:540})+'<p class="cap">Cycle: node 6 loops back to node 3. Pointers cannot escape.</p>';
+
+  var N2={},E2=[];
+  N2.n1={l:'1',x:30,y:48,a:'head'};
+  N2.n2={l:'2',x:135,y:48,s:'distance a'};
+  N2.n3={l:'3',x:240,y:48,a:'cycle entrance',c:'ok'};
+  N2.n4={l:'4',x:345,y:48,s:'distance b'};
+  N2.n5={l:'5',x:450,y:48,a:'meeting point',c:'now'};
+  N2.n6={l:'6',x:555,y:48,s:'distance c'};
+  E2.push(['n1','n2'],['n2','n3'],['n3','n4'],['n4','n5'],['n5','n6'],['n6','n3','mv',0,55]);
+  $('distBreakdownF').innerHTML=G(N2,E2,{w:660,h:135,m:560})+'<p class="cap">Distance a: 1 to 3. Distance b: 3 to 5. Distance c: 5 back to 3. Cycle length L = b + c.</p>';
+
+  $('mentalModelF').innerHTML=flow([
+    'Step 1: What is moving? (nodes, indices, numbers, states)',
+    'Step 2: Does every state have exactly one next state? (f(x))',
+    'Step 3: Can the process revisit a state? → Think Cycle',
+    'Step 4: Would two speeds reveal a collision or boundary? → Fast / Slow',
+    'Step 5: Decompose: Find Middle → Reverse → Weave'
+  ]);
+})();
+
+// ---- 1. Interactive Relative Gap Decrement (Section 1.3) ----
+widget('gapDecrW',[
+  ['Initial Gap = 4',4],
+  ['Initial Gap = 3',3],
+  ['Initial Gap = 2',2],
+  ['Initial Gap = 1',1]
+],function(initGap){
+  var s=[],L=6;
+  var s0=1; // slow starts at node 1
+  var f0=(s0-initGap+L)%L; // fast starts initGap behind slow along the cycle
+
+  var sCur=s0, fCur=f0;
+  for(var step=0;step<=initGap;step++){
+    var curGap=(sCur-fCur+L)%L;
+    var isCollision=curGap===0;
+    var N={},E=[];
+
+    // Draw track of 6 nodes (0 to 5)
+    for(var k=0;k<L;k++){
+      var id='c'+k;
+      var cls='';
+      if(isCollision && k===sCur) cls='ok';
+      else if(k===sCur) cls='mv';
+      else if(k===fCur) cls='now';
+      N[id]={l:String(k),x:35+k*95,y:48,c:cls};
+      if(k>0) E.push(['c'+(k-1),id]);
+    }
+    E.push(['c'+(L-1),'c0','mv',0,55]);
+
+    if(isCollision){
+      N.both={l:'COLLISION (Gap = 0)',t:'p',w:140,x:N['c'+sCur].x-38,y:10,c:'ok'};
+      E.push(['both','c'+sCur]);
+    }else{
+      N.slow={l:'slow',t:'p',w:50,x:N['c'+sCur].x+7,y:10,c:'mv'};
+      N.fast={l:'fast',t:'p',w:50,x:N['c'+fCur].x+7,y:10,c:'now'};
+      E.push(['slow','c'+sCur],['fast','c'+fCur]);
+    }
+
+    var tagClass=isCollision?'tag-ok':'tag-hi';
+    var tagText=isCollision?'Gap reached 0: Collision at node '+sCur+'!':'Remaining forward gap: '+curGap+' node'+(curGap>1?'s':'');
+
+    var noteText='';
+    if(step===0){
+      noteText='Initial state: slow is at node '+sCur+', fast is at node '+fCur+'. Forward along the cycle arrows, fast is '+curGap+' node'+(curGap>1?'s':'')+' behind slow.';
+    }else{
+      var prevS=(sCur-1+L)%L;
+      var prevF=(fCur-2+L)%L;
+      var midF=(prevF+1)%L;
+      var loopMsg=(prevF===5||midF===5)?' (looping back via arrow 5 → 0)':'';
+      if(isCollision){
+        noteText='Round '+step+': COLLISION at node '+sCur+'! slow moved 1 step forward ('+prevS+' → '+sCur+'). fast moved 2 steps forward ('+prevF+' → '+midF+' → '+fCur+loopMsg+'). Remaining gap reached 0! Because fast gains strictly 1 node every round, it is mathematically impossible to hop over slow.';
+      }else{
+        noteText='Round '+step+': slow moved 1 step forward ('+prevS+' → '+sCur+'). fast moved 2 steps forward ('+prevF+' → '+midF+' → '+fCur+loopMsg+'). The forward gap decreased by exactly 1: from '+(curGap+1)+' to '+curGap+'.';
+      }
+    }
+
+    s.push({
+      h:'<div class="row" style="gap:12px;margin:6px 0;"><span class="panel-tag '+tagClass+'">'+tagText+'</span><span class="panel-tag tag-acc">slow: node '+sCur+' (+1)</span><span class="panel-tag tag-hi">fast: node '+fCur+' (+2)</span><span class="panel-tag">Relative speed: 1 step/round</span></div>'+G(N,E,{w:650,h:145,m:560}),
+      n:noteText
+    });
+
+    // Advance pointers for next step
+    sCur=(sCur+1)%L;
+    fCur=(fCur+2)%L;
+  }
+  return s;
+});
+
+// ---- 2. Cycle Detection Stepper (Section 2.4) ----
+widget('cycDetectW',[['Detect Cycle in 1 → 2 → 3 → 4 → 5 → 6 → 3',0]],function(){
+  var s=[];
+  var steps=[
+    {s:1,f:1,n:'Both slow and fast start at head (node 1).'},
+    {s:2,f:3,n:'slow moves 1 step to 2. fast moves 2 steps to 3 (entered cycle).'},
+    {s:3,f:5,n:'slow moves 1 step to 3. fast moves 2 steps to 5.'},
+    {s:4,f:3,n:'slow moves to 4. fast loops through 6 back to 3. Gap is closing!'},
+    {s:5,f:5,col:true,n:'slow moves to 5. fast moves through 4 to 5. COLLISION! Both pointers land on the exact same node 5.'}
+  ];
+
+  steps.forEach(function(st){
+    var N={},E=[];
+    chList(N,E,[1,2,3,4,5,6],40,48,95,false);
+    E.push(['n6','n3','mv',0,55]);
+
+    if(st.col){
+      N['n'+st.s].c='ok';
+      N.both={l:'COLLISION!',t:'p',w:96,x:N['n'+st.s].x-16,y:10,c:'ok'};
+      E.push(['both','n'+st.s]);
+    }else if(st.s===st.f){
+      N.both={l:'slow, fast',t:'p',w:82,x:N['n'+st.s].x-9,y:10,c:'now'};
+      E.push(['both','n'+st.s]);
+    }else{
+      N['n'+st.s].c='mv';
+      N['n'+st.f].c='now';
+      N.slow={l:'slow',t:'p',w:50,x:N['n'+st.s].x+7,y:10,c:'mv'};
+      N.fast={l:'fast',t:'p',w:50,x:N['n'+st.f].x+7,y:10,c:'now'};
+      E.push(['slow','n'+st.s],['fast','n'+st.f]);
+    }
+
+    var tagClass=st.col?'tag-ok':'tag-hi';
+    var tagText=st.col?'Collision at node 5: cycle detected':'slow: node '+st.s+' | fast: node '+st.f;
+    s.push({
+      h:'<div class="row" style="gap:12px;margin:6px 0;"><span class="panel-tag '+tagClass+'">'+tagText+'</span></div>'+G(N,E,{w:640,h:130,m:540}),
+      n:st.n
+    });
+  });
+
+  return s;
+});
+
+// ---- 3. Mathematical Intuition: Derivation of a = c Visualizer (Section 3.3) ----
+widget('floydMathW',[
+  ['Case 1: a = 2, L = 4 (b=2, c=2 → a = c = 2)',0],
+  ['Case 2: a = 3, L = 4 (b=1, c=3 → a = c = 3)',1]
+],function(kase){
+  var s=[];
+  var aVal=kase===0?2:3;
+  var bVal=kase===0?2:1;
+  var cVal=kase===0?2:3;
+  var LVal=bVal+cVal;
+
+  for(var step=0;step<=aVal;step++){
+    var isDone=step===aVal;
+    var sCur=1+step;
+    // Fast starts at meeting point (entrance + b) and travels c steps
+    var fNodes=kase===0?[5,6,3]:[4,5,6,3];
+    var fCur=fNodes[step];
+
+    var N={},E=[];
+    chList(N,E,[1,2,3,4,5,6],40,48,95,false);
+    E.push(['n6','n3','mv',0,55]);
+
+    if(isDone){
+      N.n3.c='ok';
+      N.both={l:'Cycle Entrance (3)',t:'p',w:135,x:N.n3.x-35,y:10,c:'ok'};
+      E.push(['both','n3']);
+    }else{
+      N['n'+sCur].c='mv';
+      N['n'+fCur].c='now';
+      N.slow={l:'p1 (from head)',t:'p',w:100,x:N['n'+sCur].x-18,y:10,c:'mv'};
+      N.fast={l:'p2 (from meet)',t:'p',w:100,x:N['n'+fCur].x-18,y:10,c:'now'};
+      E.push(['slow','n'+sCur],['fast','n'+fCur]);
+    }
+
+    var tagClass=isDone?'tag-ok':'tag-acc';
+    var tagText=isDone?'Arrival at entrance! a = c verified':'Step '+step+' of '+aVal+': p1 travelled '+step+', p2 travelled '+step;
+    s.push({
+      h:'<div class="row" style="gap:12px;margin:6px 0;"><span class="panel-tag '+tagClass+'">'+tagText+'</span><span class="panel-tag">Equation: a = '+aVal+', c = '+cVal+'</span></div>'+G(N,E,{w:650,h:130,m:560}),
+      n:isDone
+        ?'Both pointers travelled exactly '+aVal+' steps and collided at cycle entrance node 3! Because a = c, the distance from head equals the distance from meeting point back to entrance.'
+        :'Dual race: Pointer 1 advances 1 step from head ('+sCur+'). Pointer 2 advances 1 step from meeting point ('+fCur+').'
+    });
+  }
+  return s;
+});
+
+// ---- 4. Start of Cycle Stepper (Section 3.5) ----
+widget('cycStartW',[['Find Cycle Entrance (Node 3)',0]],function(){
+  var s=[];
+  var steps=[
+    {p:1,s:1,f:1,n:'Phase 1: Both start at head (1). Fast runs at 2x speed.'},
+    {p:1,s:5,f:5,col1:true,n:'Phase 1 complete: slow and fast collide at node 5 inside the cycle.'},
+    {p:2,s:1,f:5,n:'Phase 2: Leave fast at meeting point (5). Reset slow back to head (1). Now move BOTH 1 step at a time.'},
+    {p:2,s:2,f:6,n:'Both take 1 step: slow moves 1 → 2. fast moves 5 → 6.'},
+    {p:2,s:3,f:3,col2:true,n:'Both take 1 step: slow moves 2 → 3. fast loops 6 → 3. They meet at node 3: the exact entrance to the cycle!'}
+  ];
+
+  steps.forEach(function(st){
+    var N={},E=[];
+    chList(N,E,[1,2,3,4,5,6],40,48,95,false);
+    E.push(['n6','n3','mv',0,55]);
+
+    if(st.col1){
+      N.n5.c='now';
+      N.both={l:'Meeting (5)',t:'p',w:90,x:N.n5.x-13,y:10,c:'now'};
+      E.push(['both','n5']);
+    }else if(st.col2){
+      N.n3.c='ok';
+      N.both={l:'Cycle Entrance: 3',t:'p',w:120,x:N.n3.x-28,y:10,c:'ok'};
+      E.push(['both','n3']);
+    }else if(st.s===st.f){
+      N.both={l:'slow, fast',t:'p',w:82,x:N['n'+st.s].x-9,y:10,c:'now'};
+      E.push(['both','n'+st.s]);
+    }else{
+      N['n'+st.s].c='mv';
+      N['n'+st.f].c=st.p===2?'ok':'now';
+      N.slow={l:'slow',t:'p',w:50,x:N['n'+st.s].x+7,y:10,c:'mv'};
+      N.fast={l:'fast',t:'p',w:50,x:N['n'+st.f].x+7,y:10,c:st.p===2?'ok':'now'};
+      E.push(['slow','n'+st.s],['fast','n'+st.f]);
+    }
+
+    var tagClass=st.col2?'tag-ok':(st.col1?'tag-hi':'tag-acc');
+    var tagText=st.col2?'Cycle entrance found: Node 3':(st.col1?'Meeting point: Node 5':'Phase '+st.p+': slow='+st.s+', fast='+st.f);
+    s.push({
+      h:'<div class="row" style="gap:12px;margin:6px 0;"><span class="panel-tag '+tagClass+'">'+tagText+'</span></div>'+G(N,E,{w:640,h:130,m:540}),
+      n:st.n
+    });
+  });
+
+  return s;
+});
+
+// ---- 5. Happy Number Stepper (Section 4.3) ----
+widget('happyW',[
+  ['Happy Number: 19 → 1',19],
+  ['Unhappy Number: 2 (Cycle)',2]
+],function(nVal){
+  var s=[];
+  if(nVal===19){
+    var seq=[19,82,68,100,1];
+    var steps=[
+      {s:0,f:0,n:'Start: slow = 19, fast = 19.'},
+      {s:1,f:2,n:'slow moves to 82. fast moves 2 steps (82 → 68).'},
+      {s:2,f:4,n:'slow moves to 68. fast moves 2 steps (100 → 1). fast reached 1!'},
+      {s:4,f:4,happy:true,n:'slow reaches 1. Both meet at 1. The number 19 is happy!'}
+    ];
+    steps.forEach(function(st){
+      var N={},E=[];
+      chList(N,E,seq,40,48,115,false);
+      if(st.happy){
+        N.n1.c='ok';
+        N.both={l:'Reached 1: Happy!',t:'p',w:130,x:N.n1.x-33,y:10,c:'ok'};
+        E.push(['both','n1']);
+      }else if(st.s===st.f){
+        N.both={l:'slow, fast',t:'p',w:82,x:N['n'+seq[st.s]].x-9,y:10,c:'now'};
+        E.push(['both','n'+seq[st.s]]);
+      }else{
+        N['n'+seq[st.s]].c='mv';
+        N['n'+seq[st.f]].c='now';
+        N.slow={l:'slow',t:'p',w:50,x:N['n'+seq[st.s]].x+7,y:10,c:'mv'};
+        N.fast={l:'fast',t:'p',w:50,x:N['n'+seq[st.f]].x+7,y:10,c:'now'};
+        E.push(['slow','n'+seq[st.s]],['fast','n'+seq[st.f]]);
+      }
+      var tagClass=st.happy?'tag-ok':'tag-hi';
+      var tagText=st.happy?'Happy number: ends at 1':'slow: '+seq[st.s]+' | fast: '+seq[st.f];
+      s.push({
+        h:'<div class="row" style="gap:12px;margin:6px 0;"><span class="panel-tag '+tagClass+'">'+tagText+'</span></div>'+G(N,E,{w:650,h:120,m:540}),
+        n:st.n
+      });
+    });
+  }else{
+    var cycSeq=[2,4,16,37,58,89,145,42,20];
+    var steps2=[
+      {s:0,f:0,n:'Start: slow = 2, fast = 2.'},
+      {s:1,f:2,n:'slow moves to 4. fast moves 2 steps (4 → 16). Entered cycle!'},
+      {s:2,f:4,n:'slow moves to 16. fast moves 2 steps (37 → 58).'},
+      {s:3,f:6,n:'slow moves to 37. fast moves 2 steps (89 → 145).'},
+      {s:4,f:8,n:'slow moves to 58. fast moves 2 steps (42 → 20).'},
+      {s:5,f:2,n:'slow moves to 89. fast loops around to 16!'},
+      {s:6,f:4,n:'slow moves to 145. fast moves to 58. Gap is closing.'},
+      {s:8,f:8,col:true,n:'Collision at 20! Both pointers meet inside the 8-number cycle. 2 is an unhappy number.'}
+    ];
+    steps2.forEach(function(st){
+      var N={},E=[];
+      chList(N,E,cycSeq,25,48,68,false);
+      E.push(['n20','n4','mv',0,55]);
+
+      if(st.col){
+        N['n'+cycSeq[st.s]].c='ok';
+        N.both={l:'Cycle Collision (20)',t:'p',w:135,x:N['n'+cycSeq[st.s]].x-35,y:10,c:'ok'};
+        E.push(['both','n'+cycSeq[st.s]]);
+      }else if(st.s===st.f){
+        N.both={l:'slow, fast',t:'p',w:82,x:N['n'+cycSeq[st.s]].x-9,y:10,c:'now'};
+        E.push(['both','n'+cycSeq[st.s]]);
+      }else{
+        N['n'+cycSeq[st.s]].c='mv';
+        N['n'+cycSeq[st.f]].c='now';
+        N.slow={l:'slow',t:'p',w:50,x:N['n'+cycSeq[st.s]].x+7,y:10,c:'mv'};
+        N.fast={l:'fast',t:'p',w:50,x:N['n'+cycSeq[st.f]].x+7,y:10,c:'now'};
+        E.push(['slow','n'+cycSeq[st.s]],['fast','n'+cycSeq[st.f]]);
+      }
+      var tagClass=st.col?'tag-ok':'tag-hi';
+      var tagText=st.col?'Cycle detected: unhappy number':'slow: '+cycSeq[st.s]+' | fast: '+cycSeq[st.f];
+      s.push({
+        h:'<div class="row" style="gap:12px;margin:6px 0;"><span class="panel-tag '+tagClass+'">'+tagText+'</span></div>'+G(N,E,{w:660,h:130,m:560}),
+        n:st.n
+      });
+    });
+  }
+  return s;
+});
+
+// ---- 6. Duplicate Number (Array as Graph) Widget (Section 5.4) ----
+widget('dupGraphW',[['Trace nums = [1, 3, 4, 2, 2]',0]],function(){
+  var s=[];
+  var steps=[
+    {p:1,s:0,f:0,n:'Phase 1: Both start at index 0 (slow = nums[0]=1, fast = nums[nums[0]]=nums[1]=3).'},
+    {p:1,s:1,f:3,n:'slow is at index 1 (value 3). fast is at index 3 (value 2).'},
+    {p:1,s:3,f:4,n:'slow moves to index 3 (value 2). fast moves to index 4 (value 2).'},
+    {p:1,s:2,f:2,col1:true,n:'Collision! Both land at index 2 (value 4). Phase 1 complete: cycle detected.'},
+    {p:2,s:0,f:2,n:'Phase 2: Leave fast at meeting index 2. Reset slow back to start index 0. Move both 1 hop at a time.'},
+    {p:2,s:1,f:4,n:'slow hops 0 → 1. fast hops 2 → 4.'},
+    {p:2,s:2,f:2,col2:true,n:'Both meet at index 2 (value 4) which points to index 2! The entrance to the cycle is value 2: the duplicate!'}
+  ];
+
+  steps.forEach(function(st){
+    var arr=[1,3,4,2,2];
+    var N={},E=[];
+    arr.forEach(function(v,idx){
+      N['idx'+idx]={l:'['+idx+']:'+v,x:25+idx*120,y:48,w:70,c:st.col2&&v===2?'ok':''};
+    });
+    E.push(['idx0','idx1'],['idx1','idx3'],['idx3','idx2'],['idx2','idx4'],['idx4','idx2','mv',0,50]);
+
+    if(st.col2){
+      N.both={l:'Duplicate: 2',t:'p',w:96,x:N['idx2'].x-13,y:10,c:'ok'};
+      E.push(['both','idx2']);
+    }else if(st.col1){
+      N.both={l:'Meeting (idx 2)',t:'p',w:100,x:N['idx2'].x-15,y:10,c:'now'};
+      E.push(['both','idx2']);
+    }else if(st.s===st.f){
+      N.both={l:'slow, fast',t:'p',w:82,x:N['idx'+st.s].x-6,y:10,c:'now'};
+      E.push(['both','idx'+st.s]);
+    }else{
+      N.slow={l:'slow',t:'p',w:50,x:N['idx'+st.s].x+10,y:10,c:'mv'};
+      N.fast={l:'fast',t:'p',w:50,x:N['idx'+st.f].x+10,y:10,c:'now'};
+      E.push(['slow','idx'+st.s],['fast','idx'+st.f]);
+    }
+
+    var tagClass=st.col2?'tag-ok':(st.col1?'tag-hi':'tag-acc');
+    var tagText=st.col2?'Duplicate number found: 2':(st.col1?'Meeting point: index 2':'Phase '+st.p+': slow=idx '+st.s+', fast=idx '+st.f);
+    s.push({
+      h:'<div class="row" style="gap:12px;margin:6px 0;"><span class="panel-tag '+tagClass+'">'+tagText+'</span></div>'+G(N,E,{w:650,h:130,m:560}),
+      n:st.n
+    });
+  });
+
+  return s;
+});
+
+// ---- 7. Middle of Linked List Widget (Section 6.3) ----
+widget('midListW',[
+  ['Odd List (5 nodes: 1 → 2 → 3 → 4 → 5)',5],
+  ['Even List (6 nodes: 1 → 2 → 3 → 4 → 5 → 6)',6]
+],function(count){
+  var s=[],vals=count===5?[1,2,3,4,5]:[1,2,3,4,5,6];
+  var steps=count===5?[[0,0],[1,2],[2,4]]:[[0,0],[1,2],[2,4],[3,null]];
+
+  steps.forEach(function(st,idx){
+    var si=st[0],fi=st[1];
+    var sVal=vals[si],fVal=fi!==null?vals[fi]:'None';
+    var N={},E=[];
+    chList(N,E,vals,count===5?40:25,50,count===5?105:95,true);
+    N['n'+sVal].c=idx===steps.length-1?'ok':'mv';
+    if(fi!==null&&fi<vals.length)N['n'+fVal].c='now';
+
+    var sx=count===5?40+si*105:25+si*95;
+    var fx=fi!==null?(count===5?40+fi*105:25+fi*95):(count===5?40+5*105:25+6*95);
+
+    if(si===fi){
+      N.both={l:'slow, fast',t:'p',w:82,x:sx-9,y:10,c:'now'};
+      E.push(['both','n'+sVal]);
+    }else{
+      N.slow={l:'slow',t:'p',w:50,x:sx+7,y:10,c:idx===steps.length-1?'ok':'mv'};
+      E.push(['slow','n'+sVal]);
+      if(fi!==null&&fi<vals.length){
+        N.fast={l:'fast',t:'p',w:50,x:fx+7,y:10,c:'now'};
+        E.push(['fast','n'+fVal]);
+      }else{
+        N.fast={l:'fast',t:'p',w:50,x:fx+2,y:10,c:'dim'};
+        E.push(['fast','nil']);
+      }
+    }
+
+    var isDone=idx===steps.length-1;
+    var hHtml='<div class="row" style="gap:12px;margin:6px 0;">'
+      +'<span class="panel-tag tag-acc">slow: '+sVal+'</span>'
+      +'<span class="panel-tag tag-hi">fast: '+fVal+'</span>'
+      +(isDone?'<span class="panel-tag tag-ok">Middle = '+sVal+'</span>':'')
+      +'</div>'+G(N,E,{w:count===5?660:690,h:115,m:560});
+
+    var nText=idx===0
+      ?'Both slow and fast start at head (node 1).'
+      :(!isDone
+        ?'slow moves 1 step to '+sVal+', fast moves 2 steps to '+fVal+'.'
+        :(count===5
+          ?'fast reached node 5 (fast.next is None). Loop terminates! slow is at 3: the exact middle.'
+          :'fast reached None. Loop terminates! slow is at 4: for even lists, returns the second middle node.'));
+
+    s.push({h:hHtml,n:nText});
+  });
+
+  return s;
+});
+
+// ---- 8. Palindrome Linked List Widget (Section 7.3) ----
+widget('palListW',[
+  ['Palindrome: 1 → 2 → 3 → 2 → 1',true],
+  ['Non-Palindrome: 1 → 2 → 3 → 4 → 5',false]
+],function(isPal){
+  var s=[],vals=isPal?[1,2,3,2,1]:[1,2,3,4,5];
+  var steps=[
+    {st:0,n:'Phase 1: Find middle using fast and slow pointers. slow lands on node 3.'},
+    {st:1,n:'Phase 2: Reverse second half starting from slow. List is now: 1 → 2 → 3 and 1 ← 2.'},
+    {st:2,n:'Phase 3: Compare head (1) with tail (1). Equal! Advance inward.'},
+    {st:3,n:isPal?'Compare second (2) with second-last (2). Equal! All pairs matched: Palindrome = True.':'Compare 2 with 4. Not equal! Palindrome = False.'}
+  ];
+
+  steps.forEach(function(step){
+    var N={},E=[];
+    if(step.st===0){
+      chList(N,E,vals,40,50,110,true);
+      N.slow={l:'slow (middle)',t:'p',w:95,x:40+2*110-15,y:10,c:'ok'};
+      E.push(['slow','n'+vals[2]]);
+    }else if(step.st===1){
+      chList(N,E,vals.slice(0,3),40,50,110,false);
+      N.n4={l:String(vals[3]),x:40+3*110,y:50,c:'mv'};
+      N.n5={l:String(vals[4]),x:40+4*110,y:50,c:'mv'};
+      E.push(['n5','n4','new']);
+    }else if(step.st===2){
+      chList(N,E,vals.slice(0,3),40,50,110,false);
+      N.n4={l:String(vals[3]),x:40+3*110,y:50};
+      N.n5={l:String(vals[4]),x:40+4*110,y:50,c:'ok'};
+      N['n'+vals[0]].c='ok';
+      E.push(['n5','n4']);
+      N.p1={l:'first',t:'p',w:50,x:47,y:10,c:'ok'};
+      N.p2={l:'second',t:'p',w:56,x:40+4*110+4,y:10,c:'ok'};
+      E.push(['p1','n'+vals[0]],['p2','n5']);
+    }else{
+      chList(N,E,vals.slice(0,3),40,50,110,false);
+      N.n4={l:String(vals[3]),x:40+3*110,y:50,c:isPal?'ok':'now'};
+      N.n5={l:String(vals[4]),x:40+4*110,y:50};
+      N['n'+vals[1]].c=isPal?'ok':'now';
+      E.push(['n5','n4']);
+      N.p1={l:'first',t:'p',w:50,x:40+110+7,y:10,c:isPal?'ok':'now'};
+      N.p2={l:'second',t:'p',w:56,x:40+3*110+4,y:10,c:isPal?'ok':'now'};
+      E.push(['p1','n'+vals[1]],['p2','n4']);
+    }
+
+    var tagClass=step.st===3?(isPal?'tag-ok':'tag-hi'):'tag-acc';
+    var tagText=step.st===3?(isPal?'Result: Palindrome (True)':'Result: Not a palindrome (False)'):'Phase '+(step.st+1);
+    s.push({
+      h:'<div class="row" style="gap:12px;margin:6px 0;"><span class="panel-tag '+tagClass+'">'+tagText+'</span></div>'+G(N,E,{w:650,h:120,m:560}),
+      n:step.n
+    });
+  });
+
+  return s;
+});
+
+// ---- 9. Reorder List Widget (Section 8.3) ----
+widget('reorderW',[['Reorder 1 → 2 → 3 → 4 → 5 → 6',0]],function(){
+  var s=[];
+  var steps=[
+    {st:0,n:'Original list: 1 → 2 → 3 → 4 → 5 → 6.'},
+    {st:1,n:'Step 1: Find middle (node 3) using fast/slow pointers. Split into two halves: 1 → 2 → 3 and 4 → 5 → 6.'},
+    {st:2,n:'Step 2: Reverse the second half: 4 → 5 → 6 becomes 6 → 5 → 4.'},
+    {st:3,n:'Step 3: Weave the two halves alternately: 1 → 6 → 2 → 5 → 3 → 4! Done in O(n) time and O(1) space.'}
+  ];
+
+  steps.forEach(function(step){
+    var N={},E=[];
+    if(step.st===0){
+      chList(N,E,[1,2,3,4,5,6],30,48,95,true);
+    }else if(step.st===1){
+      chList(N,E,[1,2,3],30,48,95,false);
+      chList(N,E,[4,5,6],340,48,95,true);
+    }else if(step.st===2){
+      chList(N,E,[1,2,3],30,48,95,false);
+      N.n6={l:'6',x:340,y:48,c:'ok'};
+      N.n5={l:'5',x:435,y:48,c:'ok'};
+      N.n4={l:'4',x:530,y:48,c:'ok'};
+      E.push(['n6','n5'],['n5','n4']);
+    }else{
+      var weave=[1,6,2,5,3,4];
+      chList(N,E,weave,30,48,95,true);
+      for(var k=0;k<6;k++)N['n'+weave[k]].c='ok';
+    }
+
+    var tagText=step.st===3?'Clean reordered list: 1 → 6 → 2 → 5 → 3 → 4':'Step '+step.st+': '+step.n.split(':')[0];
+    var tagClass=step.st===3?'tag-ok':'tag-acc';
+    s.push({
+      h:'<div class="row" style="gap:12px;margin:6px 0;"><span class="panel-tag '+tagClass+'">'+tagText+'</span></div>'+G(N,E,{w:650,h:120,m:560}),
+      n:step.n
+    });
+  });
+
+  return s;
+});
+
+// ---- 10. Circular Array Loop Widget (Section 9.3) ----
+widget('circArrayW',[['Trace nums = [2, -1, 1, 2, 2]',0]],function(){
+  var s=[];
+  var steps=[
+    {s:0,f:0,n:'Start at index 0 (val = +2, direction = forward). Both slow and fast start at 0.'},
+    {s:2,f:3,n:'slow moves 1 step: (0+2)%5 = 2. fast moves 2 steps: 0 → 2 → 3.'},
+    {s:3,f:2,n:'slow moves 1 step: (2+1)%5 = 3. fast moves 2 steps: 3 → 0 → 2.'},
+    {s:0,f:0,col:true,n:'slow moves (3+2)%5 = 0. fast moves 2 → 3 → 0. COLLISION at index 0! All steps were positive (+2, +1, +2): valid cycle!'}
+  ];
+
+  steps.forEach(function(st){
+    var arr=[2,-1,1,2,2];
+    var N={},E=[];
+    arr.forEach(function(v,idx){
+      N['idx'+idx]={l:'['+idx+']:'+(v>0?'+'+v:v),x:25+idx*120,y:48,w:70,c:st.col&&idx===0?'ok':''};
+    });
+    E.push(['idx0','idx2'],['idx2','idx3'],['idx3','idx0','mv',0,50]);
+
+    if(st.col){
+      N.both={l:'Cycle Match: idx 0',t:'p',w:120,x:N['idx0'].x-25,y:10,c:'ok'};
+      E.push(['both','idx0']);
+    }else if(st.s===st.f){
+      N.both={l:'slow, fast',t:'p',w:82,x:N['idx'+st.s].x-6,y:10,c:'now'};
+      E.push(['both','idx'+st.s]);
+    }else{
+      N.slow={l:'slow',t:'p',w:50,x:N['idx'+st.s].x+10,y:10,c:'mv'};
+      N.fast={l:'fast',t:'p',w:50,x:N['idx'+st.f].x+10,y:10,c:'now'};
+      E.push(['slow','idx'+st.s],['fast','idx'+st.f]);
+    }
+
+    var tagClass=st.col?'tag-ok':'tag-hi';
+    var tagText=st.col?'Valid circular cycle detected':'slow: idx '+st.s+' | fast: idx '+st.f;
+    s.push({
+      h:'<div class="row" style="gap:12px;margin:6px 0;"><span class="panel-tag '+tagClass+'">'+tagText+'</span></div>'+G(N,E,{w:650,h:130,m:560}),
+      n:st.n
+    });
+  });
+
+  return s;
+});
+
+// Top tools: code toggle and theme switcher
+var cb=$('codeBtn'),hid=false;
+cb.onclick=function(){
+  hid=!hid;
+  [].forEach.call(document.querySelectorAll('details'),function(d){d.open=!hid});
+  cb.textContent=hid?'Show code':'Hide code';
+};
+
+var root=document.documentElement,tb=$('theme');
+function setTheme(t){root.setAttribute('data-theme',t);tb.textContent=t==='dark'?'Light':'Dark'}
+try{var sv=localStorage.getItem('theme');if(sv==='dark'||sv==='light')setTheme(sv)}catch(e){}
+tb.onclick=function(){
+  var t=root.getAttribute('data-theme')==='dark'?'light':'dark';
+  setTheme(t);
+  try{localStorage.setItem('theme',t)}catch(e){}
+};
+</script>
+</body>
+</html>

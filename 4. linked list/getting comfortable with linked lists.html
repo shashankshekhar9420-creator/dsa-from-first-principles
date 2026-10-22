@@ -1,0 +1,1764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Getting Comfortable with Linked Lists</title>
+<style>
+:root{--bg:#fff;--ink:#111;--mut:#555;--line:#ccc;--acc:#1f4e8c;--hi:#fff3b0;--hib:#c9a227;--ok:#dcf0dc;--okb:#3a8a3a;--mv:#e6edf7;--dim:#eee;--card:#fafafa;--red:#b5342b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#121212;--ink:#eee;--mut:#aaa;--line:#3a3a3a;--acc:#8ab4f8;--hi:#4a4220;--hib:#c9a227;--ok:#1d3a22;--okb:#5cb85c;--mv:#1c2a40;--dim:#2a2a2a;--card:#1a1a1a;--red:#ff7b72;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Roman",Times,serif}
+main{max-width:720px;margin:0 auto;padding:40px 20px 80px}
+h1,h2,h3{font-family:inherit;line-height:1.25}
+h1{font-size:2.1rem;margin:.2em 0 .6em}
+h2{font-size:1.5rem;margin:2.6em 0 .6em;padding-top:1.2em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin:1.6em 0 .4em}
+blockquote{margin:1.2em 0;padding:.4em 1em;border-left:4px solid var(--acc);font-size:1.12rem}
+blockquote p{margin:.3em 0}
+code{font:inherit;background:var(--card);padding:1px 5px;border-radius:4px}
+a{color:var(--acc)}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:1.2em 0}
+.cap{font-size:.9rem;color:var(--mut);margin:.6em 0 0}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:flex-end}
+.cw{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ix{font-size:.8rem;color:var(--mut);min-height:1.1em;font-weight:600}
+.cell{min-width:54px;padding:7px 6px;text-align:center;border:2px solid var(--line);background:var(--bg);border-radius:6px;font-weight:600;transition:background .2s}
+.gap{border-style:dashed;background:transparent}
+.ok{background:var(--ok);border-color:var(--okb)}
+.now{background:var(--hi);border-color:var(--hib)}
+.dim{background:var(--dim);color:var(--mut);border-color:var(--dim)}
+.mv{background:var(--mv);border-color:var(--acc)}
+button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
+button:hover:not(:disabled){background:var(--mv)}
+button:disabled{opacity:.4;cursor:default}
+button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--hib);outline-offset:2px}
+.tools{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5;display:flex;gap:8px}
+.ctl{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.pos{color:var(--mut);font-size:.9rem}
+.note{min-height:3em;margin:.4em 0 0;font-weight:500}
+.lbl{font-size:.9rem;margin:8px 0 3px}
+.bar{height:14px;border-radius:4px;background:var(--acc);min-width:3px}
+.bar.g{background:var(--okb)}.bar.r{background:var(--red)}
+input[type=range]{width:100%}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--dim)}
+details{margin:1em 0;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+summary{cursor:pointer;padding:8px 12px;font-size:.95rem;color:var(--acc)}
+pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,Menlo,Consolas,monospace}
+.flow{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;font-size:.95rem}
+.flow .cell{min-width:140px}
+.tt td{text-align:left}.tt td:first-child{font-weight:600}
+.sv{width:100%;height:auto;display:block}
+.sv .n rect{fill:var(--bg);stroke:var(--line);stroke-width:2}
+.sv .n line{stroke:var(--line);stroke-width:2}
+.sv .n circle{fill:var(--acc)}
+.sv .n text{fill:var(--ink);font:600 15px "Times New Roman",Times,serif;text-anchor:middle}
+.sv .n text.sm{font-size:11px;font-weight:400;fill:var(--mut)}
+.sv .n.now rect{fill:var(--hi);stroke:var(--hib)}
+.sv .n.ok rect{fill:var(--ok);stroke:var(--okb)}
+.sv .n.mv rect{fill:var(--mv);stroke:var(--acc)}
+.sv .n.dim rect{fill:var(--dim);stroke:var(--dim)}
+.sv .n.dim text{fill:var(--mut)}
+.sv .n.p rect{stroke-dasharray:4 3}
+.sv .n.g rect{fill:none;stroke-dasharray:2 4;opacity:.6}
+.sv .e{stroke:var(--ink);stroke-width:2;fill:none}
+.sv .e.new{stroke:var(--okb)}
+.sv .e.old{stroke:var(--red);stroke-dasharray:5 4}
+.sv .e.mv{stroke:var(--acc)}
+.panel-tag{display:inline-block;padding:2px 8px;border-radius:4px;font-family:ui-monospace,Menlo,monospace;font-size:.85rem;background:var(--dim);color:var(--ink);margin-right:8px}
+.tag-acc{background:var(--mv);color:var(--acc);font-weight:600}
+.tag-ok{background:var(--ok);color:var(--okb);font-weight:600}
+.tag-hi{background:var(--hi);color:var(--hib);font-weight:600}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" style="fill:var(--ink)"/></marker>
+<marker id="arg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" style="fill:var(--okb)"/></marker>
+<marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" style="fill:var(--red)"/></marker>
+<marker id="arm" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" style="fill:var(--acc)"/></marker>
+</defs></svg>
+<div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
+<main>
+<h1>Getting Comfortable with Linked Lists</h1>
+<p>In the previous article, we asked a fundamental question:</p>
+<blockquote><p><strong>Why would we need a linked list when arrays already exist?</strong></p></blockquote>
+<p>We discovered that a linked list makes a different tradeoff. An array gives us:</p>
+<blockquote><p><strong>“Tell me the position, and I can jump there.”</strong></p></blockquote>
+<p>A linked list gives us:</p>
+<blockquote><p><strong>“Give me a node, and I can follow its relationship to the next node.”</strong></p></blockquote>
+<p>That difference changes how we think about almost every operation. With an array, we are often thinking in terms of:</p>
+<blockquote><p><code>index → element</code></p></blockquote>
+<p>With a linked list, we should start thinking in terms of:</p>
+<blockquote><p><code>node → next node → next node → ...</code></p></blockquote>
+<p>So before we jump into clever algorithms like slow and fast pointers, we need to become comfortable with the basic mechanics. Not by memorizing a collection of linked-list functions. But by repeatedly asking three questions:</p>
+<blockquote>
+<p><strong>Where am I?</strong></p>
+<p><strong>Where do I need to go?</strong></p>
+<p><strong>Which link needs to change?</strong></p>
+</blockquote>
+<p>We’ll start with the simplest possible operations and gradually build toward more interesting ones. Every figure below is an interactive stepper or diagram you can drive.</p>
+<ol>
+<li><a href="#s1">First, let’s build a linked list</a></li>
+<li><a href="#s2">Why do we need both head and tail while building?</a></li>
+<li><a href="#s3">Traversing the list</a></li>
+<li><a href="#s4">Finding the length</a></li>
+<li><a href="#s5">Searching for a value</a></li>
+<li><a href="#s6">Inserting at the beginning</a></li>
+<li><a href="#s7">Inserting at the end</a></li>
+<li><a href="#s8">Deleting the head</a></li>
+<li><a href="#s9">Deleting the last node</a></li>
+<li><a href="#s10">Deleting a node by value</a></li>
+<li><a href="#s11">What if the value appears more than once?</a></li>
+<li><a href="#s12">Reversing a linked list</a></li>
+<li><a href="#s13">Let’s actually watch the reversal</a></li>
+<li><a href="#s14">Why doesn’t reversing take O(n²)?</a></li>
+<li><a href="#s15">Finding the middle of a linked list</a></li>
+<li><a href="#s16">Why does the trick work?</a></li>
+<li><a href="#s17">Finding the nth node from the end</a></li>
+<li><a href="#s18">Removing the nth node from the end</a></li>
+<li><a href="#s19">Removing duplicates from a sorted list</a></li>
+<li><a href="#s20">Why don’t we move current after removing a duplicate?</a></li>
+<li><a href="#s21">The patterns we’ve quietly learned</a></li>
+<li><a href="#s22">A small complexity summary</a></li>
+<li><a href="#s23">The most important mental shift</a></li>
+<li><a href="#s24">And this is why we’re not jumping into “linked list patterns” yet</a></li>
+<li><a href="#s25">The bridge to what comes next</a></li>
+</ol>
+
+<h2 id="s1">1. First, Let's Build a Linked List</h2>
+<p>Suppose someone gives us an ordinary Python list:</p>
+<blockquote><p><code>values = [10, 20, 30, 40, 50]</code></p></blockquote>
+<p>and asks us to turn it into:</p>
+<blockquote><p><code>10 → 20 → 30 → 40 → 50 → None</code></p></blockquote>
+<p>What actually needs to happen? We need to create five nodes. Each node needs:</p>
+<ul>
+<li>a value</li>
+<li>a reference to the next node</li>
+</ul>
+<p>Let's represent that in Python.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>class Node:
+    def __init__(self, value):
+        self.value = value
+        self.next = None</pre></details>
+<p>Now we need to connect the nodes.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def build_linked_list(values):
+    head = None
+    tail = None
+
+    for value in values:
+        node = Node(value)
+
+        if head is None:
+            head = node
+            tail = node
+        else:
+            tail.next = node
+            tail = node
+
+    return head</pre></details>
+<p>We can use it like this:</p>
+<blockquote><p><code>head = build_linked_list([10, 20, 30, 40, 50])</code></p></blockquote>
+<p>The resulting structure is a chain of references:</p>
+<div class="fig" id="bldStaticF"></div>
+<p class="cap">The list starts at head, follows next links through 10, 20, 30, 40, 50, and terminates at None.</p>
+
+<h2 id="s2">2. Why Do We Need Both <code>head</code> and <code>tail</code> While Building?</h2>
+<p>This is worth understanding. When we create the first node, <code>10</code>, it is both the beginning of the list and the end of the list. So both <code>head</code> and <code>tail</code> point to it.</p>
+<p>When we create <code>20</code>, we want <code>10 → 20</code>. We need to attach <code>20</code> after the current last node. If we only have <code>head</code>, finding the last node would require walking through the entire list every time. Instead, we maintain:</p>
+<blockquote>
+<p><code>head → first node</code></p>
+<p><code>tail → last node</code></p>
+</blockquote>
+<p>So when a new node arrives:</p>
+<blockquote><p><code>tail.next = node</code><br><code>tail = node</code></p></blockquote>
+<p>We immediately know where to attach it. This is a tiny example of a broader data-structure principle:</p>
+<blockquote><p><strong>Sometimes storing extra information makes future operations cheaper.</strong></p></blockquote>
+<p>We’re spending one extra reference (<code>tail</code>) to avoid repeatedly searching for the end.</p>
+<h3>Try it: build the list</h3>
+<p>Step through adding values <code>[10, 20, 30, 40, 50]</code> one by one. Watch how <code>tail</code> advances at each insertion while <code>head</code> stays anchored at the first node.</p>
+<div class="fig" id="bldW"></div>
+<blockquote><p><strong>The important visual lesson:</strong> <code>head</code> and <code>tail</code> are references to nodes. They are not nodes themselves.</p></blockquote>
+
+<h2 id="s3">3. Traversing the List</h2>
+<p>Now that we have a linked list, the most basic thing we can do is walk through it. Suppose:</p>
+<blockquote><p><code>head → 10 → 20 → 30 → 40 → None</code></p></blockquote>
+<p>How do we print everything? We cannot say <code>for i in range(len(values)): print(values[i])</code> because there is no direct indexing. Instead, we start at the head and repeatedly move to the next node:</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def print_list(head):
+    current = head
+
+    while current is not None:
+        print(current.value)
+        current = current.next</pre></details>
+<p>The important line is:</p>
+<blockquote><p><code>current = current.next</code></p></blockquote>
+<p>This is essentially the fundamental operation of a linked list. We are saying:</p>
+<blockquote><p><strong>“I am currently here. Where does this node tell me to go next?”</strong></p></blockquote>
+<p>Then we follow that link until <code>current is None</code>.</p>
+<h3>Try it: walk the chain</h3>
+<p>Click <em>Next</em> to move the highlighted <code>current</code> pointer forward through the chain. Notice how the printed output accumulates step by step.</p>
+<div class="fig" id="trvW"></div>
+<blockquote><p>Traversal is literally: <strong>current → next → next → next → None</strong>.</p></blockquote>
+
+<h2 id="s4">4. Finding the Length</h2>
+<p>Now that we know how to traverse, finding the length is almost automatic. We walk through the list and maintain a counter:</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def length(head):
+    count = 0
+    current = head
+
+    while current is not None:
+        count += 1
+        current = current.next
+
+    return count</pre></details>
+<p>Why does this work? Because every time we successfully reach a node, we’ve found one more element. For <code>10 → 20 → 30 → 40 → None</code>, we count 1, 2, 3, 4.</p>
+<p>Notice how this differs from many array implementations. With an array, the length is typically maintained as part of the structure (<code>O(1)</code>). With a basic linked list, if all we have is <code>head</code>, we don’t inherently know how many nodes exist. We have to walk the chain and count them:</p>
+<div class="fig scroll"><table class="tt"><tr><th>Metric</th><th>Array</th><th>Singly Linked List</th></tr><tr><td>Length time</td><td>O(1) (stored attribute)</td><td>O(n) (must traverse chain)</td></tr><tr><td>Extra space</td><td>O(1)</td><td>O(1)</td></tr></table></div>
+<h3>A useful observation</h3>
+<p>We’re beginning to see a recurring pattern:</p>
+<div class="fig" id="flowLenF"></div>
+<p>This isn't a rule to memorize. It follows directly from the structure.</p>
+
+<h2 id="s5">5. Searching for a Value</h2>
+<p>Suppose we want to find <code>30</code> in <code>10 → 20 → 30 → 40 → 50</code>. We can't jump to it. So we start from the head: 10? No. 20? No. 30? Yes.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def contains(head, target):
+    current = head
+
+    while current is not None:
+        if current.value == target:
+            return True
+
+        current = current.next
+
+    return False</pre></details>
+<p>There is another important property here: we can stop as soon as we find the value. If we search for <code>10</code>, it is found immediately in 1 step (<code>O(1)</code> best case). If we search for <code>50</code>, it is found last in 5 steps (<code>O(n)</code> worst case). If the value is not present, we walk all the way to <code>None</code>.</p>
+<h3>Try it: search for a value</h3>
+<p>Choose a target value below and step through the search to compare the number of hops required.</p>
+<div class="fig" id="srcW"></div>
+
+<h2 id="s6">6. Inserting at the Beginning</h2>
+<p>Now we're ready to modify the list. Suppose we have <code>20 → 30 → 40</code>, and we want <code>10 → 20 → 30 → 40</code>. Where should the new node go? Before the current head.</p>
+<ol>
+<li>Create: <code>node = Node(10)</code></li>
+<li>Point to old head: <code>node.next = head</code></li>
+<li>Update head: <code>head = node</code></li>
+</ol>
+<details open><summary>Python code (click to hide or show)</summary><pre>def insert_at_beginning(head, value):
+    node = Node(value)
+
+    node.next = head
+    head = node
+
+    return head</pre></details>
+<p>Notice how little work was required. We didn't touch <code>20</code>, <code>30</code>, or <code>40</code>. We only changed the beginning of the chain. Therefore:</p>
+<blockquote><p><strong>Insert at beginning: O(1)</strong></p></blockquote>
+<h3>Why is this so different from an array?</h3>
+<p>With an array <code>[A, B, C, D]</code>, inserting <code>X</code> at the beginning requires shifting every existing element rightward to make room (<code>O(n)</code>). In a linked list, no existing node moved in memory: we simply changed one relationship and one reference.</p>
+<div class="fig" id="insBegF"></div>
+
+<h2 id="s7">7. Inserting at the End</h2>
+<p>Suppose we have <code>10 → 20 → 30</code> and want <code>10 → 20 → 30 → 40</code>. If we already maintain a <code>tail</code> reference, this is constant work:</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def insert_at_end(head, tail, value):
+    node = Node(value)
+
+    if head is None:
+        return node, node
+
+    tail.next = node
+    tail = node
+
+    return head, tail</pre></details>
+<p>The key operation is <code>tail.next = node; tail = node</code>. Constant work: <code>O(1)</code>.</p>
+<h3>But what if we don't have a tail?</h3>
+<p>Suppose all we have is <code>head → 10 → 20 → 30 → None</code>. To insert at the end, we'd have to find <code>30</code> first. That means traversing from <code>10</code> all the way to <code>30</code>: <code>O(n)</code>.</p>
+<blockquote><p><strong>Same linked list. Same operation. Different information available. Different complexity.</strong></p></blockquote>
+<h3>Try it: inserting at beginning and end</h3>
+<p>Switch between inserting at the beginning, at the end with a tail, and at the end without a tail:</p>
+<div class="fig" id="insW"></div>
+
+<h2 id="s8">8. Deleting the Head</h2>
+<p>Suppose we have <code>head → 10 → 20 → 30 → 40</code> and want <code>20 → 30 → 40</code>. What needs to change? <strong>Only <code>head</code>.</strong></p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def delete_head(head):
+    if head is None:
+        return None
+
+    return head.next</pre></details>
+<p>We simply make the second node the new first node. The old <code>10</code> is no longer part of the list reachable from <code>head</code>. Therefore: <strong>Delete head: O(1)</strong>. No traversal. No shifting. No searching.</p>
+<h3>Try it: change the head</h3>
+<div class="fig" id="delHW"></div>
+<blockquote><p><strong>Deleting the head doesn't require deleting or moving the other nodes. We only change what <code>head</code> points to.</strong></p></blockquote>
+
+<h2 id="s9">9. Deleting the Last Node</h2>
+<p>Now things become slightly more interesting. Suppose <code>10 → 20 → 30 → 40</code>, and we want <code>10 → 20 → 30</code>. The obvious question is: <em>Which link must change?</em></p>
+<p>The answer: <code>30.next</code> must become <code>None</code>. But in a singly linked list, <code>40</code> doesn't know who comes before it. So we must traverse until <code>current.next.next is None</code> to stop at <code>30</code>:</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def delete_last(head):
+    if head is None:
+        return None
+
+    if head.next is None:
+        return None
+
+    current = head
+
+    while current.next.next is not None:
+        current = current.next
+
+    current.next = None
+
+    return head</pre></details>
+<p>The important lesson isn't the condition itself. It's:</p>
+<blockquote><p><strong>To delete the last node in a singly linked list, we need to find its predecessor.</strong></p></blockquote>
+<p>And finding that predecessor requires traversal: <strong>Delete last node: O(n)</strong>.</p>
+<h3>Try it: delete the last node</h3>
+<div class="fig" id="delLW"></div>
+
+<h2 id="s10">10. Deleting a Node by Value</h2>
+<p>Now suppose we have <code>10 → 20 → 30 → 40</code> and want to delete <code>30</code>. We don't actually modify <code>30</code>. We modify the node <strong>before</strong> it: <code>20.next = 40</code>.</p>
+<blockquote><p><strong>To remove a node from a singly linked list, we usually need access to its predecessor.</strong></p></blockquote>
+<details open><summary>Python code (click to hide or show)</summary><pre>def delete_value(head, target):
+    if head is None:
+        return None
+
+    if head.value == target:
+        return head.next
+
+    current = head
+
+    while current.next is not None:
+        if current.next.value == target:
+            current.next = current.next.next
+            return head
+
+        current = current.next
+
+    return head</pre></details>
+<p>Look at the crucial line: <code>current.next = current.next.next</code>. When <code>current</code> is <code>20</code>, <code>current.next</code> is <code>30</code> and <code>current.next.next</code> is <code>40</code>. Setting <code>current.next = 40</code> bypasses <code>30</code> completely.</p>
+<h3>Try it: bypass a node</h3>
+<div class="fig" id="delVW"></div>
+<blockquote><p><strong>Deletion in a linked list often means bypassing a node, not physically moving the remaining nodes.</strong></p></blockquote>
+
+<h2 id="s11">11. What If the Value Appears More Than Once?</h2>
+<p>Suppose: <code>10 → 20 → 30 → 20 → 40</code>, and we ask: <em>Delete <code>20</code>.</em> Which one? This is a specification question. Our function in section 10 deleted only the <strong>first occurrence</strong>. If instead we want to delete <strong>every occurrence</strong>, we continue traversing:</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def delete_all(head, target):
+    while head is not None and head.value == target:
+        head = head.next
+
+    current = head
+
+    while current is not None and current.next is not None:
+        if current.next.value == target:
+            current.next = current.next.next
+        else:
+            current = current.next
+
+    return head</pre></details>
+<h3>Try it: first occurrence vs all occurrences</h3>
+<div class="fig" id="delAllW"></div>
+<blockquote><p>The algorithm depends on the exact operation we are defining: first occurrence, last occurrence, or every occurrence.</p></blockquote>
+
+<h2 id="s12">12. Reversing a Linked List</h2>
+<p>Now we reach our first operation where we are not simply adding or removing something. We want to turn <code>10 → 20 → 30 → 40 → None</code> into <code>40 → 30 → 20 → 10 → None</code>.</p>
+<p>The links currently point rightward. We need them to point leftward. But if we change <code>10.next = None</code> before remembering where <code>20</code> is, we lose our path to the rest of the list. So we need to remember two things:</p>
+<blockquote>
+<p><strong>Where am I?</strong> (<code>current</code>)</p>
+<p><strong>Where does the rest of the list begin?</strong> (<code>next_node</code>)</p>
+</blockquote>
+<p>This requires three references during the loop:</p>
+<ul>
+<li><strong>Step 1: Save the future:</strong> <code>next_node = current.next</code></li>
+<li><strong>Step 2: Reverse the link:</strong> <code>current.next = previous</code></li>
+<li><strong>Step 3: Move references forward:</strong> <code>previous = current; current = next_node</code></li>
+</ul>
+<details open><summary>Python code (click to hide or show)</summary><pre>def reverse(head):
+    previous = None
+    current = head
+
+    while current is not None:
+        next_node = current.next
+        current.next = previous
+        previous = current
+        current = next_node
+
+    return previous</pre></details>
+
+<h2 id="s13">13. Let's Actually Watch the Reversal</h2>
+<p>Let's trace it carefully:</p>
+<ul>
+<li>Initially: <code>previous = None</code>, <code>current = 10</code>. Save <code>20</code>. Reverse: <code>10 → None</code>. Move: <code>previous = 10</code>, <code>current = 20</code>.</li>
+<li>Next: Save <code>30</code>. Reverse: <code>20 → 10</code>. Move: <code>previous = 20</code>, <code>current = 30</code>.</li>
+<li>Next: Save <code>40</code>. Reverse: <code>30 → 20</code>. Move: <code>previous = 30</code>, <code>current = 40</code>.</li>
+<li>Next: Save <code>None</code>. Reverse: <code>40 → 30</code>. Move: <code>previous = 40</code>, <code>current = None</code>.</li>
+<li>Stop: <code>current is None</code>. Return <code>previous</code> (now pointing to <code>40</code>, the new head!).</li>
+</ul>
+<h3>Try it: reverse the chain</h3>
+<p>Use <em>Next</em> and <em>Previous</em> to step through every iteration and link reversal. Watch the invariant hold true at every single step.</p>
+<div class="fig" id="revW"></div>
+<blockquote><p><strong>The invariant:</strong> The portion before <code>current</code> is already reversed. The portion beginning at <code>current</code> is still untouched.</p></blockquote>
+
+<h2 id="s14">14. Why Doesn't Reversing Take O(n²)?</h2>
+<p>A common first impression is: <em>“We’re changing every node, so maybe we repeatedly scan things.”</em> But we’re not. Each node is visited exactly once, performing constant work: save next, reverse link, move previous, move current.</p>
+<blockquote><p><strong>Time: O(n) &nbsp;|&nbsp; Space: O(1)</strong></p></blockquote>
+<p>The important point is: <strong>we changed the entire direction of the chain without creating a second linked list</strong>. We reused the existing nodes.</p>
+
+<h2 id="s15">15. Finding the Middle of a Linked List</h2>
+<p>Suppose <code>10 → 20 → 30 → 40 → 50</code>, and we want <code>30</code> (the middle node). In an array, we calculate <code>middle = n // 2</code> and jump there. But in a linked list, we don't have random access.</p>
+<p>We could traverse the list to find its length, divide by 2, and traverse again. But there is a more interesting way: <strong>two pointers moving at different speeds</strong>.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def find_middle(head):
+    slow = head
+    fast = head
+
+    while fast is not None and fast.next is not None:
+        slow = slow.next
+        fast = fast.next.next
+
+    return slow</pre></details>
+<h3>Try it: slow and fast meet the middle</h3>
+<p>Toggle between an odd-length list (5 nodes) and an even-length list (6 nodes). Watch how <code>fast</code> travels twice as fast as <code>slow</code>.</p>
+<div class="fig" id="midW"></div>
+
+<h2 id="s16">16. Why Does the Trick Work?</h2>
+<p>The trick works because of <strong>relative speed</strong>. If <code>slow</code> moves 1 step while <code>fast</code> moves 2 steps, whenever <code>fast</code> has travelled the entire list (say, 10 steps), <code>slow</code> has travelled half of that (5 steps):</p>
+<blockquote><p><strong>Sometimes we don't need to calculate a quantity directly. We can make two things move in a relationship that causes the desired information to reveal itself.</strong></p></blockquote>
+
+<h2 id="s17">17. Finding the Nth Node From the End</h2>
+<p>Suppose we want the <strong>2nd node from the end</strong> in <code>10 → 20 → 30 → 40 → 50</code> (answer: <code>40</code>). Instead of two passes, we maintain a fixed gap between two pointers:</p>
+<ol>
+<li>First advance <code>fast</code> by <code>n</code> nodes. (For <code>n = 2</code>, <code>fast</code> is at <code>30</code> while <code>slow</code> is at <code>10</code>.)</li>
+<li>Now move both pointers one step at a time, keeping the distance constant.</li>
+<li>When <code>fast</code> reaches <code>None</code>, <code>slow</code> is exactly at the nth node from the end!</li>
+</ol>
+<details open><summary>Python code (click to hide or show)</summary><pre>def nth_from_end(head, n):
+    fast = head
+    slow = head
+
+    for _ in range(n):
+        if fast is None:
+            return None
+        fast = fast.next
+
+    while fast is not None:
+        slow = slow.next
+        fast = fast.next
+
+    return slow</pre></details>
+<h3>Try it: maintain a gap</h3>
+<div class="fig" id="gapW"></div>
+<blockquote><p><strong>The invariant:</strong> Keep <code>fast</code> exactly <code>n</code> nodes ahead of <code>slow</code>. As both move together, that distance remains constant.</p></blockquote>
+
+<h2 id="s18">18. Removing the Nth Node From the End</h2>
+<p>To delete the nth node from the end, we need the node <strong>before it</strong>. So we maintain a pointer one position behind our target. A dummy node makes edge cases (like removing the head) effortless:</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def remove_nth_from_end(head, n):
+    dummy = Node(0)
+    dummy.next = head
+
+    slow = dummy
+    fast = dummy
+
+    for _ in range(n + 1):
+        fast = fast.next
+
+    while fast is not None:
+        slow = slow.next
+        fast = fast.next
+
+    slow.next = slow.next.next
+
+    return dummy.next</pre></details>
+<p>Why <code>n + 1</code>? Because <code>slow</code> needs to end up at the predecessor of the node being deleted. Then <code>slow.next = slow.next.next</code> cleanly bypasses it.</p>
+<div class="fig" id="remNthW"></div>
+
+<h2 id="s19">19. Removing Duplicates From a Sorted List</h2>
+<p>Consider <code>10 → 20 → 20 → 30 → 30 → 30 → 40</code>. Because the list is sorted, duplicate values are always adjacent! We don't need a hash set or extra memory. If <code>current.value == current.next.value</code>, we bypass <code>current.next</code>:</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def remove_duplicates(head):
+    current = head
+
+    while current is not None and current.next is not None:
+        if current.value == current.next.value:
+            current.next = current.next.next
+        else:
+            current = current.next
+
+    return head</pre></details>
+<p>Let's watch how adjacent duplicates are detected and bypassed on <code>10 → 20 → 20 → 30 → 30 → 40</code>:</p>
+<ul>
+<li>At <code>10</code>: <code>10 != 20</code> → no duplicate, advance <code>current</code> to <code>20</code>.</li>
+<li>At first <code>20</code>: <code>20 == 20</code> → duplicate found! Bypass second <code>20</code>: <code>20 ───→ 30</code>.</li>
+<li>At first <code>30</code>: <code>30 == 30</code> → duplicate found! Bypass second <code>30</code>: <code>30 ───→ 40</code>.</li>
+<li>At <code>40</code>: <code>current.next is None</code> → finished!</li>
+</ul>
+<h3>Try it: bypass adjacent duplicates</h3>
+<div class="fig" id="remDupW"></div>
+
+<h2 id="s20">20. Why Don't We Move <code>current</code> After Removing a Duplicate?</h2>
+<p>This tiny detail is worth understanding. Suppose: <code>10 → 20 → 20 → 20 → 30</code>. When we remove the first duplicate <code>20</code>, the next node is <em>still</em> <code>20</code>! Therefore, we must <strong>stay where we are</strong> and check again:</p>
+<blockquote>
+<p>duplicate found → change link, stay</p>
+<p>no duplicate → move forward</p>
+</blockquote>
+<h3>Try it: remove duplicates</h3>
+<div class="fig" id="dupW"></div>
+<blockquote><p><strong>Sometimes the correct pointer movement depends on what happened at the current position.</strong></p></blockquote>
+
+<h2 id="s21">21. The Patterns We've Quietly Learned</h2>
+<p>We started with simple tasks (build, traverse, count, search), changed structure (insert, delete), rearranged links (reverse), and extracted information from pointer motion (middle, nth from end). Five underlying patterns emerged:</p>
+<div class="fig" id="patF"></div>
+<ul>
+<li><strong>Pattern 1: Walk the chain.</strong> When needing information, follow <code>current = current.next</code>.</li>
+<li><strong>Pattern 2: Change a relationship.</strong> Modifying lists means changing links, not shifting nodes.</li>
+<li><strong>Pattern 3: Keep the previous node.</strong> Deletion in singly linked lists requires access to the predecessor.</li>
+<li><strong>Pattern 4: Use multiple references when one isn't enough.</strong> Reversal requires <code>prev</code>, <code>curr</code>, and <code>next</code> so we never drop the rest of the list.</li>
+<li><strong>Pattern 5: Relative movement reveals information.</strong> Different pointer speeds or constant offsets eliminate extra passes.</li>
+</ul>
+
+<h2 id="s22">22. A Small Complexity Summary</h2>
+<p>Now all major operations can be derived naturally from the structure:</p>
+<div class="fig scroll"><table class="tt">
+<tr><th>Operation</th><th>Time</th><th>Space</th><th>Why?</th></tr>
+<tr><td>Build from array</td><td>O(n)</td><td>O(1)*</td><td>Create and link each node once</td></tr>
+<tr><td>Traverse</td><td>O(n)</td><td>O(1)</td><td>Visit every node in sequence</td></tr>
+<tr><td>Length</td><td>O(n)</td><td>O(1)</td><td>Must count every node</td></tr>
+<tr><td>Search</td><td>O(n)</td><td>O(1)</td><td>May need to inspect every node (best: O(1))</td></tr>
+<tr><td>Insert at beginning</td><td>O(1)</td><td>O(1)</td><td>Update head and one link</td></tr>
+<tr><td>Insert at end with tail</td><td>O(1)</td><td>O(1)</td><td>Tail is already known</td></tr>
+<tr><td>Insert at end without tail</td><td>O(n)</td><td>O(1)</td><td>Must traverse to find last node</td></tr>
+<tr><td>Delete head</td><td>O(1)</td><td>O(1)</td><td>Move head to head.next</td></tr>
+<tr><td>Delete last node</td><td>O(n)</td><td>O(1)</td><td>Must traverse to find predecessor</td></tr>
+<tr><td>Delete by value</td><td>O(n)</td><td>O(1)</td><td>May need to search for target and predecessor</td></tr>
+<tr><td>Reverse</td><td>O(n)</td><td>O(1)</td><td>Visit each node once, rewire links in place</td></tr>
+<tr><td>Find middle</td><td>O(n)</td><td>O(1)</td><td>Slow and fast pointers traverse once</td></tr>
+<tr><td>Nth from end</td><td>O(n)</td><td>O(1)</td><td>Maintain fixed gap of n nodes</td></tr>
+<tr><td>Remove nth from end</td><td>O(n)</td><td>O(1)</td><td>Maintain fixed gap of n+1 to reach predecessor</td></tr>
+<tr><td>Remove duplicates (sorted)</td><td>O(n)</td><td>O(1)</td><td>Each node examined once; adjacent duplicates bypassed</td></tr>
+</table></div>
+<p class="cap">* O(1) auxiliary space beyond the n nodes created for the list itself.</p>
+<blockquote><p>The complexity isn't something we memorized. It is a consequence of how the structure works.</p></blockquote>
+
+<h2 id="s23">23. The Most Important Mental Shift</h2>
+<p>When looking at an array, your eyes naturally see indices: <code>0, 1, 2, 3, 4</code>. When looking at a linked list, don't think indices. Think:</p>
+<div class="fig" id="shiftF"></div>
+<p>A linked list is fundamentally a <strong>chain of relationships</strong>. Once you see that, the algorithms become much less mysterious.</p>
+
+<h2 id="s24">24. And This Is Why We're Not Jumping Into “Linked List Patterns” Yet</h2>
+<p>There is a temptation when learning DSA to immediately collect tricks: reverse, slow/fast, cycle detection, merge lists, palindrome, intersection. But that's backwards. First we need to be comfortable with the primitive operations: <code>current = current.next</code>, <code>node.next</code> as an actual link, and multiple pointers having distinct jobs. Only then do sophisticated algorithms become intuitive.</p>
+
+<h2 id="s25">25. The Bridge to What Comes Next</h2>
+<p>We’ve now seen two pointers moving at different speeds to find the middle, and two pointers maintaining a gap to find the nth node from the end. That gives us a beautiful next question:</p>
+<blockquote><p><strong>If two pointers move through a structure at different speeds, what else can their relative movement tell us?</strong></p></blockquote>
+<p>Consider a list where the last node links back to an earlier node: <code>A → B → C → D → E → C</code>. There is a cycle. Traversal would run forever. But what if <code>slow</code> moves 1 step and <code>fast</code> moves 2 steps, and both are trapped inside the cycle?</p>
+<h3>Try it: relative motion in a cycle</h3>
+<div class="fig" id="cycW"></div>
+<p>The faster pointer gains on the slower pointer by 1 step in every iteration. Eventually, <strong>they must collide</strong>. We can detect a cycle without storing any visited nodes in memory. That is the deeper idea behind slow and fast pointers. And that is where our next chapter begins.</p>
+</main>
+
+<script>
+var $ = function(i){return document.getElementById(i)};
+function cells(a,o){o=o||{};var c=o.c||{};return '<div class="row">'+a.map(function(v,i){var g=v==='';return '<div class="cw"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="cell'+(g?' gap':'')+' '+(c[i]||'')+'">'+(g?'&nbsp;':v)+'</div><span class="ix">'+(o.noix?'':i)+'</span></div>'}).join('')+'</div>'}
+function flow(a){return '<div class="flow">'+a.map(function(x){return '<div class="cell">'+x+'</div>'}).join('<span>↓</span>')+'</div>'}
+
+function widget(id,opts,build){
+  var el=$(id);if(!el)return;
+  var i=0,st=[],cur=0;
+  el.innerHTML=(opts.length>1?'<div class="row" style="align-items:center;margin-bottom:8px">'+opts.map(function(o,k){return '<button data-k="'+k+'">'+o[0]+'</button>'}).join('')+'</div>':'')+'<div class="scroll v"></div><p class="note" aria-live="polite"></p><div class="ctl"><button class="pv">Previous</button><span class="pos"></span><button class="nx">Next</button></div>';
+  var v=el.querySelector('.v'),n=el.querySelector('.note'),p=el.querySelector('.pos'),pv=el.querySelector('.pv'),nx=el.querySelector('.nx');
+  function r(){v.innerHTML=st[i].h;n.innerHTML=st[i].n;p.textContent='Step '+(i+1)+' of '+st.length;pv.disabled=i===0;nx.disabled=i===st.length-1}
+  function pick(k){cur=k;st=build(opts[k][1]);i=0;[].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.k===k))});r()}
+  [].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.onclick=function(){pick(+b.dataset.k)}});
+  pv.onclick=function(){if(i>0){i--;r()}};nx.onclick=function(){if(i<st.length-1){i++;r()}};pick(0);
+  return {re:function(){var j=i;pick(cur);i=Math.min(j,st.length-1);r()}};
+}
+
+function tabs(id,labels,fn){
+  var el=$(id);if(!el)return;
+  el.innerHTML='<div class="row" style="align-items:center;margin-bottom:8px"></div><div class="tv"></div>';
+  var bar=el.firstChild,tv=el.lastChild;
+  labels.forEach(function(t,k){
+    var b=document.createElement('button');b.textContent=t;
+    b.onclick=function(){[].forEach.call(bar.children,function(x){x.setAttribute('aria-pressed',String(x===b))});tv.innerHTML=fn(k)};
+    b.setAttribute('aria-pressed',String(k===0));bar.appendChild(b);
+  });
+  tv.innerHTML=fn(0);
+}
+
+// SVG graph renderer: N {l,x,y,c,t,a,s,w}, E [from, to, class, yOffset, curve]
+function G(N,E,o){
+  o=o||{};var W=o.w||660,H=o.h||120,h='<div class="scroll"><svg class="sv" viewBox="0 0 '+W+' '+H+'" style="min-width:'+(o.m||540)+'px" role="img" aria-label="'+(o.al||'Linked list diagram')+'">';
+  function dm(n){return n.t==='p'?[n.w||52,26]:[64,38]}
+  E.forEach(function(e){
+    var a=N[e[0]],b=N[e[1]];if(!a||!b)return;
+    var da=dm(a),db=dm(b),of=e[3]||0,bx=b.x+db[0]/2,by=b.y+db[1]/2+of,sx,sy,
+        mk='#ar'+(e[2]==='new'?'g':e[2]==='old'?'r':e[2]==='mv'?'m':'');
+    if(e[4]){
+      var crv=typeof e[4]==='number'?e[4]:70;
+      if(crv<0){
+        sx=a.t==='p'?a.x+da[0]/2:(a.x+da[0]-11);sy=a.y;
+        var ex=bx,ey=b.y;
+        h+='<path class="e '+(e[2]||'')+'" d="M'+sx+' '+sy+' Q'+(sx+ex)/2+' '+(sy+crv)+' '+ex+' '+ey+'" marker-end="url('+mk+')"/>';
+      }else{
+        sx=a.t==='p'?a.x+da[0]/2:(bx<a.x?a.x+11:a.x+da[0]-11);sy=a.y+da[1];
+        var ex=bx,ey=b.y+db[1];
+        h+='<path class="e '+(e[2]||'')+'" d="M'+sx+' '+sy+' Q'+(sx+ex)/2+' '+(sy+crv)+' '+ex+' '+ey+'" marker-end="url('+mk+')"/>';
+      }
+      return;
+    }
+    if(a.t==='p'){
+      if(b.y>=a.y+da[1]-2){sx=a.x+da[0]/2;sy=a.y+da[1]}
+      else if(b.y+db[1]<=a.y+2){sx=a.x+da[0]/2;sy=a.y}
+      else{sx=bx<a.x?a.x:a.x+da[0];sy=a.y+da[1]/2+of}
+    }else{
+      sy=a.y+da[1]/2+of;sx=bx<a.x?a.x+11:a.x+da[0]-11;
+    }
+    var dx=bx-sx,dy=by-sy,L=Math.sqrt(dx*dx+dy*dy)||1,ux=dx/L,uy=dy/L,
+        t=Math.min((db[0]/2+4)/(Math.abs(ux)||.001),(db[1]/2+4)/(Math.abs(uy)||.001));
+    h+='<line class="e '+(e[2]||'')+'" x1="'+sx+'" y1="'+sy+'" x2="'+(bx-ux*t)+'" y2="'+(by-uy*t)+'" marker-end="url('+mk+')"/>';
+  });
+  for(var k in N){
+    var n=N[k],d=dm(n),mid=n.y+d[1]/2,c=(n.c||'')+(n.t==='p'?' p':'')+(n.t==='g'?' g':'');
+    h+='<g class="n '+c+'"><rect x="'+n.x+'" y="'+n.y+'" width="'+d[0]+'" height="'+d[1]+'" rx="6"/>';
+    if(n.t!=='g'){
+      if(!n.t){h+='<line x1="'+(n.x+d[0]-22)+'" x2="'+(n.x+d[0]-22)+'" y1="'+n.y+'" y2="'+(n.y+d[1])+'"/><circle cx="'+(n.x+d[0]-11)+'" cy="'+mid+'" r="3.5"/>'}
+      h+='<text x="'+(n.x+(n.t?d[0]/2:(d[0]-22)/2))+'" y="'+(mid+5)+'">'+n.l+'</text>';
+      if(n.a)h+='<text class="sm" x="'+(n.x+d[0]/2)+'" y="'+(n.y+d[1]+14)+'">'+n.a+'</text>';
+      if(n.s)h+='<text class="sm" x="'+(n.x+d[0]/2)+'" y="'+(n.y-6)+'">'+n.s+'</text>';
+    }
+    h+='</g>';
+  }
+  return h+'</svg></div>';
+}
+
+function chList(N,E,items,x,y,g,hasNil){
+  var ids=[];
+  items.forEach(function(item,i){
+    var id=typeof item==='object'?item.id:'n'+item;
+    var lbl=typeof item==='object'?item.l:String(item);
+    var cls=typeof item==='object'?(item.c||''):'';
+    ids.push(id);
+    N[id]={l:lbl,x:x+i*g,y:y,c:cls};
+    if(typeof item==='object'){
+      if(item.s)N[id].s=item.s;
+      if(item.a)N[id].a=item.a;
+    }
+    if(i>0)E.push([ids[i-1],id]);
+  });
+  if(hasNil&&ids.length){
+    N.nil={l:'None',t:'p',x:x+ids.length*g,y:y+6};
+    E.push([ids[ids.length-1],'nil']);
+  }
+  return ids;
+}
+
+// ---- Static diagrams ----
+(function(){
+  var N={},E=[];
+  chList(N,E,[10,20,30,40,50],95,45,100,true);
+  N.head={l:'head',t:'p',x:15,y:51};
+  E.push(['head','n10']);
+  $('bldStaticF').innerHTML=G(N,E,{w:660,h:105,m:560});
+
+  $('flowLenF').innerHTML=flow([
+    'Need to know something about every node?',
+    'Probably traverse the chain.',
+    'Probably O(n) work.'
+  ]);
+
+  var N2={},E2=[];
+  chList(N2,E2,[20,30,40],130,50,105,true);
+  N2.n10={l:'10',x:20,y:50,c:'ok'};
+  N2.head={l:'head',t:'p',x:26,y:10};
+  E2.push(['head','n10'],['n10','n20','new']);
+  $('insBegF').innerHTML=G(N2,E2,{w:580,h:105,m:500})+'<p class="cap">New node 10 points to 20, and head moves to 10. No existing node moved in memory.</p>';
+
+  $('patF').innerHTML=flow([
+    '1. Walk the chain: current = current.next',
+    '2. Change relationships: rewire links, do not shift data',
+    '3. Access predecessor: deletion requires knowing the node before',
+    '4. Multi-reference safety: save next before reversing',
+    '5. Relative motion: slow & fast pointers reveal positions'
+  ]);
+
+  $('shiftF').innerHTML=flow([
+    'Where am I?',
+    'What does this node point to?',
+    'Where does that relationship take me?'
+  ]);
+})();
+
+// ---- 1. Build the List Widget ----
+widget('bldW',[['Build [10, 20, 30, 40, 50]',0]],function(){
+  var s=[],vals=[10,20,30,40,50];
+  function stInfo(hVal,tVal){
+    return '<div class="row" style="gap:16px;margin:6px 0;font-family:ui-monospace,Menlo,monospace;font-size:0.88rem;">'
+      +'<span class="panel-tag tag-acc">head = '+(hVal?'Node('+hVal+')':'None')+'</span>'
+      +'<span class="panel-tag tag-ok">tail = '+(tVal?'Node('+tVal+')':'None')+'</span>'
+      +'</div>';
+  }
+
+  // Step 0: start
+  s.push({
+    h:stInfo(null,null)+'<div class="lbl"><strong>Initial state:</strong> head and tail are both None.</div>',
+    n:'We are given values = [10, 20, 30, 40, 50]. Before the loop begins, head = None and tail = None.'
+  });
+
+  // Step 1: add 10
+  var N1={},E1=[];
+  N1.n10={l:'10',x:100,y:48,c:'now'};
+  N1.head={l:'head',t:'p',x:106,y:8,c:'mv'};
+  N1.tail={l:'tail',t:'p',x:106,y:98,c:'ok'};
+  E1.push(['head','n10'],['tail','n10']);
+  s.push({
+    h:stInfo(10,10)+G(N1,E1,{w:480,h:135,m:400}),
+    n:'Create Node(10). Since head is None, node 10 is both the beginning and end of the chain. head and tail both point to it.'
+  });
+
+  // Step 2: add 20
+  var N2={},E2=[];
+  N2.n10={l:'10',x:70,y:48};
+  N2.n20={l:'20',x:180,y:48,c:'now'};
+  E2.push(['n10','n20','new']);
+  N2.head={l:'head',t:'p',x:76,y:8,c:'mv'};
+  N2.tail={l:'tail',t:'p',x:186,y:98,c:'ok'};
+  E2.push(['head','n10'],['tail','n20']);
+  s.push({
+    h:stInfo(10,20)+G(N2,E2,{w:480,h:135,m:400}),
+    n:'Node(20) arrives. We attach it instantly via tail.next = Node(20), then update tail = Node(20). head stays at 10.'
+  });
+
+  // Step 3: add 30
+  var N3={},E3=[];
+  chList(N3,E3,[10,20,30],50,48,110,false);
+  N3.n30.c='now';
+  E3[1]=['n20','n30','new'];
+  N3.head={l:'head',t:'p',x:56,y:8,c:'mv'};
+  N3.tail={l:'tail',t:'p',x:276,y:98,c:'ok'};
+  E3.push(['head','n10'],['tail','n30']);
+  s.push({
+    h:stInfo(10,30)+G(N3,E3,{w:560,h:135,m:460}),
+    n:'Node(30) arrives. tail.next = Node(30), then tail = Node(30). Storing tail avoids walking the chain!'
+  });
+
+  // Step 4: add 40
+  var N4={},E4=[];
+  chList(N4,E4,[10,20,30,40],40,48,105,false);
+  N4.n40.c='now';
+  E4[2]=['n30','n40','new'];
+  N4.head={l:'head',t:'p',x:46,y:8,c:'mv'};
+  N4.tail={l:'tail',t:'p',x:361,y:98,c:'ok'};
+  E4.push(['head','n10'],['tail','n40']);
+  s.push({
+    h:stInfo(10,40)+G(N4,E4,{w:620,h:135,m:500}),
+    n:'Node(40) arrives. Attached at the tail in O(1) constant time.'
+  });
+
+  // Step 5: add 50 & finish
+  var N5={},E5=[];
+  chList(N5,E5,[10,20,30,40,50],35,48,100,true);
+  N5.head={l:'head',t:'p',x:41,y:8,c:'mv'};
+  N5.tail={l:'tail',t:'p',x:441,y:98,c:'ok'};
+  E5.push(['head','n10'],['tail','n50']);
+  s.push({
+    h:stInfo(10,50)+G(N5,E5,{w:680,h:135,m:560}),
+    n:'Node(50) attached. The loop terminates and returns head. Notice: head and tail are references to nodes, not nodes themselves!'
+  });
+
+  return s;
+});
+
+// ---- 2. Traverse the List Widget ----
+widget('trvW',[['Traverse 10 → 20 → 30 → 40',0]],function(){
+  var s=[],vals=[10,20,30,40];
+  function cons(out){
+    return '<div class="row" style="align-items:center;gap:12px;margin:6px 0;">'
+      +'<span class="lbl"><strong>Printed output:</strong></span>'
+      +'<div class="panel-tag tag-ok">'+(out.length?out.join(' &nbsp; '):'<em>(empty)</em>')+'</div>'
+      +'</div>';
+  }
+
+  // Step 0: start at head
+  var N0={},E0=[];
+  chList(N0,E0,vals,40,50,110,true);
+  N0.n10.c='now';
+  N0.cur={l:'current',t:'p',w:60,x:42,y:10,c:'now'};
+  E0.push(['cur','n10']);
+  s.push({
+    h:cons([])+G(N0,E0,{w:620,h:115,m:520}),
+    n:'Start: current = head. We are at node 10. current is not None, so we enter the while loop.'
+  });
+
+  for(var step=0;step<4;step++){
+    var v=vals[step],outSoFar=vals.slice(0,step+1);
+    var N={},E=[];
+    chList(N,E,vals,40,50,110,true);
+    for(var k=0;k<=step;k++)N['n'+vals[k]].c=k===step?'ok':'';
+    var nextTarget=step+1<4?'n'+vals[step+1]:'nil';
+    var curX=step+1<4?40+(step+1)*110+2:40+4*110-4;
+    N.cur={l:'current',t:'p',w:60,x:curX,y:10,c:step===3?'dim':'now'};
+    E.push(['cur',nextTarget]);
+    s.push({
+      h:cons(outSoFar)+G(N,E,{w:620,h:115,m:520}),
+      n:'print(current.value) prints '+v+'. Then current = current.next follows the link forward.'
+    });
+  }
+
+  // Final step
+  s.push({
+    h:cons(vals)+'<div class="lbl"><strong>Loop complete:</strong> current is None. Traversal finished.</div>',
+    n:'current reached None. while current is not None evaluates to False. Traversal terminates cleanly in O(n) time.'
+  });
+
+  return s;
+});
+
+// ---- 3. Searching for a Value Widget ----
+widget('srcW',[
+  ['Search 10 (Best Case: 1 hop)',10],
+  ['Search 30 (Middle: 3 hops)',30],
+  ['Search 50 (Worst Case: 5 hops)',50],
+  ['Search 99 (Not Found)',99]
+],function(target){
+  var s=[],vals=[10,20,30,40,50],hitIdx=vals.indexOf(target);
+  var maxSteps=hitIdx>=0?hitIdx+1:vals.length;
+
+  for(var step=0;step<maxSteps;step++){
+    var curVal=vals[step];
+    var isHit=curVal===target;
+    var N={},E=[];
+    chList(N,E,vals,40,50,102,true);
+    for(var k=0;k<step;k++)N['n'+vals[k]].c='dim';
+    N['n'+curVal].c=isHit?'ok':'now';
+    N.cur={l:'current',t:'p',w:60,x:40+step*102+2,y:10,c:isHit?'ok':'now'};
+    E.push(['cur','n'+curVal]);
+    var hops=step+1;
+    var tagClass=isHit?'tag-ok':'tag-hi';
+    var tagText=isHit?'Match Found: '+curVal+' == '+target:'Inspecting: '+curVal+' != '+target;
+    var hHtml='<div class="row" style="gap:12px;margin:6px 0;"><span class="panel-tag '+tagClass+'">'+tagText+'</span><span class="panel-tag">Hops: '+hops+'</span></div>'+G(N,E,{w:660,h:115,m:540});
+    var nText=isHit
+      ?'current.value == '+target+'! Found target '+target+' in '+hops+' hop'+(hops>1?'s':'')+'. Returns True immediately without scanning remaining nodes.'
+      :'Comparing: current.value ('+curVal+') == '+target+' is False. Advance: current = current.next.';
+    s.push({h:hHtml,n:nText});
+  }
+
+  if(hitIdx===-1){
+    var Nend={},Eend=[];
+    chList(Nend,Eend,vals,40,50,102,true);
+    for(var j=0;j<5;j++)Nend['n'+vals[j]].c='dim';
+    Nend.cur={l:'current',t:'p',w:60,x:40+5*102-4,y:10,c:'dim'};
+    Eend.push(['cur','nil']);
+    s.push({
+      h:'<div class="row" style="gap:12px;margin:6px 0;"><span class="panel-tag tag-acc">Reached None: Not Found</span><span class="panel-tag">Total Hops: 5</span></div>'+G(Nend,Eend,{w:660,h:115,m:540}),
+      n:'current reached None without finding '+target+'. Returns False. Worst-case cost for unfound element: O(n).'
+    });
+  }
+  return s;
+});
+
+// ---- 4. Inserting at Beginning vs End Widget ----
+widget('insW',[
+  ['Insert at Beginning: O(1)',0],
+  ['Insert at End (with tail): O(1)',1],
+  ['Insert at End (without tail): O(n)',2]
+],function(mode){
+  var s=[];
+  if(mode===0){
+    // Mode 0: Insert at Beginning
+    // Step 0: Initial
+    var N0={},E0=[];
+    chList(N0,E0,[20,30,40],135,55,105,true);
+    N0.n10={l:'10',x:25,y:55,c:'now'};
+    N0.head={l:'head',t:'p',x:141,y:10,c:'mv'};
+    E0.push(['head','n20']);
+    s.push({
+      h:G(N0,E0,{w:600,h:120,m:520}),
+      n:'Initial state: <code>head</code> points to 20. We create <code>Node(10)</code>. It is not yet connected to the chain.'
+    });
+
+    // Step 1: node.next = head
+    var N1={},E1=[];
+    chList(N1,E1,[20,30,40],135,55,105,true);
+    N1.n10={l:'10',x:25,y:55,c:'now'};
+    N1.head={l:'head',t:'p',x:141,y:10,c:'mv'};
+    E1.push(['head','n20'],['n10','n20','new']);
+    s.push({
+      h:G(N1,E1,{w:600,h:120,m:520}),
+      n:'Step 1: <code>node.next = head</code>. 10 now points to 20. <code>head</code> still points to 20.'
+    });
+
+    // Step 2: head = node
+    var N2={},E2=[];
+    chList(N2,E2,[20,30,40],135,55,105,true);
+    N2.n10={l:'10',x:25,y:55,c:'ok'};
+    N2.head={l:'head',t:'p',x:31,y:10,c:'ok'};
+    E2.push(['head','n10','new'],['n10','n20']);
+    s.push({
+      h:G(N2,E2,{w:600,h:120,m:520}),
+      n:'Step 2: <code>head = node</code>. <code>head</code> now points to 10. Done! 2 reference updates, 0 existing nodes moved in memory: <strong>O(1)</strong>.'
+    });
+  }else if(mode===1){
+    // Mode 1: Insert at End with tail
+    // Step 0: Initial
+    var N0={},E0=[];
+    chList(N0,E0,[10,20,30],25,55,105,false);
+    N0.n40={l:'40',x:340,y:55,c:'now'};
+    N0.nil={l:'None',t:'p',x:340,y:100};
+    N0.head={l:'head',t:'p',x:31,y:10,c:'mv'};
+    N0.tail={l:'tail',t:'p',x:241,y:10,c:'ok'};
+    E0.push(['head','n10'],['tail','n30'],['n30','nil']);
+    s.push({
+      h:G(N0,E0,{w:600,h:135,m:520}),
+      n:'Initial state: <code>tail</code> points directly to the last node (30). We create <code>Node(40)</code> to attach at the end.'
+    });
+
+    // Step 1: tail.next = node
+    var N1={},E1=[];
+    chList(N1,E1,[10,20,30],25,55,105,false);
+    N1.n40={l:'40',x:340,y:55,c:'now'};
+    N1.head={l:'head',t:'p',x:31,y:10,c:'mv'};
+    N1.tail={l:'tail',t:'p',x:241,y:10,c:'ok'};
+    E1.push(['head','n10'],['tail','n30'],['n30','n40','new']);
+    s.push({
+      h:G(N1,E1,{w:600,h:135,m:520}),
+      n:'Step 1: <code>tail.next = node</code>. 30 connects directly to 40 because tail told us where 30 is in O(1) time.'
+    });
+
+    // Step 2: tail = node
+    var N2={},E2=[];
+    chList(N2,E2,[10,20,30,40],25,55,105,true);
+    N2.n40.c='ok';
+    N2.head={l:'head',t:'p',x:31,y:10,c:'mv'};
+    N2.tail={l:'tail',t:'p',x:346,y:10,c:'ok'};
+    E2.push(['head','n10'],['tail','n40','new']);
+    s.push({
+      h:G(N2,E2,{w:600,h:135,m:520}),
+      n:'Step 2: <code>tail = node</code>. <code>tail</code> moves to 40. Completed in 2 reference updates: <strong>O(1)</strong>.'
+    });
+  }else{
+    // Mode 2: Insert at End without tail
+    var vals=[10,20,30];
+
+    // Step 0: Need to find end
+    var N0={},E0=[];
+    chList(N0,E0,vals,25,55,105,true);
+    N0.n40={l:'40',x:425,y:55,c:'now'};
+    N0.head={l:'head',t:'p',x:31,y:10,c:'mv'};
+    E0.push(['head','n10']);
+    s.push({
+      h:G(N0,E0,{w:620,h:120,m:540}),
+      n:'No tail pointer available! Only <code>head</code> is known. To attach Node(40) at the end, we must first find the last node by traversing from head.'
+    });
+
+    // Steps 1-3: Traversal
+    for(var k=0;k<3;k++){
+      var N={},E=[];
+      chList(N,E,vals,25,55,105,true);
+      for(var j=0;j<k;j++)N['n'+vals[j]].c='dim';
+      N['n'+vals[k]].c=k===2?'ok':'now';
+      N.n40={l:'40',x:425,y:55,c:'now'};
+      N.head={l:'head',t:'p',x:31,y:10,c:'mv'};
+      N.cur={l:'current',t:'p',w:60,x:27+k*105,y:10,c:k===2?'ok':'now'};
+      E.push(['head','n10'],['cur','n'+vals[k]]);
+      var isLast=k===2;
+      s.push({
+        h:G(N,E,{w:620,h:120,m:540}),
+        n:isLast
+          ?'<code>current = current.next (30)</code>. <code>current.next is None</code>! Found the last node after walking 3 nodes.'
+          :'Start/traverse: <code>current</code> is at '+vals[k]+'. <code>current.next</code> is not None. Advance forward.'
+      });
+    }
+
+    // Step 4: Attach 40
+    var N4={},E4=[];
+    chList(N4,E4,vals,25,55,105,false);
+    N4.n40={l:'40',x:340,y:55,c:'ok'};
+    N4.nil={l:'None',t:'p',x:445,y:61};
+    N4.head={l:'head',t:'p',x:31,y:10,c:'mv'};
+    E4.push(['head','n10'],['n30','n40','new'],['n40','nil','new']);
+    s.push({
+      h:G(N4,E4,{w:620,h:120,m:540}),
+      n:'<code>current.next = Node(40)</code>. Node 40 is attached at the end. Then <code>40.next = None</code>.'
+    });
+
+    // Step 5: Done
+    var N5={},E5=[];
+    chList(N5,E5,[10,20,30,40],25,55,105,true);
+    N5.head={l:'head',t:'p',x:31,y:10,c:'mv'};
+    E5.push(['head','n10']);
+    s.push({
+      h:G(N5,E5,{w:620,h:120,m:540}),
+      n:'Done! Without tail, we had to traverse all n nodes: <strong>O(n) traversal + O(1) link update = O(n) total</strong>.'
+    });
+  }
+  return s;
+});
+
+// ---- 5. Deleting the Head Widget ----
+widget('delHW',[['Delete head',0]],function(){
+  var s=[],vals=[10,20,30,40];
+  // Step 0
+  var N0={},E0=[];
+  chList(N0,E0,vals,40,50,110,true);
+  N0.head={l:'head',t:'p',x:46,y:10,c:'mv'};
+  E0.push(['head','n10']);
+  s.push({h:G(N0,E0,{w:620,h:115,m:520}),n:'Initial state: head points to 10. We want to remove 10.'});
+
+  // Step 1
+  var N1={},E1=[];
+  chList(N1,E1,vals,40,50,110,true);
+  N1.n10.c='dim';
+  N1.head={l:'head',t:'p',x:156,y:10,c:'ok'};
+  E1.push(['head','n20','new']);
+  s.push({h:G(N1,E1,{w:620,h:115,m:520}),n:'head = head.next. head now points to 20. Link to 10 is bypassed.'});
+
+  // Step 2
+  var N2={},E2=[];
+  chList(N2,E2,[20,30,40],150,50,110,true);
+  N2.head={l:'head',t:'p',x:156,y:10,c:'ok'};
+  E2.push(['head','n20']);
+  s.push({
+    h:G(N2,E2,{w:620,h:115,m:520}),
+    n:'Node 10 is no longer reachable from head. 1 pointer update, O(1). No other node moved in memory.'
+  });
+  return s;
+});
+
+// ---- 6. Deleting the Last Node Widget ----
+widget('delLW',[['Delete last node',0]],function(){
+  var s=[],vals=[10,20,30,40];
+  // Step 0
+  var N0={},E0=[];
+  chList(N0,E0,vals,40,50,110,true);
+  N0.n40.c='now';
+  s.push({
+    h:G(N0,E0,{w:620,h:115,m:520}),
+    n:'We want to delete 40. But in a singly linked list, 40 does not know who points to it! We must traverse from head to find predecessor 30.'
+  });
+
+  // Traversal steps
+  for(var k=0;k<3;k++){
+    var N={},E=[];
+    chList(N,E,vals,40,50,110,true);
+    N['n'+vals[k]].c=k===2?'ok':'now';
+    N.cur={l:'current',t:'p',w:60,x:42+k*110,y:10,c:k===2?'ok':'now'};
+    E.push(['cur','n'+vals[k]]);
+    var isPred=k===2;
+    s.push({
+      h:G(N,E,{w:620,h:115,m:520}),
+      n:isPred
+        ?'current.next.next is None! STOP: current is at node 30, the predecessor of 40.'
+        :'current is at node '+vals[k]+'. current.next.next is not None. Advance: current = current.next.'
+    });
+  }
+
+  // Sever link
+  var NSev={},ESev=[];
+  chList(NSev,ESev,vals,40,50,110,false);
+  NSev.nil={l:'None',t:'p',x:40+3*110,y:10,c:'ok'};
+  NSev.n40.c='dim';
+  ESev.push(['n30','nil','new']);
+  ESev[2]=['n30','n40','old'];
+  s.push({
+    h:G(NSev,ESev,{w:620,h:115,m:520}),
+    n:'current.next = None. Node 40 is disconnected. The deletion itself is O(1), but finding the predecessor took O(n) traversal.'
+  });
+  return s;
+});
+
+// ---- 7. Deleting a Node by Value (Bypass) Widget ----
+widget('delVW',[
+  ['Delete 30 (Middle Node)',30],
+  ['Delete 10 (Head Node)',10],
+  ['Delete 50 (Tail Node)',50]
+],function(target){
+  var s=[],vals=[10,20,30,40,50];
+  if(target===30){
+    // Step 0: search predecessor
+    var N0={},E0=[];
+    chList(N0,E0,vals,30,50,105,true);
+    N0.n30.c='now';
+    s.push({h:G(N0,E0,{w:680,h:125,m:560}),n:'We want to delete 30. We traverse until current.next.value == 30.'});
+
+    // Step 1: found predecessor 20
+    var N1={},E1=[];
+    chList(N1,E1,vals,30,50,105,true);
+    N1.n20.c='ok';
+    N1.n30.c='now';
+    N1.cur={l:'current',t:'p',w:60,x:137,y:10,c:'ok'};
+    E1.push(['cur','n20']);
+    s.push({
+      h:G(N1,E1,{w:680,h:125,m:560}),
+      n:'current is at 20. current.next is 30 (the target) and current.next.next is 40.'
+    });
+
+    // Step 2: bypass!
+    var N2={},E2=[];
+    chList(N2,E2,vals,30,50,105,true);
+    N2.n20.c='ok';
+    N2.n30.c='dim';
+    E2[1]=['n20','n30','old'];
+    E2[2]=['n30','n40','old'];
+    E2.push(['n20','n40','new',0,-45]);
+    s.push({
+      h:G(N2,E2,{w:680,h:125,m:560}),
+      n:'current.next = current.next.next. Node 20 connects directly to 40, bypassing 30! No node moved in memory.'
+    });
+
+    // Step 3: result
+    var N3={},E3=[];
+    chList(N3,E3,[10,20,40,50],30,50,115,true);
+    s.push({
+      h:G(N3,E3,{w:680,h:125,m:560}),
+      n:'Done! The chain is now 10 → 20 → 40 → 50 → None. Node 30 is cleanly excised.'
+    });
+  }else if(target===10){
+    var N0={},E0=[];
+    chList(N0,E0,vals,30,50,105,true);
+    N0.n10.c='now';
+    s.push({h:G(N0,E0,{w:680,h:125,m:560}),n:'Deleting head node 10. Head matches target directly: head.value == target.'});
+    var N1={},E1=[];
+    chList(N1,E1,[20,30,40,50],135,50,105,true);
+    N1.head={l:'head',t:'p',x:141,y:10,c:'ok'};
+    E1.push(['head','n20']);
+    s.push({h:G(N1,E1,{w:680,h:125,m:560}),n:'return head.next. head moves to 20. Cost: O(1) immediately.'});
+  }else{
+    var N0={},E0=[];
+    chList(N0,E0,vals,30,50,105,true);
+    N0.n40.c='ok';N0.n50.c='now';
+    N0.cur={l:'current',t:'p',w:60,x:347,y:10,c:'ok'};
+    E0.push(['cur','n40']);
+    s.push({h:G(N0,E0,{w:680,h:125,m:560}),n:'Deleting tail 50. Predecessor is 40. current.next.next is None.'});
+    var N1={},E1=[];
+    chList(N1,E1,[10,20,30,40],30,50,105,true);
+    s.push({h:G(N1,E1,{w:680,h:125,m:560}),n:'current.next = None. 50 is disconnected. Result: 10 → 20 → 30 → 40 → None.'});
+  }
+  return s;
+});
+
+// ---- 8. Delete All Occurrences Widget ----
+widget('delAllW',[
+  ['Delete First 20 Only',0],
+  ['Delete All 20s',1]
+],function(mode){
+  var s=[];
+  // List: 10 -> 20 -> 30 -> 20 -> 40
+  if(mode===0){
+    var N0={},E0=[];
+    N0.n10={l:'10',x:20,y:50};
+    N0.n20a={l:'20',x:125,y:50,c:'now'};
+    N0.n30={l:'30',x:230,y:50};
+    N0.n20b={l:'20',x:335,y:50};
+    N0.n40={l:'40',x:440,y:50};
+    N0.nil={l:'None',t:'p',x:545,y:56};
+    E0.push(['n10','n20a'],['n20a','n30'],['n30','n20b'],['n20b','n40'],['n40','nil']);
+    s.push({h:G(N0,E0,{w:640,h:115,m:540}),n:'delete_value stops at the FIRST occurrence of 20 and returns head immediately.'});
+
+    var N1={},E1=[];
+    N1.n10={l:'10',x:20,y:50};
+    N1.n30={l:'30',x:130,y:50};
+    N1.n20b={l:'20',x:240,y:50,c:'now'};
+    N1.n40={l:'40',x:350,y:50};
+    N1.nil={l:'None',t:'p',x:460,y:56};
+    E1.push(['n10','n30'],['n30','n20b'],['n20b','n40'],['n40','nil']);
+    s.push({h:G(N1,E1,{w:640,h:115,m:540}),n:'Result: 10 → 30 → 20 → 40. The first 20 was removed; the second 20 remains.'});
+  }else{
+    var N0={},E0=[];
+    N0.n10={l:'10',x:20,y:50};
+    N0.n20a={l:'20',x:125,y:50,c:'now'};
+    N0.n30={l:'30',x:230,y:50};
+    N0.n20b={l:'20',x:335,y:50,c:'now'};
+    N0.n40={l:'40',x:440,y:50};
+    N0.nil={l:'None',t:'p',x:545,y:56};
+    E0.push(['n10','n20a'],['n20a','n30'],['n30','n20b'],['n20b','n40'],['n40','nil']);
+    s.push({h:G(N0,E0,{w:640,h:115,m:540}),n:'delete_all keeps traversing until current reaches None, bypassing EVERY node with value 20.'});
+
+    var N1={},E1=[];
+    N1.n10={l:'10',x:30,y:50};
+    N1.n30={l:'30',x:150,y:50};
+    N1.n40={l:'40',x:270,y:50};
+    N1.nil={l:'None',t:'p',x:390,y:56};
+    E1.push(['n10','n30'],['n30','n40'],['n40','nil']);
+    s.push({h:G(N1,E1,{w:640,h:115,m:540}),n:'Result: 10 → 30 → 40 → None. Both 20s were bypassed!'});
+  }
+  return s;
+});
+
+// ---- 9. Reversing a Linked List Widget (The Marquee Interactive) ----
+widget('revW',[['Reverse 10 → 20 → 30 → 40',0]],function(){
+  var s=[],vals=[10,20,30,40];
+  function inv(p,c){
+    return '<div class="row" style="gap:12px;margin:6px 0;">'
+      +'<span class="panel-tag tag-ok">Reversed: '+(p.length?p.join(' ← '):'none')+'</span>'
+      +'<span class="panel-tag tag-hi">Untouched: '+(c.length?c.join(' → '):'none')+'</span>'
+      +'</div>';
+  }
+
+  // Step 0: start
+  var N0={},E0=[];
+  chList(N0,E0,vals,140,55,105,true);
+  N0.prev={l:'prev (None)',t:'p',w:78,x:30,y:10,c:'mv'};
+  N0.cur={l:'current',t:'p',w:60,x:142,y:10,c:'now'};
+  E0.push(['cur','n10']);
+  s.push({
+    h:inv([],vals)+G(N0,E0,{w:680,h:130,m:580}),
+    n:'Start: previous = None, current = head (10). Untouched chain: 10 → 20 → 30 → 40 → None.'
+  });
+
+  // For each of the 4 nodes, show:
+  // 1. save next
+  // 2. reverse link
+  // 3. move pointers
+  var revLinks=[]; // stores [from, to] reversed backwards
+  for(var i=0;i<4;i++){
+    var v=vals[i];
+    var nextVal=i+1<4?vals[i+1]:null;
+
+    // Substep 1: Save next
+    var N1={},E1=[];
+    // draw reversed so far
+    for(var r=0;r<i;r++){
+      var rx=140+r*105;
+      N1['n'+vals[r]]={l:String(vals[r]),x:rx,y:55,c:'ok'};
+      if(r===0){
+        N1.nilL={l:'None',t:'p',x:40,y:61};
+        E1.push(['n10','nilL']);
+      }else{
+        E1.push(['n'+vals[r],'n'+vals[r-1]]);
+      }
+    }
+    // draw current and remaining
+    for(var rem=i;rem<4;rem++){
+      var mx=140+rem*105;
+      N1['n'+vals[rem]]={l:String(vals[rem]),x:mx,y:55,c:rem===i?'now':''};
+      if(rem>i)E1.push(['n'+vals[rem-1],'n'+vals[rem]]);
+    }
+    N1.nilR={l:'None',t:'p',x:140+4*105,y:61};
+    E1.push(['n40','nilR']);
+
+    // Pointers
+    var curX=140+i*105;
+    N1.cur={l:'curr',t:'p',w:50,x:curX+7,y:10,c:'now'};
+    E1.push(['cur','n'+v]);
+    if(nextVal){
+      N1.nxt={l:'next',t:'p',w:50,x:curX+105+7,y:10,c:'hi'};
+      E1.push(['nxt','n'+nextVal]);
+    }
+    if(i>0){
+      N1.prev={l:'prev',t:'p',w:50,x:curX-105+7,y:10,c:'mv'};
+      E1.push(['prev','n'+vals[i-1]]);
+    }
+
+    s.push({
+      h:inv(vals.slice(0,i).reverse(),vals.slice(i))+G(N1,E1,{w:680,h:130,m:580}),
+      n:'Node '+v+': Step 1: Save next_node = current.next ('+(nextVal?nextVal:'None')+'). We must remember this before breaking the link!'
+    });
+
+    // Substep 2: Reverse link
+    var N2={},E2=[];
+    for(var r=0;r<=i;r++){
+      var rx=140+r*105;
+      N2['n'+vals[r]]={l:String(vals[r]),x:rx,y:55,c:'ok'};
+      if(r===0){
+        N2.nilL={l:'None',t:'p',x:40,y:61};
+        E2.push(['n10','nilL',r===i?'new':'']);
+      }else{
+        E2.push(['n'+vals[r],'n'+vals[r-1],r===i?'new':'']);
+      }
+    }
+    for(var rem=i+1;rem<4;rem++){
+      var mx=140+rem*105;
+      N2['n'+vals[rem]]={l:String(vals[rem]),x:mx,y:55};
+      if(rem>i+1)E2.push(['n'+vals[rem-1],'n'+vals[rem]]);
+    }
+    if(i<3){
+      N2.nilR={l:'None',t:'p',x:140+4*105,y:61};
+      E2.push(['n40','nilR']);
+    }
+    N2.cur={l:'curr',t:'p',w:50,x:curX+7,y:10,c:'now'};
+    E2.push(['cur','n'+v]);
+    if(nextVal){
+      N2.nxt={l:'next',t:'p',w:50,x:curX+105+7,y:10,c:'hi'};
+      E2.push(['nxt','n'+nextVal]);
+    }
+
+    s.push({
+      h:inv(vals.slice(0,i+1).reverse(),vals.slice(i+1))+G(N2,E2,{w:680,h:130,m:580}),
+      n:'Node '+v+': Step 2: current.next = previous. Arrow reversed! '+v+' now points backwards to '+(i===0?'None':vals[i-1])+'.'
+    });
+  }
+
+  // Final step
+  var NFin={},EFin=[];
+  for(var r=0;r<4;r++){
+    NFin['n'+vals[r]]={l:String(vals[r]),x:140+r*105,y:55,c:'ok'};
+    if(r===0){
+      NFin.nilL={l:'None',t:'p',x:40,y:61};
+      EFin.push(['n10','nilL']);
+    }else{
+      EFin.push(['n'+vals[r],'n'+vals[r-1]]);
+    }
+  }
+  NFin.prev={l:'prev (new head)',t:'p',w:100,x:140+3*105-18,y:10,c:'ok'};
+  EFin.push(['prev','n40']);
+  s.push({
+    h:inv([40,30,20,10],[])+G(NFin,EFin,{w:680,h:130,m:580}),
+    n:'current is None. while loop terminates. return previous (40). The list is completely reversed in O(n) time and O(1) space!'
+  });
+
+  return s;
+});
+
+// ---- 10. Slow & Fast Pointers (Finding Middle) Widget ----
+widget('midW',[
+  ['Odd List (5 nodes: 10 → 20 → 30 → 40 → 50)',5],
+  ['Even List (6 nodes: 10 → 20 → 30 → 40 → 50 → 60)',6]
+],function(count){
+  var s=[],vals=count===5?[10,20,30,40,50]:[10,20,30,40,50,60];
+  var steps=count===5?[[0,0],[1,2],[2,4]]:[[0,0],[1,2],[2,4],[3,null]];
+
+  steps.forEach(function(st,idx){
+    var si=st[0],fi=st[1];
+    var sVal=vals[si],fVal=fi!==null?vals[fi]:'None';
+    var N={},E=[];
+    chList(N,E,vals,count===5?40:25,50,count===5?105:95,true);
+    N['n'+sVal].c=idx===steps.length-1?'ok':'mv';
+    if(fi!==null&&fi<vals.length)N['n'+fVal].c='now';
+
+    var sx=count===5?40+si*105:25+si*95;
+    var fx=fi!==null?(count===5?40+fi*105:25+fi*95):(count===5?40+5*105:25+6*95);
+
+    if(si===fi){
+      N.both={l:'slow, fast',t:'p',w:82,x:sx-9,y:10,c:'now'};
+      E.push(['both','n'+sVal]);
+    }else{
+      N.slow={l:'slow',t:'p',w:50,x:sx+7,y:10,c:idx===steps.length-1?'ok':'mv'};
+      E.push(['slow','n'+sVal]);
+      if(fi!==null&&fi<vals.length){
+        N.fast={l:'fast',t:'p',w:50,x:fx+7,y:10,c:'now'};
+        E.push(['fast','n'+fVal]);
+      }else{
+        N.fast={l:'fast',t:'p',w:50,x:fx+2,y:10,c:'dim'};
+        E.push(['fast','nil']);
+      }
+    }
+
+    var isDone=idx===steps.length-1;
+    var hHtml='<div class="row" style="gap:12px;margin:6px 0;">'
+      +'<span class="panel-tag tag-acc">slow: '+sVal+'</span>'
+      +'<span class="panel-tag tag-hi">fast: '+fVal+'</span>'
+      +(isDone?'<span class="panel-tag tag-ok">Middle = '+sVal+'</span>':'')
+      +'</div>'+G(N,E,{w:count===5?660:690,h:115,m:560});
+
+    var nText=idx===0
+      ?'Both slow and fast start at head (10).'
+      :(!isDone
+        ?'slow moves 1 step to '+sVal+', fast moves 2 steps to '+fVal+'.'
+        :(count===5
+          ?'fast is at 50 (fast.next is None). Loop terminates! slow is at 30: the exact middle.'
+          :'fast reached None. Loop terminates! slow is at 40: for even lists, returns the second middle node.'));
+
+    s.push({h:hHtml,n:nText});
+  });
+
+  return s;
+});
+
+// ---- 11. Maintain a Gap (Nth Node From End) Widget ----
+widget('gapW',[
+  ['Find n = 2 from end (Target: 40)',2],
+  ['Find n = 1 from end (Target: 50)',1],
+  ['Find n = 3 from end (Target: 30)',3]
+],function(nVal){
+  var s=[],vals=[10,20,30,40,50];
+  function stat(fi,si,isDone){
+    var g=fi-si;
+    var sVal=vals[si],fVal=fi<5?vals[fi]:'None';
+    return '<div class="row" style="gap:12px;margin:6px 0;">'
+      +'<span class="panel-tag tag-acc">slow: '+sVal+'</span>'
+      +'<span class="panel-tag tag-hi">fast: '+fVal+'</span>'
+      +'<span class="panel-tag">Gap: '+g+'</span>'
+      +(isDone?'<span class="panel-tag tag-ok">Result: '+sVal+'</span>':'')
+      +'</div>';
+  }
+
+  // Phase 1: advance fast by nVal steps
+  for(var f=0;f<=nVal;f++){
+    var N={},E=[];
+    chList(N,E,vals,40,50,105,true);
+    var sx=40,fx=40+f*105;
+    if(f===0){
+      N.both={l:'slow, fast',t:'p',w:82,x:sx-9,y:10,c:'now'};
+      E.push(['both','n10']);
+    }else{
+      N.slow={l:'slow',t:'p',w:50,x:sx+7,y:10,c:'mv'};
+      N.fast={l:'fast',t:'p',w:50,x:fx+7,y:10,c:'now'};
+      E.push(['slow','n10'],['fast','n'+vals[f]]);
+    }
+    s.push({
+      h:stat(f,0,false)+G(N,E,{w:660,h:115,m:560}),
+      n:f===0
+        ?'Phase 1: Both pointers start at head. We will advance fast by n = '+nVal+' steps to establish the gap.'
+        :'fast moves step '+f+' of '+nVal+'. slow stays at head.'
+    });
+  }
+
+  // Phase 2: slide together until fast is at None (fi = 5)
+  for(var shift=1;shift<=(5-nVal);shift++){
+    var curS=shift,curF=nVal+shift;
+    var N={},E=[];
+    chList(N,E,vals,40,50,105,true);
+    var sx=40+curS*105;
+    var isDone=curF===5;
+    N['n'+vals[curS]].c=isDone?'ok':'mv';
+    N.slow={l:'slow',t:'p',w:50,x:sx+7,y:10,c:isDone?'ok':'mv'};
+    E.push(['slow','n'+vals[curS]]);
+
+    if(!isDone){
+      var fx=40+curF*105;
+      N.fast={l:'fast',t:'p',w:50,x:fx+7,y:10,c:'now'};
+      E.push(['fast','n'+vals[curF]]);
+    }else{
+      N.fast={l:'fast',t:'p',w:50,x:40+5*105+2,y:10,c:'dim'};
+      E.push(['fast','nil']);
+    }
+
+    s.push({
+      h:stat(curF,curS,isDone)+G(N,E,{w:660,h:115,m:560}),
+      n:!isDone
+        ?'Phase 2: Move both pointers in lockstep. The gap of '+nVal+' nodes remains constant.'
+        :'fast reached None! The fixed gap means slow must be exactly '+nVal+' node'+(nVal>1?'s':'')+' from the end: '+vals[curS]+'!'
+    });
+  }
+
+  return s;
+});
+
+// ---- 11b. Remove Nth Node From End Widget (Section 18) ----
+widget('remNthW',[
+  ['Remove 2nd from end (Target: 40, n = 2)',2],
+  ['Remove 1st from end (Target: 50, n = 1)',1],
+  ['Remove 5th from end (Target: 10, head, n = 5)',5]
+],function(nVal){
+  var s=[],vals=[10,20,30,40,50];
+  var targetVal=vals[5-nVal];
+  var targetIdx=5-nVal;
+
+  function stat(fi,si,isBypassed,isDone){
+    var g=fi-si;
+    var sName=si===0?'dummy':vals[si-1];
+    var fName=fi===0?'dummy':(fi<=5?vals[fi-1]:'None');
+    return '<div class="row" style="gap:12px;margin:6px 0;">'
+      +'<span class="panel-tag tag-acc">slow: '+sName+'</span>'
+      +'<span class="panel-tag tag-hi">fast: '+fName+'</span>'
+      +'<span class="panel-tag">Gap: '+g+'</span>'
+      +(isDone?'<span class="panel-tag tag-ok">Removed '+targetVal+'</span>':'')
+      +'</div>';
+  }
+
+  // Phase 1: Advance fast by nVal + 1 steps from dummy (index 0)
+  for(var f=0;f<=nVal+1;f++){
+    var N={},E=[];
+    N.dummy={l:'dummy (0)',t:'p',w:78,x:15,y:55,c:'mv'};
+    chList(N,E,vals,110,55,95,true);
+    E.unshift(['dummy','n10']);
+
+    var sx=15,fx=f===0?15:(f<=5?110+(f-1)*95:110+5*95);
+    if(f===0){
+      N.both={l:'slow, fast',t:'p',w:82,x:13,y:10,c:'now'};
+      E.push(['both','dummy']);
+    }else{
+      N.slow={l:'slow',t:'p',w:50,x:29,y:10,c:'mv'};
+      E.push(['slow','dummy']);
+      if(f<=5){
+        N.fast={l:'fast',t:'p',w:50,x:fx+7,y:10,c:'now'};
+        E.push(['fast','n'+vals[f-1]]);
+      }else{
+        N.fast={l:'fast',t:'p',w:50,x:fx-2,y:10,c:'dim'};
+        E.push(['fast','nil']);
+      }
+    }
+
+    s.push({
+      h:stat(f,0,false,false)+G(N,E,{w:690,h:120,m:580}),
+      n:f===0
+        ?'Start: dummy(0) is linked to head (10). Both slow and fast begin at dummy. We advance fast by n + 1 = '+(nVal+1)+' steps.'
+        :'Phase 1: fast moves step '+f+' of '+(nVal+1)+'. slow stays anchored at dummy.'
+    });
+  }
+
+  // Phase 2: Slide both pointers until fast reaches None (fi = 6)
+  var totalAdvance=6-(nVal+1);
+  for(var shift=1;shift<=totalAdvance;shift++){
+    var curS=shift,curF=nVal+1+shift;
+    var N={},E=[];
+    N.dummy={l:'dummy (0)',t:'p',w:78,x:15,y:55,c:'mv'};
+    chList(N,E,vals,110,55,95,true);
+    E.unshift(['dummy','n10']);
+
+    var isAtEnd=curF===6;
+    var sTarget=curS===0?'dummy':'n'+vals[curS-1];
+    var sx=curS===0?15:110+(curS-1)*95;
+
+    N.slow={l:'slow',t:'p',w:50,x:sx+(curS===0?14:7),y:10,c:isAtEnd?'ok':'mv'};
+    E.push(['slow',sTarget]);
+
+    if(!isAtEnd){
+      var fx=110+(curF-1)*95;
+      N.fast={l:'fast',t:'p',w:50,x:fx+7,y:10,c:'now'};
+      E.push(['fast','n'+vals[curF-1]]);
+    }else{
+      var fx=110+5*95;
+      N.fast={l:'fast',t:'p',w:50,x:fx-2,y:10,c:'dim'};
+      E.push(['fast','nil']);
+    }
+
+    s.push({
+      h:stat(curF,curS,false,false)+G(N,E,{w:690,h:120,m:580}),
+      n:!isAtEnd
+        ?'Phase 2: Move both slow and fast in lockstep. The gap of '+(nVal+1)+' nodes remains constant.'
+        :'fast has reached None! Because fast was '+(nVal+1)+' nodes ahead, slow is sitting at '+(curS===0?'dummy':vals[curS-1])+' — the exact predecessor of target node '+targetVal+'.'
+    });
+  }
+
+  // Phase 3: Bypass target node!
+  var predId=targetIdx===0?'dummy':'n'+vals[targetIdx-1];
+  var targetNodeId='n'+targetVal;
+  var succId=targetIdx+1<5?'n'+vals[targetIdx+1]:'nil';
+
+  var NByp={},EByp=[];
+  NByp.dummy={l:'dummy (0)',t:'p',w:78,x:15,y:55,c:'mv'};
+  chList(NByp,EByp,vals,110,55,95,true);
+  EByp.unshift(['dummy','n10']);
+  NByp[targetNodeId].c='dim';
+
+  for(var ei=0;ei<EByp.length;ei++){
+    if(EByp[ei][0]===predId&&EByp[ei][1]===targetNodeId){
+      EByp[ei][2]='old';
+      break;
+    }
+  }
+  EByp.push([predId,succId,'new',0,-40]);
+
+  var predX=targetIdx===0?15:110+(targetIdx-1)*95;
+  NByp.slow={l:'slow',t:'p',w:50,x:predX+(targetIdx===0?14:7),y:10,c:'ok'};
+  EByp.push(['slow',predId]);
+
+  s.push({
+    h:stat(6,targetIdx,true,false)+G(NByp,EByp,{w:690,h:120,m:580}),
+    n:'slow.next = slow.next.next. Node '+(targetIdx===0?'dummy':vals[targetIdx-1])+' bypasses '+targetVal+' directly to '+(succId==='nil'?'None':vals[targetIdx+1])+'. Old link (red) is broken.'
+  });
+
+  // Final: return dummy.next
+  var NFin={},EFin=[];
+  var remVals=vals.filter(function(v){return v!==targetVal});
+  chList(NFin,EFin,remVals,40,55,105,true);
+  NFin.head={l:'head',t:'p',x:46,y:10,c:'ok'};
+  EFin.push(['head','n'+remVals[0]]);
+  s.push({
+    h:'<div class="row" style="gap:12px;margin:6px 0;"><span class="panel-tag tag-ok">Clean list after removing '+targetVal+'</span></div>'+G(NFin,EFin,{w:660,h:115,m:560}),
+    n:'return dummy.next. Target '+targetVal+' is gone! Resulting list: '+remVals.join(' → ')+' → None. Completed in a single traversal: O(n) time, O(1) space.'
+  });
+
+  return s;
+});
+
+// ---- 12a. Bypass Adjacent Duplicates Widget (Section 19) ----
+widget('remDupW',[['Bypass adjacent duplicates in [10, 20, 20, 30, 30, 40]',0]],function(){
+  var s=[];
+  var rawVals=[10,20,20,30,30,40];
+  var steps=[
+    {
+      ci:0,dup:false,
+      n:'Start at head: current is at 10. current.value (10) != current.next.value (20). Advance: current = current.next.',
+      tag:'Comparing: 10 != 20 → Advance',byp:[]
+    },
+    {
+      ci:1,dup:true,
+      n:'current is at the first 20. current.value (20) == current.next.value (20)! Adjacent duplicate detected.',
+      tag:'Duplicate found: 20 == 20',byp:[]
+    },
+    {
+      ci:1,dup:true,byp:[2],
+      n:'current.next = current.next.next. First 20 connects directly to 30, bypassing the second 20 (faded).',
+      tag:'Bypassing duplicate 20'
+    },
+    {
+      ci:1,dup:false,byp:[2],
+      n:'current.value (20) != current.next.value (30). No more duplicates of 20: advance current = current.next to 30.',
+      tag:'Comparing: 20 != 30 → Advance to 30'
+    },
+    {
+      ci:3,dup:true,byp:[2],
+      n:'current is at the first 30. current.value (30) == current.next.value (30)! Adjacent duplicate detected.',
+      tag:'Duplicate found: 30 == 30'
+    },
+    {
+      ci:3,dup:true,byp:[2,4],
+      n:'current.next = current.next.next. First 30 connects directly to 40, bypassing the second 30 (faded).',
+      tag:'Bypassing duplicate 30'
+    },
+    {
+      ci:5,dup:false,byp:[2,4],
+      n:'current is at 40. current.next is None. The while loop condition evaluates to False. Traversal complete!',
+      tag:'Reached end: current.next is None'
+    },
+    {
+      ci:null,fin:true,byp:[2,4],
+      n:'Done! The clean sorted list is: 10 → 20 → 30 → 40 → None. All adjacent duplicates were excised in O(n) time and O(1) space.',
+      tag:'Clean list: [10, 20, 30, 40]'
+    }
+  ];
+
+  steps.forEach(function(st){
+    var tagClass=st.dup?'tag-hi':'tag-ok';
+    var N={},E=[];
+    var xPos=25,lastId=null;
+
+    rawVals.forEach(function(val,idx){
+      var isByp=st.byp.indexOf(idx)>=0;
+      var id='n'+idx;
+      var isCur=st.ci===idx;
+      N[id]={l:String(val),x:xPos,y:55,c:isByp?'dim':(isCur?'now':'')};
+      if(lastId&&!isByp){
+        E.push([lastId,id]);
+        lastId=id;
+      }else if(!lastId){
+        lastId=id;
+      }
+      xPos+=95;
+    });
+
+    N.nil={l:'None',t:'p',x:xPos,y:61};
+    if(lastId)E.push([lastId,'nil']);
+
+    if(st.ci!==null){
+      var curX=25+st.ci*95;
+      N.cur={l:'current',t:'p',w:60,x:curX+2,y:10,c:st.dup?'hi':'now'};
+      E.push(['cur','n'+st.ci]);
+    }
+
+    s.push({
+      h:'<div class="row" style="gap:12px;margin:6px 0;"><span class="panel-tag '+tagClass+'">'+st.tag+'</span></div>'+G(N,E,{w:660,h:120,m:560}),
+      n:st.n
+    });
+  });
+
+  return s;
+});
+
+// ---- 12b. Remove Duplicates from Sorted List Widget (Section 20) ----
+widget('dupW',[['Remove duplicates from [10, 20, 20, 20, 30, 30, 40]',0]],function(){
+  var s=[];
+  // Trace sequence:
+  // step 0: at 10 -> 10!=20 -> advance to 20a
+  // step 1: at 20a -> 20==20 -> bypass 20b -> STAY at 20a!
+  // step 2: at 20a -> 20==20 -> bypass 20c -> STAY at 20a!
+  // step 3: at 20a -> 20!=30 -> advance to 30a
+  // step 4: at 30a -> 30==30 -> bypass 30b -> STAY at 30a!
+  // step 5: at 30a -> 30!=40 -> advance to 40
+  // step 6: at 40 -> next is None -> finished!
+
+  var steps=[
+    {cur:'10',dup:false,n:'current at 10. 10 != 20. No duplicate: advance current = current.next.',byp:[]},
+    {cur:'20',dup:true,n:'current at 20. current.value == current.next.value! Duplicate found. Bypass link: current.next = current.next.next. NOTICE: current STAYS at 20!',byp:[1]},
+    {cur:'20',dup:true,n:'current STILL at 20. Check again: next node is STILL 20! Duplicate found again. Bypass second duplicate. current STAYS at 20.',byp:[1,2]},
+    {cur:'20',dup:false,n:'current at 20. Next node is 30. 20 != 30. No duplicate now: advance current = current.next to 30.',byp:[1,2]},
+    {cur:'30',dup:true,n:'current at 30. 30 == 30! Duplicate found. Bypass second 30. current STAYS at 30.',byp:[1,2,4]},
+    {cur:'30',dup:false,n:'current at 30. Next node is 40. 30 != 40. Advance current to 40.',byp:[1,2,4]},
+    {cur:'40',dup:false,n:'current at 40. current.next is None. Loop ends! Clean list: 10 → 20 → 30 → 40 → None.',byp:[1,2,4],fin:true}
+  ];
+
+  steps.forEach(function(st,idx){
+    var tagClass=st.dup?'tag-hi':'tag-ok';
+    var tagText=st.dup?'Duplicate found: change link & stay':'Distinct value: advance pointer';
+    if(st.fin)tagText='Clean list: [10, 20, 30, 40]';
+
+    var raw=['10','20','20','20','30','30','40'];
+    var N={},E=[];
+    // draw active nodes
+    var xPos=20,lastNode=null;
+    raw.forEach(function(val,ri){
+      var isByp=st.byp.indexOf(ri)>=0;
+      var id='n'+ri;
+      N[id]={l:val,x:xPos,y:50,c:isByp?'dim':(val===st.cur&&!st.fin?'now':'')};
+      if(lastNode&&!isByp){
+        E.push([lastNode,id]);
+        lastNode=id;
+      }else if(!lastNode){
+        lastNode=id;
+      }
+      xPos+=85;
+    });
+    N.nil={l:'None',t:'p',x:xPos,y:56};
+    if(lastNode)E.push([lastNode,'nil']);
+
+    s.push({
+      h:'<div class="row" style="gap:12px;margin:6px 0;"><span class="panel-tag '+tagClass+'">'+tagText+'</span></div>'+G(N,E,{w:660,h:115,m:560}),
+      n:st.n
+    });
+  });
+
+  return s;
+});
+
+// ---- 13. Bridge Teaser: Cycle Detection Widget ----
+widget('cycW',[['Cycle Collision Stepper',0]],function(){
+  var s=[];
+  // Cycle: A -> B -> C -> D -> E -> C
+  var nodes=['A','B','C','D','E'];
+  var steps=[
+    {s:'A',f:'A',n:'slow and fast both start at head A.'},
+    {s:'B',f:'C',n:'slow moves 1 step to B. fast moves 2 steps to C (entered the cycle!).'},
+    {s:'C',f:'E',n:'slow moves 1 step to C. fast moves 2 steps to E.'},
+    {s:'D',f:'D',col:true,n:'slow moves to D. fast loops from E back to C and reaches D. COLLISION! Cycle detected!'}
+  ];
+
+  steps.forEach(function(st){
+    var N={},E=[];
+    nodes.forEach(function(m,i){
+      N[m]={l:m,x:40+i*115,y:40,c:st.col&&m==='D'?'ok':''};
+      if(i>0)E.push([nodes[i-1],m]);
+    });
+    // Cycle loopback link E -> C
+    E.push(['E','C','mv',0,55]);
+
+    if(st.s===st.f){
+      var xPos=N[st.s].x-8;
+      N.both={l:st.col?'COLLISION!':'slow, fast',t:'p',w:st.col?96:82,x:xPos,y:2,c:st.col?'ok':'now'};
+      E.push(['both',st.s]);
+    }else{
+      N.slow={l:'slow',t:'p',w:50,x:N[st.s].x+7,y:2,c:'mv'};
+      N.fast={l:'fast',t:'p',w:50,x:N[st.f].x+7,y:2,c:'now'};
+      E.push(['slow',st.s],['fast',st.f]);
+    }
+
+    var tagClass=st.col?'tag-ok':'tag-hi';
+    var tagText=st.col?'Collision at D: loop detected':'Tracing relative motion in cycle';
+    s.push({
+      h:'<div class="row" style="gap:12px;margin:6px 0;"><span class="panel-tag '+tagClass+'">'+tagText+'</span></div>'+G(N,E,{w:640,h:120,m:540}),
+      n:st.n
+    });
+  });
+
+  return s;
+});
+
+// ---- Top tools: code toggle and theme switcher ----
+var cb=$('codeBtn'),hid=false;
+cb.onclick=function(){
+  hid=!hid;
+  [].forEach.call(document.querySelectorAll('details'),function(d){d.open=!hid});
+  cb.textContent=hid?'Show code':'Hide code';
+};
+
+var root=document.documentElement,tb=$('theme');
+function setTheme(t){root.setAttribute('data-theme',t);tb.textContent=t==='dark'?'Light':'Dark'}
+try{var sv=localStorage.getItem('theme');if(sv==='dark'||sv==='light')setTheme(sv)}catch(e){}
+tb.onclick=function(){
+  var t=root.getAttribute('data-theme')==='dark'?'light':'dark';
+  setTheme(t);
+  try{localStorage.setItem('theme',t)}catch(e){}
+};
+</script>
+</body>
+</html>

@@ -3,23 +3,135 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="DSA from First Principles - A series of essays breaking down data structures and algorithms from the ground up.">
 <title>DSA from First Principles</title>
+<script>
+(function() {
+  try {
+    var st = localStorage.getItem('theme');
+    if (st === 'dark' || (!st && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+      document.documentElement.setAttribute('data-theme', 'dark');
+    }
+  } catch (e) {}
+})();
+</script>
 <style>
-:root{--bg:#fff;--ink:#111;--mut:#555;--line:#ccc;--acc:#1f4e8c;--hi:#fff3b0;--hib:#c9a227;--ok:#dcf0dc;--okb:#3a8a3a;--mv:#e6edf7;--dim:#eee;--card:#fafafa;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
-:root[data-theme="dark"]{--bg:#121212;--ink:#eee;--mut:#aaa;--line:#3a3a3a;--acc:#8ab4f8;--hi:#4a4220;--hib:#c9a227;--ok:#1d3a22;--okb:#5cb85c;--mv:#1c2a40;--dim:#2a2a2a;--card:#1a1a1a;color-scheme:dark}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Roman",Times,serif}
-main{max-width:720px;margin:0 auto;padding:40px 20px 80px}
-h1{font-size:2.1rem;margin:.2em 0 1em}
-ol{padding-left:1.4em;margin:1em 0}
-ol ol{padding-left:1.4em;margin:.4em 0}
-li{margin:.8em 0}
-ol ol li{margin:.5em 0}
-a{color:var(--acc);text-decoration:none}
-a:hover{text-decoration:underline}
-button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
-button:hover{background:var(--mv)}
-.theme{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5}
+:root {
+  --bg: #fff;
+  --ink: #111;
+  --mut: #555;
+  --line: #ccc;
+  --acc: #1f4e8c;
+  --hi: #fff3b0;
+  --hib: #c9a227;
+  --ok: #dcf0dc;
+  --okb: #3a8a3a;
+  --mv: #e6edf7;
+  --dim: #eee;
+  --card: #fafafa;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #121212;
+  --ink: #eee;
+  --mut: #aaa;
+  --line: #3a3a3a;
+  --acc: #8ab4f8;
+  --hi: #4a4220;
+  --hib: #c9a227;
+  --ok: #1d3a22;
+  --okb: #5cb85c;
+  --mv: #1c2a40;
+  --dim: #2a2a2a;
+  --card: #1a1a1a;
+  color-scheme: dark;
+}
+
+*, *::before, *::after {
+  box-sizing: inherit;
+}
+
+html {
+  scroll-padding-top: env(safe-area-inset-top, 0px);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 19px/1.6 "Times New Roman", Times, Georgia, serif;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+}
+
+h1 {
+  font-size: 2.1rem;
+  font-weight: 700;
+  margin: 0.2em 0 1em;
+  line-height: 1.25;
+}
+
+ol {
+  padding-left: 1.4em;
+  margin: 1em 0;
+}
+
+ol ol {
+  padding-left: 1.4em;
+  margin: 0.4em 0;
+}
+
+li {
+  margin: 0.8em 0;
+}
+
+ol ol li {
+  margin: 0.5em 0;
+}
+
+a {
+  color: var(--acc);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+a:focus-visible, button:focus-visible {
+  outline: 2px solid var(--acc);
+  outline-offset: 2px;
+}
+
+button.theme {
+  position: fixed;
+  top: calc(env(safe-area-inset-top, 0px) + 10px);
+  right: 12px;
+  z-index: 10;
+  font: inherit;
+  font-size: 0.95rem;
+  padding: 6px 14px;
+  border: 1px solid var(--acc);
+  color: var(--acc);
+  background: var(--bg);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+button.theme:hover {
+  background: var(--mv);
+}
 </style>
 </head>
 <body>
@@ -27,24 +139,69 @@ button:hover{background:var(--mv)}
 <main>
 <h1>DSA from First Principles</h1>
 <ol>
-  <li><a href="introduction.html">DSA from First Principles</a></li>
-  <li><a href="complexity%20analysis.html">Complexity Analysis from First Principles</a></li>
+  <li><a href="1.%20introduction.html" target="_blank" rel="noopener noreferrer">Introduction: DSA from First Principles</a></li>
+  <li><a href="2.%20complexity%20analysis.html" target="_blank" rel="noopener noreferrer">Complexity Analysis</a></li>
   <li>
     Arrays
     <ol>
-      <li><a href="arrays/arrays%20introduction%20and%20basics.html">Arrays from First Principles</a></li>
-      <li><a href="arrays/two%20pointers%20intuition.html">Two Pointers: Understanding the Idea Before the Pattern</a></li>
-      <li><a href="arrays/problems%20on%20two%20pointers%201.html">Two Pointers, From First Principles</a></li>
-      <li><a href="arrays/problems%20on%20two%20pointers%202.html">Two Pointers: Beyond the Basic Pattern</a></li>
+      <li><a href="3.%20arrays/arrays%20introduction%20and%20basics.html" target="_blank" rel="noopener noreferrer">Introduction to Arrays</a></li>
+      <li><a href="3.%20arrays/problems%20on%20two%20pointers%201.html" target="_blank" rel="noopener noreferrer">Introduction to Two Pointers</a></li>
+      <li><a href="3.%20arrays/problems%20on%20two%20pointers%202.html" target="_blank" rel="noopener noreferrer">Two Pointers: Beyond the Basic Pattern</a></li>
+      <li><a href="3.%20arrays/problems%20on%20two%20pointers%203.html" target="_blank" rel="noopener noreferrer">Container With Most Water and Trapping Rain Water</a></li>
+    </ol>
+  </li>
+  <li>
+    Linked Lists
+    <ol>
+      <li><a href="4.%20linked%20list/introduction%20to%20linked%20lists.html" target="_blank" rel="noopener noreferrer">Introduction to Linked Lists</a></li>
+      <li><a href="4.%20linked%20list/getting%20comfortable%20with%20linked%20lists.html" target="_blank" rel="noopener noreferrer">Getting Comfortable with Linked Lists</a></li>
+      <li><a href="4.%20linked%20list/linked-list-dummy-node.html" target="_blank" rel="noopener noreferrer">Making things easier</a></li>
+    </ol>
+  </li>
+  <li>
+    Continuing Two Pointers
+    <ol>
+      <li><a href="5.%20two%20pointer%20pattern%20continued/fast_and_slow_pointers.html" target="_blank" rel="noopener noreferrer">Fast and Slow Pointers</a></li>
+      <li><a href="5.%20two%20pointer%20pattern%20continued/sliding-window.html" target="_blank" rel="noopener noreferrer">Introduction to Sliding Window</a></li>
+      <li><a href="5.%20two%20pointer%20pattern%20continued/sliding-window-2.html" target="_blank" rel="noopener noreferrer">Window Controlled by a Constraint</a></li>
+      <li><a href="5.%20two%20pointer%20pattern%20continued/sliding-window-3.html" target="_blank" rel="noopener noreferrer">The State Inside the Window</a></li>
+    </ol>
+  </li>
+  <li>
+    The Monotonic Deque Solution to The Sliding Window Problem
+    <ol>
+      <li><a href="5.%20queue/queue-blog.html" target="_blank" rel="noopener noreferrer">Introduction to Queue</a></li>
+      <li><a href="5.%20queue/queue-fifo.html" target="_blank" rel="noopener noreferrer">Why Does FIFO Exist?</a></li>
+      <li><a href="5.%20queue/deque-blog%20(2).html" target="_blank" rel="noopener noreferrer">Deque: Why Would We Need Both Ends?</a></li>
+      <li><a href="5.%20queue/sliding-window-maximum.html" target="_blank" rel="noopener noreferrer">The Sliding Window Problem</a></li>
+      <li><a href="5.%20queue/monotonic-deque.html" target="_blank" rel="noopener noreferrer">Monotonic Deque</a></li>
     </ol>
   </li>
 </ol>
 </main>
 <script>
-var root=document.documentElement,tb=document.getElementById('theme');
-function setTheme(t){root.setAttribute('data-theme',t);tb.textContent=t==='dark'?'Light':'Dark'}
-try{var st=localStorage.getItem('theme');if(st==='dark'||st==='light')setTheme(st)}catch(e){}
-tb.onclick=function(){var t=root.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);try{localStorage.setItem('theme',t)}catch(e){}};
+var root = document.documentElement;
+var tb = document.getElementById('theme');
+
+function updateButtonText() {
+  tb.textContent = root.getAttribute('data-theme') === 'dark' ? 'Light' : 'Dark';
+}
+
+function setTheme(t) {
+  root.setAttribute('data-theme', t);
+  updateButtonText();
+}
+
+updateButtonText();
+
+tb.addEventListener('click', function() {
+  var current = root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  var next = current === 'dark' ? 'light' : 'dark';
+  setTheme(next);
+  try {
+    localStorage.setItem('theme', next);
+  } catch (e) {}
+});
 </script>
 </body>
 </html>

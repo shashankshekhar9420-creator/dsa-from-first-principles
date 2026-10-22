@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sliding Window Maximum: Why the Old Toolkit Breaks</title>
+<style>
+:root{--bg:#fff;--ink:#111;--mut:#555;--line:#ccc;--acc:#1f4e8c;--hi:#fff3b0;--hib:#c9a227;--ok:#dcf0dc;--okb:#3a8a3a;--mv:#e6edf7;--dim:#eee;--card:#fafafa;--red:#b5342b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#121212;--ink:#eee;--mut:#aaa;--line:#3a3a3a;--acc:#8ab4f8;--hi:#4a4220;--hib:#c9a227;--ok:#1d3a22;--okb:#5cb85c;--mv:#1c2a40;--dim:#2a2a2a;--card:#1a1a1a;--red:#ff7b72;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Roman",Times,serif}
+main{max-width:720px;margin:0 auto;padding:40px 20px 80px}
+h1,h2,h3{font-family:inherit;line-height:1.25}
+h1{font-size:2.1rem;margin:.2em 0 .6em}
+h2{font-size:1.5rem;margin:2.6em 0 .6em;padding-top:1.2em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin:1.6em 0 .4em}
+blockquote{margin:1.2em 0;padding:.4em 1em;border-left:4px solid var(--acc);font-size:1.12rem}
+blockquote p{margin:.3em 0}
+code{font:inherit;background:var(--card);padding:1px 5px;border-radius:4px}
+a{color:var(--acc)}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:1.2em 0}
+.cap{font-size:.9rem;color:var(--mut);margin:.6em 0 0}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:flex-end}
+.cw{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ix{font-size:.8rem;color:var(--mut);min-height:1.1em;font-weight:600}
+.cell{min-width:54px;padding:7px 6px;text-align:center;border:2px solid var(--line);background:var(--bg);border-radius:6px;font-weight:600;transition:background .2s}
+.gap{border-style:dashed;background:transparent}
+.ok{background:var(--ok);border-color:var(--okb)}
+.now{background:var(--hi);border-color:var(--hib)}
+.dim{background:var(--dim);color:var(--mut);border-color:var(--dim)}
+.mv{background:var(--mv);border-color:var(--acc)}
+.mx{display:grid;gap:3px;margin:8px 0}
+.mh{font-size:.8rem;color:var(--mut);text-align:center;align-self:center}
+.mx .cell{min-width:0;padding:3px 0;font-size:.8rem}
+button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
+button:hover:not(:disabled){background:var(--mv)}
+button:disabled{opacity:.4;cursor:default}
+button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--hib);outline-offset:2px}
+.tools{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5;display:flex;gap:8px}
+.ctl{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.pos{color:var(--mut);font-size:.9rem}
+.note{min-height:3em;margin:.4em 0 0;font-weight:500}
+.lbl{font-size:.9rem;margin:8px 0 3px}
+.bar{height:14px;border-radius:4px;background:var(--acc);min-width:3px}
+.bar.g{background:var(--okb)}.bar.r{background:var(--red)}
+input[type=range]{width:100%}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--dim)}
+details{margin:1em 0;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+summary{cursor:pointer;padding:8px 12px;font-size:.95rem;color:var(--acc)}
+pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,Menlo,Consolas,monospace}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.two{grid-template-columns:1fr}}
+.flow{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;font-size:.95rem}
+.flow .cell{min-width:140px}
+.zones{display:flex;border:2px solid var(--line);border-radius:6px;overflow:hidden;text-align:center;font-size:.85rem}
+.zones div{padding:10px 6px}
+.flag{font-size:.9rem;color:var(--mut)}
+.tt td:first-child{font-weight:600}
+.tt td{text-align:left}
+.vb{display:flex;gap:6px;align-items:flex-end;margin:6px 0}
+.vc{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:26px;max-width:60px;justify-content:flex-end}
+.vbar{width:100%;border:2px solid var(--line);background:var(--bg);border-radius:4px 4px 0 0;transition:height .2s,background .2s}
+</style>
+</head>
+<body>
+<div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
+<main>
+
+<h1>Sliding Window Maximum: Why the Old Toolkit Breaks</h1>
+<p>We have spent the last few articles learning how sliding windows work. The central idea was: when a window moves, do not throw away everything you already know, update only what changed. We learned to maintain sums, counts, frequency maps, the number of distinct elements, the number of zeroes and character frequencies.</p>
+<p>But there is one kind of information that is a little different. What if the question is: <strong>what is the maximum element inside the current window?</strong> That sounds simple, but it exposes an important limitation in the way we have been maintaining window state. Let us discover it.</p>
+<blockquote><p>Keep only the elements that can still affect the answer.</p></blockquote>
+<p>Every idea below has something to step through, drag or drive, and the code can be hidden with the button at the top. We reach the deque only at the end, because the data structure comes <em>after</em> the reasoning.</p>
+<ol>
+<li><a href="#s1">The problem</a></li>
+<li><a href="#s2">Attempt one: just find the maximum</a></li>
+<li><a href="#s3">We are repeating work</a></li>
+<li><a href="#s4">What we want from our window state</a></li>
+<li><a href="#s5">What if the maximum leaves?</a></li>
+<li><a href="#s6">Too little, too much, just right</a></li>
+<li><a href="#s7">Which elements could matter later? Domination</a></li>
+<li><a href="#s8">A new element arrives</a></li>
+<li><a href="#s9">Why we need both ends</a></li>
+<li><a href="#s10">Expiration and the four rules</a></li>
+<li><a href="#s11">Why is the front always the maximum?</a></li>
+<li><a href="#s12">The candidate structure is not the window</a></li>
+<li><a href="#s13">Put it all together, then drive it yourself</a></li>
+<li><a href="#s14">What these problems taught us</a></li>
+<li><a href="#s15">The bigger pattern: still sliding window</a></li>
+<li><a href="#s16">A useful way to recognize these problems</a></li>
+<li><a href="#s17">The evolution of the idea</a></li>
+</ol>
+
+<!-- ===== 1 ===== -->
+<h2 id="s1">1. The problem</h2>
+<p>Given <code>nums = [2, 1, 5, 3, 4, 6]</code> and <code>k = 3</code>, consider every contiguous window of size 3 and return the maximum of each. The windows are <code>[2,1,5]</code>, <code>[1,5,3]</code>, <code>[5,3,4]</code> and <code>[3,4,6]</code>, with maxima <code>5, 5, 5, 6</code>. The result is <code>[5, 5, 5, 6]</code>.</p>
+<div class="fig" id="stWins"></div>
+<p>At first glance this looks like a standard sliding-window problem. The window size is fixed, one element leaves, one enters. So let us start with what we already know.</p>
+
+<!-- ===== 2 ===== -->
+<h2 id="s2">2. Attempt one: just find the maximum</h2>
+<h3>The naive way</h3>
+<p>For the first window <code>[2, 1, 5]</code> we scan it and find <code>5</code>. Move the window to <code>[1, 5, 3]</code> and scan again. Then <code>[5, 3, 4]</code>, scan again. This works, and there is nothing incorrect about it. But something feels wrong. Watch how much looking we do. Yellow is the element being examined.</p>
+<div class="fig" id="stScan"></div>
+
+<!-- ===== 3 ===== -->
+<h2 id="s3">3. We are repeating work</h2>
+<p>Look at two consecutive windows, <code>[2, 1, 5]</code> and <code>[1, 5, 3]</code>. Two of the three elements are identical, yet we scan all three again. We already knew <code>5</code> was the maximum of the previous window. Why are we examining it from scratch? Only two things changed: <code>2</code> left and <code>3</code> entered. Drag <code>k</code> to see how much is shared.</p>
+<div class="fig" id="slOver"></div>
+<p>This is exactly the waste sliding window was designed to eliminate, so ideally our work should focus on what changed.</p>
+
+<!-- ===== 4 ===== -->
+<h2 id="s4">4. What we want from our window state</h2>
+<p>For a sum problem we can do <code>old sum - leaving element + entering element</code>. For <code>[2, 1, 5]</code> the sum is 8, and moving to <code>[1, 5, 3]</code> we say <code>8 - 2 + 3 = 9</code>. The old state is updated from the new information. Can we do something similar for the maximum? Try it:</p>
+<div class="fig" id="tbSumMax"></div>
+<blockquote><p>Maximum is not additive. And there is a deeper problem.</p></blockquote>
+
+<!-- ===== 5 ===== -->
+<h2 id="s5">5. What if the maximum leaves?</h2>
+<p>Consider <code>[5, 3, 4]</code> with maximum <code>5</code>. The window moves to <code>[3, 4, 2]</code>. The <code>5</code> has left, so our old maximum has disappeared. We need to know that <code>4</code> is the new maximum, but if all we remembered was <code>maximum = 5</code>, we have lost the information we need. Switch between the two strategies:</p>
+<div class="fig" id="stLeave"></div>
+<p>For a sum, losing one element is easy to repair. For a maximum, losing the current maximum can reveal an older candidate that we previously ignored. So perhaps we need to remember <strong>more than just the current maximum</strong>.</p>
+
+<!-- ===== 6 ===== -->
+<h2 id="s6">6. Too little, too much, just right</h2>
+<p>A reasonable next attempt: keep the entire window. When <code>5</code> leaves we can find the new maximum from <code>[3, 4]</code>. But we are back to scanning, which defeats the purpose. We want something between two extremes.</p>
+<div class="fig" id="tbSpec"></div>
+<blockquote><p>Keep only the information that might matter later.</p></blockquote>
+
+<!-- ===== 7 ===== -->
+<h2 id="s7">7. Which elements could matter later? Domination</h2>
+<p>In <code>[5, 3, 4]</code> the maximum is <code>5</code>, but we should not forget <code>3</code> and <code>4</code>, because <code>5</code> may leave. If it does, <code>4</code> becomes the maximum, so <code>4</code> is a useful candidate. What about <code>3</code>? Once <code>4</code> is present after it, ask: can <code>3</code> ever become the maximum while <code>4</code> is still inside the window? No. <code>4</code> is larger, and <code>4</code> is newer.</p>
+<p>Think about lifetimes. Because <code>3</code> is older, it leaves the window <strong>before</strong> <code>4</code>. So while <code>4</code> is around, <code>3 &lt; 4</code>; and after <code>4</code> leaves, <code>3</code> has already left too. This is stronger than "4 is currently bigger". We can say <strong>4 completely dominates 3</strong>. An older element <code>3</code> sits in the window and a newer element arrives. Drag its value:</p>
+<div class="fig" id="slDom"></div>
+<blockquote><p>A newer, larger element dominates an older, smaller one. The older one can never be the maximum again, so we can safely forget it.</p></blockquote>
+
+<!-- ===== 8 ===== -->
+<h2 id="s8">8. A new element arrives</h2>
+<p>Take window <code>[5, 3, 2]</code>. The best candidate is <code>5</code>, but we should not throw away <code>3</code> and <code>2</code>, because if <code>5</code> leaves, <code>3</code> becomes the maximum. All three are potential candidates, and notice they are already decreasing: <code>5 &gt; 3 &gt; 2</code>. The best candidate is at the front, the weaker ones behind it.</p>
+<p>Now <code>4</code> enters. Ask of each candidate from the back: can it become the maximum while <code>4</code> is inside? Step through, and try the other presets.</p>
+<div class="fig" id="stArr"></div>
+<h3>Notice what just happened</h3>
+<p>When <code>4</code> arrived we did not ask "what is the maximum of the entire window?". We asked a much smaller question: <strong>which candidates has this new element made useless?</strong> Instead of recomputing the answer we continuously eliminate things that can no longer contribute to it.</p>
+<blockquote><p>Do not redo work that has already been settled. Now applied to the ordering of candidates.</p></blockquote>
+
+<!-- ===== 9 ===== -->
+<h2 id="s9">9. Why we need both ends</h2>
+<p>Now the reason for learning the deque becomes clear. With candidates <code>[5, 3, 2]</code>, the largest candidate is at the front, so the current maximum is whatever is at the front. But when a new element <code>4</code> arrives, we remove dominated candidates from the <strong>back</strong>: <code>2 &lt; 4</code> so remove, <code>3 &lt; 4</code> so remove, giving <code>[5]</code>, then add <code>4</code> to get <code>[5, 4]</code>.</p>
+<div class="fig" id="fig9"></div>
+<p>The two ends have different jobs, and that is why the deque is so useful.</p>
+
+<!-- ===== 10 ===== -->
+<h2 id="s10">10. Expiration and the four rules</h2>
+<p>We have solved one problem: removing dominated candidates. But sliding windows have another rule: elements eventually leave the window. In <code>[5, 4, 2]</code> the maximum <code>5</code> is at the front, but eventually the left side moves past it. We cannot keep using it as the answer, so we must remove <strong>expired</strong> elements too. Where is the candidate that would expire first? At the front. So we have two reasons to remove an element:</p>
+<div class="fig scroll"><table class="tt"><tr><th>End</th><th>Reason</th><th>Meaning</th></tr>
+<tr><td>Front</td><td>expired</td><td>removed because it left the window</td></tr>
+<tr><td>Back</td><td>dominated</td><td>removed because it can never become the answer</td></tr></table></div>
+<blockquote><p>We are not randomly deleting elements. Each deletion has a reason.</p></blockquote>
+<p>For every new element, the structure is beginning to emerge as four rules. Pick one:</p>
+<div class="fig" id="tbRules"></div>
+<details open><summary>Python code sketch (click to hide or show)</summary><pre># Only a sketch of the four rules. The next article turns this
+# into the complete algorithm and analyses why it is efficient.
+for i, x in enumerate(nums):
+    while dq and dq[0] &lt;= i - k:          # Rule 1: remove expired (front)
+        dq.popleft()
+    while dq and nums[dq[-1]] &lt; x:        # Rule 2: remove dominated (back)
+        dq.pop()
+    dq.append(i)                           # Rule 3: add the new candidate
+    if i &gt;= k - 1:
+        out.append(nums[dq[0]])            # Rule 4: the front is the maximum</pre></details>
+
+<!-- ===== 11 ===== -->
+<h2 id="s11">11. Why is the front always the maximum?</h2>
+<p>Suppose we maintain candidates <code>[9, 7, 5, 2]</code>. They are decreasing, so the front, <code>9</code>, is the maximum. Now <code>6</code> arrives. From the back: <code>2 &lt; 6</code> remove, <code>5 &lt; 6</code> remove, <code>7 &gt; 6</code> stop. Add <code>6</code> and the sequence is still decreasing: <code>[9, 7, 6]</code>. Therefore the largest element is still at the front. Try several arrivals, including a tiny one that removes nothing and a huge one that removes everything.</p>
+<div class="fig" id="stInv"></div>
+<blockquote><p>The candidates stay in decreasing order, so the front is always the maximum. This property is what we call monotonic.</p></blockquote>
+
+<!-- ===== 12 ===== -->
+<h2 id="s12">12. The candidate structure is not the window</h2>
+<p>We can now describe what our deque contains. It does <strong>not</strong> contain every element of the window. It contains only elements that could still become the maximum, kept in decreasing order. For the window <code>[1, 5, 3, 4, 2]</code> the candidate deque is <code>[5, 4, 2]</code>. Why is <code>1</code> not there? <code>5</code> dominates it. Why not <code>3</code>? <code>4</code> arrived later and is larger. Drag to add elements one at a time:</p>
+<div class="fig" id="slCand"></div>
+<p>The deque is a compressed representation of the information we actually care about: not the whole window, not just the current maximum, but the <strong>remaining possible maxima</strong>.</p>
+
+<!-- ===== 13 ===== -->
+<h2 id="s13">13. Put it all together, then drive it yourself</h2>
+<p>Here is the whole process. The blue cells are the window, yellow is the new element, the deque shows candidate values with their indices, and green marks the front, which is the current maximum. Presets include a strictly decreasing array (nothing is ever popped from the back) and a strictly increasing one (everything is popped).</p>
+<div class="fig" id="stMax"></div>
+<h3>Now you drive</h3>
+<p>For each new element, you choose the next move. Rule 1 comes first (expired front), then Rule 2 (dominated back), then append.</p>
+<div class="fig" id="drvMax"></div>
+
+<!-- ===== 14 ===== -->
+<h2 id="s14">14. What these problems taught us</h2>
+<p>The important shift in thinking is a sequence of ideas, each one fixing the last. The data structure is not the starting point. The reasoning is, and the deque comes after the reasoning. Walk through it:</p>
+<div class="fig" id="tbMind"></div>
+<p>The most important sentence from this entire problem is not "use a monotonic deque". It is the one in the quote at the top of this post.</p>
+
+<!-- ===== 15 ===== -->
+<h2 id="s15">15. The bigger pattern: still sliding window</h2>
+<p>It is important not to think of this as an entirely new pattern. The sliding window is still doing what it always did: <code>right</code> explores, <code>left</code> removes expired elements. What is new is the <strong>state we maintain inside the window</strong>. Previously it might have been a sum, a frequency map, a distinct count or a zero count. Now it is ordered candidates for the maximum.</p>
+<div class="fig" id="tbState"></div>
+<blockquote><p>Sliding window plus specialized state. The monotonic deque is simply a clever way to maintain that particular state.</p></blockquote>
+
+<!-- ===== 16 ===== -->
+<h2 id="s16">16. A useful way to recognize these problems</h2>
+<ol>
+<li><strong>Is the window contiguous and moving?</strong> Then a sliding window may apply.</li>
+<li><strong>Is the answer a sum or count that updates additively?</strong> A running value is enough.</li>
+<li><strong>Can the leaving element change the answer unpredictably?</strong> A maximum or minimum can, because losing it reveals an older candidate.</li>
+<li><strong>Which elements could still matter later?</strong> Ask what a newer, better element makes permanently useless.</li>
+<li><strong>Where do removals happen?</strong> Expired elements leave from one end, dominated ones from the other. That points to a deque.</li>
+<li><strong>Is the structure ordered?</strong> If the candidates must stay in decreasing order, the front is the answer.</li>
+</ol>
+
+<!-- ===== 17 ===== -->
+<h2 id="s17">17. The evolution of the idea</h2>
+<div class="fig scroll"><table class="tt"><tr><th>Approach</th><th>Problem</th></tr>
+<tr><td>Scan every window</td><td>Repeated work on overlapping elements.</td></tr>
+<tr><td>Remember only the maximum</td><td>The maximum may leave, and we need to know who comes next.</td></tr>
+<tr><td>Remember everything</td><td>We would have to search through everything again.</td></tr>
+<tr><td>Keep only useful candidates</td><td>Insight: a newer, larger element makes smaller older elements permanently irrelevant.</td></tr>
+<tr><td>Order candidates in decreasing order</td><td>Now the front is the largest candidate.</td></tr>
+<tr><td>Remove from the back when dominated, from the front when expired</td><td>The structure stays correct and synchronized with the window.</td></tr></table></div>
+<p>That gives us the <strong>monotonic deque</strong>. For Sliding Window Maximum, a newer element that is larger than an older element dominates it, and once dominated, the older element can never be the maximum again, so we discard it. The remaining candidates are kept in decreasing order, so <code>deque[0]</code> is the maximum. The next article turns this reasoning into the complete algorithm and Python implementation, and analyzes why all those repeated <code>pop()</code> operations still give us an efficient solution.</p>
+<blockquote><p>When maintaining a sliding-window answer, do not necessarily keep every element. Keep only the elements that can still affect the answer.</p></blockquote>
+</main>
+
+<script>
+/* ===== SHARED HELPERS: do not change ===== */
+var $=function(i){return document.getElementById(i)};
+var L=function(v){return v.toLocaleString('en-US')};
+var num=function(x,y){return x-y};
+function isSorted(a){for(var i=1;i<a.length;i++)if(a[i-1]>a[i])return false;return true}
+
+/* cells(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label above'}, noix:true}) -> row of cells */
+function cells(a,o){o=o||{};var c=o.c||{};return '<div class="row">'+a.map(function(v,i){var g=v===''||v===null;return '<div class="cw"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="cell'+(g?' gap':'')+' '+(c[i]||'')+'">'+(g?'&nbsp;':v)+'</div><span class="ix">'+(o.noix?'':i)+'</span></div>'}).join('')+'</div>'}
+
+/* widget(id, presets, build): Previous/Next stepper.
+   presets = [[buttonLabel, params], ...]; build(params) returns [{h:htmlString, n:noteText}, ...] */
+function widget(id,opts,build){
+  var el=$(id),i=0,st=[];
+  el.innerHTML=(opts.length>1?'<div class="row" style="align-items:center">'+opts.map(function(o,k){return '<button data-k="'+k+'">'+o[0]+'</button>'}).join('')+'</div>':'')+'<div class="scroll v"></div><p class="note" aria-live="polite"></p><div class="ctl"><button class="pv">Previous</button><span class="pos"></span><button class="nx">Next</button><button class="pl">Play</button></div>';
+  var v=el.querySelector('.v'),n=el.querySelector('.note'),p=el.querySelector('.pos'),pv=el.querySelector('.pv'),nx=el.querySelector('.nx'),pl=el.querySelector('.pl'),tm=null;
+  function stop(){if(tm){clearInterval(tm);tm=null}pl.textContent='Play'}
+  function r(){v.innerHTML=st[i].h;n.textContent=st[i].n;p.textContent='Step '+(i+1)+' of '+st.length;pv.disabled=i===0;nx.disabled=i===st.length-1}
+  function pick(k){stop();st=build(opts[k][1]);i=0;[].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.k===k))});r()}
+  [].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.onclick=function(){pick(+b.dataset.k)}});
+  pv.onclick=function(){stop();if(i>0){i--;r()}};nx.onclick=function(){stop();if(i<st.length-1){i++;r()}};
+  pl.onclick=function(){if(tm){stop();return}if(i>=st.length-1){i=0;r()}pl.textContent='Pause';tm=setInterval(function(){if(i<st.length-1){i++;r()}else stop()},1100)};
+  pick(0);
+}
+
+/* tabs(id, labels, fn): tab buttons; fn(k) returns html for tab k */
+function tabs(id,labels,fn){var el=$(id);el.innerHTML='<div class="row" style="align-items:center"></div><div class="tv"></div>';var bar=el.firstChild,tv=el.lastChild;
+  labels.forEach(function(t,k){var b=document.createElement('button');b.textContent=t;b.onclick=function(){[].forEach.call(bar.children,function(x){x.setAttribute('aria-pressed',String(x===b))});tv.innerHTML=fn(k)};b.setAttribute('aria-pressed',String(k===0));bar.appendChild(b)});tv.innerHTML=fn(0)}
+
+/* growth(id, ns, bruteFn, betterFn, header1, header2): log-scale comparison table */
+function growth(id,ns,bf,tp,h1,h2){$(id).innerHTML='<table><tr><th>n</th><th>'+h1+'</th><th>'+h2+'</th></tr>'+ns.map(function(n){var b=bf(n),t=tp(n);return '<tr><td>'+L(n)+'</td><td>'+L(b)+'<div class="bar r" style="width:'+Math.max(1,Math.log10(b)/12*100)+'%;margin-left:auto"></div></td><td>'+L(t)+'<div class="bar g" style="width:'+Math.max(1,Math.log10(t)/12*100)+'%;margin-left:auto"></div></td></tr>'}).join('')+'</table><p class="cap">Bars use a log scale, otherwise the second column would be invisible.</p>'}
+
+/* flow(['step','step',...]) -> vertical arrow flow */
+function flow(a){return '<div class="flow">'+a.map(function(x){return '<div class="cell">'+x+'</div>'}).join('<span>↓</span>')+'</div>'}
+
+/* grid(matrix, {c:function(r,c){return 'ok|now|dim|mv'}, rh:[row headers], ch:[col headers]}) -> 2D table of cells (DP tables, grids, matrices) */
+function grid(m,o){o=o||{};var w=m[0].length,ch=o.ch,rh=o.rh;
+  var h='<div class="mx" style="grid-template-columns:'+(rh?'auto ':'')+'repeat('+w+',minmax(0,1fr))">';
+  if(ch){h+=(rh?'<span></span>':'')+ch.map(function(x){return '<span class="mh">'+x+'</span>'}).join('')}
+  m.forEach(function(r,i){if(rh)h+='<span class="mh">'+rh[i]+'</span>';r.forEach(function(v,j){h+='<div class="cell '+((o.c&&o.c(i,j))||'')+'">'+v+'</div>'})});
+  return h+'</div>'}
+
+/* vbars(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label'}}) -> vertical bar chart of an array (sorting, partitioning, heights) */
+function vbars(a,o){o=o||{};var c=o.c||{},mx=Math.max.apply(null,a.map(Math.abs))||1;
+  return '<div class="vb">'+a.map(function(v,i){return '<div class="vc"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="vbar '+(c[i]||'')+'" style="height:'+Math.max(4,Math.round(Math.abs(v)/mx*110))+'px"></div><span class="ix">'+v+'</span></div>'}).join('')+'</div>'}
+
+/* driver(id, cfg): "you drive the algorithm". The reader picks the move; wrong moves get a teaching message.
+   cfg = {
+     presets:[[label,param],...],
+     init:function(param){return state},
+     view:function(state,done){return html},
+     done:function(state){return bool},
+     prompt:function(state,done){return 'What should we do?'},
+     choices:[['A','button text'],['B','button text'],...],
+     expected:function(state){return 'A'},               // the correct choice id
+     apply:function(state,choiceId){ return 'Right. why it worked'},   // mutate state here
+     hint:function(state){return 'general hint'},
+     wrong:function(state,choiceId){return 'specific message for a tempting wrong choice, or undefined'}
+   } */
+function driver(id,cfg){
+  var el=$(id),k=0,s,msg='';
+  function init(){s=cfg.init(cfg.presets[k][1]);msg='';draw()}
+  function draw(){var done=cfg.done(s);
+    el.innerHTML='<div class="row" style="align-items:center">'+cfg.presets.map(function(p,j){return '<button data-p="'+j+'" aria-pressed="'+(j===k)+'">'+p[0]+'</button>'}).join('')+'</div><div class="scroll">'+cfg.view(s,done)+'</div><p class="note" aria-live="polite"><strong>'+cfg.prompt(s,done)+'</strong></p><div class="ctl">'+cfg.choices.map(function(c){return '<button data-c="'+c[0]+'"'+(done?' disabled':'')+'>'+c[1]+'</button>'}).join('')+'</div><p class="note" aria-live="polite">'+msg+'</p>';
+    [].forEach.call(el.querySelectorAll('button[data-p]'),function(b){b.onclick=function(){k=+b.dataset.p;init()}});
+    [].forEach.call(el.querySelectorAll('button[data-c]'),function(b){b.onclick=function(){choose(b.dataset.c)}})}
+  function choose(c){if(c!==cfg.expected(s)){msg=(cfg.wrong&&cfg.wrong(s,c))||('Not quite. '+cfg.hint(s));draw();return}
+    msg=cfg.apply(s,c)||'Right.';draw()}
+  init()}
+
+/* slider(id, {min,max,value,label,render:function(v){return html}}) -> "drag to see how the cost grows" figure */
+function slider(id,o){var el=$(id);el.innerHTML='<label for="'+id+'S">'+o.label+' = <strong class="so"></strong></label><input id="'+id+'S" type="range" min="'+o.min+'" max="'+o.max+'" value="'+o.value+'"><div class="sv"></div>';
+  var inp=el.querySelector('input'),out=el.querySelector('.so'),sv=el.querySelector('.sv');
+  function u(){out.textContent=inp.value;sv.innerHTML=o.render(+inp.value)}inp.oninput=u;u()}
+
+/* ===== PAGE-SPECIFIC ILLUSTRATIONS GO BELOW ===== */
+
+function ttl(t){return '<p class="lbl"><strong>'+t+'</strong></p>'}
+/* wv(array, l, r, {now:index, ok:[indices], sub:{}}) -> window view */
+function wv(a,l,r,o){o=o||{};var c={},sub={},i;
+  for(i=0;i<a.length;i++)c[i]=(r>=0&&i>=l&&i<=r)?'mv':'dim';
+  if(o.ok)for(i=0;i<o.ok.length;i++)c[o.ok[i]]='ok';
+  if(o.now!=null)c[o.now]='now';
+  if(o.sub)for(i in o.sub)sub[i]=o.sub[i];
+  return cells(a,{c:c,sub:sub})}
+/* cv(values, {mark:{idx:'dim'}, sub:{}}) -> a deque of candidate values, front on the left */
+function cv(v,o){o=o||{};var c={},s={},i;
+  if(v.length){c[0]='ok';s[0]=v.length===1?'front, back':'front';if(v.length>1)s[v.length-1]='back'}
+  if(o.mark)for(i in o.mark)c[i]=o.mark[i];
+  if(o.sub)for(i in o.sub)s[i]=o.sub[i];
+  return cells(v.length?v:[''],{c:c,sub:s,noix:true})}
+function argmax(a,l,r){var m=l,j;for(j=l;j<=r;j++)if(a[j]>a[m])m=j;return m}
+
+/* ---------- section 1: the windows and their maxima ---------- */
+function winSteps(a,k){var out=[],st=[],l;
+  for(l=0;l+k<=a.length;l++){var m=argmax(a,l,l+k-1);out.push(a[m]);
+    st.push({h:wv(a,l,l+k-1,{ok:[m]})+ttl('Maxima so far')+cells(out,{noix:true}),n:'Window [ '+a.slice(l,l+k).join(', ')+' ] has maximum '+a[m]+'.'})}
+  return st}
+widget('stWins',[['[2,1,5,3,4,6], k=3',[[2,1,5,3,4,6],3]],['[4,1,3,7,2], k=2',[[4,1,3,7,2],2]]],function(p){return winSteps(p[0],p[1])});
+
+/* ---------- section 2: scanning every window ---------- */
+function scanSim(a,k){var st=[],ex=0,l,j;
+  for(l=0;l+k<=a.length;l++){var m=-1e9;
+    for(j=l;j<l+k;j++){ex++;m=Math.max(m,a[j]);
+      st.push({h:wv(a,l,l+k-1,{now:j})+'<p class="lbl">running max = '+m+' · elements examined so far = <strong>'+ex+'</strong></p>',
+        n:'Window starting at index '+l+': look at '+a[j]+'.'+(j===l+k-1?' Window done, maximum = '+m+'. The next window will scan all '+k+' elements again.':'')})}}
+  st.push({h:cells(a,{noix:true,c:{}})+'<p class="lbl">elements examined in total = <strong>'+ex+'</strong> (for only '+a.length+' elements)</p>',n:'Done. '+(a.length-k+1)+' windows × '+k+' elements = '+ex+' looks at an array of just '+a.length+'. Correct, but wasteful.'});
+  return st}
+widget('stScan',[['[2,1,5,3,4,6], k=3',[[2,1,5,3,4,6],3]],['[4,1,3,7,2], k=2',[[4,1,3,7,2],2]]],function(p){return scanSim(p[0],p[1])});
+
+/* ---------- section 3: overlap ---------- */
+slider('slOver',{min:1,max:8,value:3,label:'window size k',render:function(k){
+  var A=[2,1,5,3,4,6,2,7,1],n=20,seg=A.slice(0,k+1),c1={},c2={},i;
+  for(i=0;i<seg.length;i++){c1[i]=i<k?'mv':'dim';c2[i]=i>=1?'mv':'dim'}
+  for(i=1;i<k;i++){c1[i]='ok';c2[i]='ok'}
+  var tot=(n-k+1)*k;
+  return ttl('Window 1')+cells(seg,{c:c1,noix:true})+ttl('Window 2')+cells(seg,{c:c2,noix:true})+
+    '<p class="note">Shared elements: <strong>'+(k-1)+' of '+k+'</strong> ('+Math.round((k-1)/k*100)+'%). Only 1 leaves and 1 enters.</p>'+
+    '<div class="lbl">Looks needed by scanning every window of a 20-element array: <strong>'+tot+'</strong></div><div class="bar r" style="width:'+(tot/110*100)+'%"></div>'+
+    '<div class="lbl">Elements in the array: <strong>'+n+'</strong></div><div class="bar g" style="width:'+(n/110*100)+'%"></div>'}});
+
+/* ---------- section 4: sum vs max ---------- */
+tabs('tbSumMax',['Sum','Maximum'],function(k){
+  var a=[2,1,5,3];
+  if(k===0)return wv(a,1,3,{now:3,sub:{0:'leaves',3:'enters'}})+'<p class="note">Window [2, 1, 5] has sum 8. Slide: <code>8 − 2 + 3 = 9</code>. Check by recomputing: 1 + 5 + 3 = 9. The old state is updated from the new information.</p>';
+  return wv(a,1,3,{now:3,sub:{0:'leaves',3:'enters'}})+'<p class="note">Window [2, 1, 5] has maximum 5. Try the same trick: <code>5 − 2 + 3 = 6</code>. But the maximum of [1, 5, 3] is 5. Wrong. There is no "subtract the leaver, add the arrival" rule for a maximum.</p>'});
+
+/* ---------- section 5: the maximum leaves ---------- */
+widget('stLeave',[['Remember only the maximum','m'],['Remember candidates','c']],function(m){
+  var s1=wv([5,3,4,2],0,2,{ok:[0]}),s2=wv([5,3,4,2],1,3,{now:3,sub:{0:'leaves',3:'enters'}});
+  if(m==='m')return [
+    {h:s1+'<p class="lbl">State: maximum = 5</p>',n:'Window [5, 3, 4]. We remember only the maximum: 5.'},
+    {h:s2+'<p class="lbl">State: maximum = 5, but 5 has left the window!</p>',n:'5 leaves and 2 enters. Our state is now wrong. Is the new maximum 3? 4? 2? We only remembered 5, so the only way to know is to look through the window again.'}];
+  return [
+    {h:s1+ttl('Candidates (decreasing)')+cv([5,4]),n:'Window [5, 3, 4]. We keep candidates 5 and 4. The 3 is dominated by the newer, larger 4 and was dropped.'},
+    {h:s2+ttl('Candidates')+cv([4],{sub:{}}),n:'5 leaves the window, so it is removed from the front. 4 is the new front.'},
+    {h:s2+ttl('Candidates')+cv([4,2]),n:'2 enters at the back. Candidates are [4, 2], decreasing. The maximum is the front: 4. No scanning was needed.'}]});
+
+/* ---------- section 6: too little, too much, just right ---------- */
+tabs('tbSpec',['Keep only the maximum','Keep everything','Keep only candidates'],function(k){
+  var a=[5,3,4];
+  if(k===0)return cells(a,{c:{0:'ok',1:'dim',2:'dim'},noix:true})+'<p class="note"><strong>Too little.</strong> When 5 leaves we have nothing to fall back on.</p>';
+  if(k===1)return cells(a,{c:{0:'mv',1:'mv',2:'mv'},noix:true})+'<p class="note"><strong>Too much.</strong> When 5 leaves we must scan [3, 4] again. We are back to repeated work.</p>';
+  return cells(a,{c:{0:'ok',1:'dim',2:'ok'},sub:{0:'keep',1:'drop',2:'keep'},noix:true})+'<p class="note"><strong>Just right.</strong> Keep 5 and 4, the only elements that can still become the maximum.</p>'});
+
+/* ---------- section 7: domination ---------- */
+slider('slDom',{min:0,max:9,value:4,label:'value of the newer element',render:function(v){
+  var c,verdict;
+  if(v>3){c={0:'dim',1:'ok'};verdict='<strong>'+v+' &gt; 3 and newer.</strong> 3 leaves the window first, so while 3 is inside, '+v+' is inside too and bigger; after 3 has gone it is irrelevant. '+v+' dominates 3: forget it.'}
+  else if(v===3){c={0:'mv',1:'mv'};verdict='<strong>Equal.</strong> The newer 3 lasts longer and is no smaller, so the older 3 can never be needed. It is safe to drop it (keeping it is harmless but useless).'}
+  else{c={0:'ok',1:'mv'};verdict='<strong>'+v+' &lt; 3.</strong> No domination. While 3 is inside, 3 is the larger. When 3 leaves, '+v+' may be the maximum. Both are candidates.'}
+  return cells([3,v],{c:c,sub:{0:'older',1:'newer'},noix:true})+'<p class="note">'+verdict+'</p>'}});
+
+/* ---------- section 8 and 11: a new element arrives ---------- */
+function pushSim(dq0,x){
+  var dq=dq0.slice(),st=[];
+  function nw(){return '<p class="lbl">New element: <strong>'+x+'</strong></p>'}
+  st.push({h:nw()+ttl('Candidates')+cv(dq),n:'Candidates, decreasing: ['+dq.join(', ')+']. The front is the maximum ('+dq[0]+'). Now '+x+' arrives.'});
+  while(dq.length&&dq[dq.length-1]<x){
+    var b=dq[dq.length-1],m={};m[dq.length-1]='dim';
+    st.push({h:nw()+ttl('Candidates')+cv(dq,{mark:m,sub:(function(){var o={};o[dq.length-1]='remove';return o})()}),n:'Back is '+b+' < '+x+'. '+x+' is newer and larger, so '+b+' can never be the maximum while '+x+' is inside. Remove it.'});
+    dq.pop()}
+  if(dq.length)st.push({h:nw()+ttl('Candidates')+cv(dq),n:'Back is '+dq[dq.length-1]+', which is not smaller than '+x+'. It can still be the maximum, so we stop removing.'});
+  dq.push(x);
+  var inc=true,i;for(i=1;i<dq.length;i++)if(dq[i-1]<dq[i])inc=false;
+  st.push({h:ttl('After appending '+x)+cv(dq,{mark:(function(){var o={};o[dq.length-1]='now';if(dq.length===1)o[0]='ok';return o})()}),n:'Append '+x+'. Candidates: ['+dq.join(', ')+']'+(inc?', still decreasing, so the front ('+dq[0]+') is the maximum.':'.')});
+  return st}
+widget('stArr',[['[5,3,2] + 4',[[5,3,2],4]],['[5,3,2] + 1',[[5,3,2],1]],['[5,3,2] + 6',[[5,3,2],6]]],function(p){return pushSim(p[0],p[1])});
+widget('stInv',[['[9,7,5,2] + 6',[[9,7,5,2],6]],['[9,7,5,2] + 1',[[9,7,5,2],1]],['[9,7,5,2] + 10',[[9,7,5,2],10]],['[9,7,5,2] + 7',[[9,7,5,2],7]]],function(p){return pushSim(p[0],p[1])});
+
+/* ---------- section 9: the two ends ---------- */
+$('fig9').innerHTML=ttl('Candidates for the window [5, 3, 2]')+cv([5,3,2])+
+  '<div class="two"><div><p class="lbl"><strong>Front</strong></p><p>Holds the best candidate. Read the maximum here. Remove it when it expires.</p></div><div><p class="lbl"><strong>Back</strong></p><p>Holds the weakest candidates. Remove dominated ones here, then append the new one.</p></div></div>'+
+  '<p class="cap">When 4 arrives: 2 &lt; 4 remove, 3 &lt; 4 remove, 5 &gt; 4 stop, append 4. Result: [5, 4].</p>';
+
+/* ---------- section 10: the four rules ---------- */
+tabs('tbRules',['1. Remove expired','2. Remove dominated','3. Add','4. Read the best'],function(k){
+  if(k===0)return wv([5,4,2,3],1,3,{now:3,sub:{0:'expired'}})+'<p class="note"><strong>Rule 1.</strong> If the candidate at the front is no longer inside the window, <code>popleft()</code>. Here nums = [5,4,2,3] and k = 3: when 3 arrives the window is [4,2,3], so index 0 (the 5) has physically left.</p>';
+  if(k===1)return cv([5,3,2],{mark:{1:'dim',2:'dim'},sub:{1:'pop',2:'pop'}})+'<p class="note"><strong>Rule 2.</strong> While the candidate at the back is smaller than the new element, <code>pop()</code>. The new element is newer and larger, so those candidates are permanently useless. (New element: 4.)</p>';
+  if(k===2)return cv([5,4],{mark:{1:'now'}})+'<p class="note"><strong>Rule 3.</strong> Add the new element as a candidate with <code>append()</code>.</p>';
+  return cv([9,7,6])+'<p class="note"><strong>Rule 4.</strong> The front is always the largest remaining candidate: <code>deque[0]</code>. It is the maximum of the current window.</p>'});
+
+/* ---------- section 12: candidates are not the window ---------- */
+slider('slCand',{min:1,max:5,value:5,label:'elements inserted',render:function(t){
+  var a=[1,5,3,4,2],dq=[],dom={},i,x;
+  for(i=0;i<t;i++){x=a[i];while(dq.length&&a[dq[dq.length-1]]<x){dom[dq[dq.length-1]]=x;dq.pop()}dq.push(i)}
+  var c={},s={},reasons=[];
+  for(i=0;i<a.length;i++){
+    if(i>=t){c[i]='dim';s[i]=''}
+    else if(dom[i]!=null){c[i]='dim';s[i]='gone';reasons.push(a[i]+' is dominated by '+dom[i])}
+    else{c[i]='ok';s[i]='kept'}}
+  return ttl('Window')+cells(a,{c:c,sub:s})+ttl('Candidate deque')+cv(dq.map(function(j){return a[j]}))+
+    '<p class="cap">'+(reasons.length?reasons.join('; ')+'.':'Nothing dominated yet.')+' The deque holds only possible maxima, in decreasing order.</p>'}});
+
+/* ---------- section 13: the whole algorithm ---------- */
+function dqCells(dq,a,mark){var m={},s={},v=dq.map(function(j){return a[j]}),i;
+  if(v.length){s[0]=v.length===1?'front, back #'+dq[0]:'front #'+dq[0];if(v.length>1)s[v.length-1]='back #'+dq[v.length-1]}
+  for(i=1;i<v.length-1;i++)s[i]='#'+dq[i];
+  if(mark!=null){m[mark]='dim'}
+  return cv(v,{mark:m,sub:s})}
+function smaxSim(a,k){
+  var dq=[],out=[],st=[],i;
+  function view(i,mark,lab){var l=Math.max(0,i-k+1);
+    return wv(a,l,i,{now:i,sub:{}})+ttl('Candidate deque (value, with its index #)')+dqCells(dq,a,mark)+ttl('Output so far')+cells(out.length?out:[''],{noix:true})}
+  for(i=0;i<a.length;i++){var x=a[i],l=Math.max(0,i-k+1);
+    st.push({h:view(i),n:x+' (index '+i+') enters. Window: [ '+a.slice(l,i+1).join(', ')+' ].'});
+    while(dq.length&&dq[0]<=i-k){
+      st.push({h:view(i,0),n:'Rule 1: the front candidate (index '+dq[0]+', value '+a[dq[0]]+') is outside the window. popleft().'});dq.shift()}
+    while(dq.length&&a[dq[dq.length-1]]<x){
+      st.push({h:view(i,dq.length-1),n:'Rule 2: back candidate '+a[dq[dq.length-1]]+' < '+x+'. It is dominated, so pop().'});dq.pop()}
+    dq.push(i);var full=i>=k-1;if(full)out.push(a[dq[0]]);
+    st.push({h:view(i),n:'Rule 3: append '+x+'.'+(full?' Rule 4: the front is the maximum of this window: '+a[dq[0]]+'.':' The window is not full yet, so no answer yet.')})}
+  st.push({h:ttl('Output')+cells(out,{noix:true}),n:'Done. Maximum of every window: ['+out.join(', ')+'].'});
+  st.out=out;
+  return st}
+widget('stMax',[
+  ['[2,1,5,3,4,6], k=3',[[2,1,5,3,4,6],3]],
+  ['[1,3,-1,-3,5,3,6,7], k=3',[[1,3,-1,-3,5,3,6,7],3]],
+  ['Decreasing [5,4,3,2,1]',[[5,4,3,2,1],3]],
+  ['Increasing [1,2,3,4,5]',[[1,2,3,4,5],3]]
+],function(p){return smaxSim(p[0],p[1])});
+
+driver('drvMax',{
+  presets:[['[2,1,5,3,4,6], k=3',[[2,1,5,3,4,6],3]],['[1,3,-1,-3,5,3], k=3',[[1,3,-1,-3,5,3],3]]],
+  init:function(p){return {a:p[0],k:p[1],i:0,dq:[],out:[]}},
+  view:function(s,done){var i=Math.min(s.i,s.a.length-1),l=Math.max(0,i-s.k+1);
+    var h=done?wv(s.a,0,-1):wv(s.a,l,i,{now:i});
+    return h+ttl('Candidate deque (value, with its index #)')+dqCells(s.dq,s.a)+ttl('Output so far')+cells(s.out.length?s.out:[''],{noix:true})},
+  done:function(s){return s.i>=s.a.length},
+  prompt:function(s,done){
+    if(done)return 'Done. The maximum of every window is ['+s.out.join(', ')+'].';
+    var x=s.a[s.i];
+    if(s.dq.length&&s.dq[0]<=s.i-s.k)return x+' (index '+s.i+') is entering. The front candidate is outside the window. What now?';
+    if(s.dq.length&&s.a[s.dq[s.dq.length-1]]<x)return x+' (index '+s.i+') is entering. The back candidate ('+s.a[s.dq[s.dq.length-1]]+') is smaller. What now?';
+    return x+' (index '+s.i+') is entering. The front is fine and the back is not smaller. What now?'},
+  choices:[['F','popleft (front)'],['B','pop (back)'],['A','Append the new element']],
+  expected:function(s){var x=s.a[s.i];
+    if(s.dq.length&&s.dq[0]<=s.i-s.k)return 'F';
+    if(s.dq.length&&s.a[s.dq[s.dq.length-1]]<x)return 'B';
+    return 'A'},
+  apply:function(s,c){
+    if(c==='F'){var f=s.dq.shift();return 'Right. Index '+f+' has left the window, so it cannot be the answer. Expired elements leave from the front.'}
+    if(c==='B'){var b=s.dq.pop();return 'Right. '+s.a[b]+' is older and smaller than the new element, so it can never be the maximum. Dominated elements leave from the back.'}
+    s.dq.push(s.i);var full=s.i>=s.k-1;if(full)s.out.push(s.a[s.dq[0]]);s.i++;
+    return 'Right. Appended. '+(full?'The front is the maximum of this window, so it joins the output.':'The window is not full yet, so there is no answer yet.')},
+  hint:function(){return 'Rule 1: expired front? Rule 2: smaller back? Otherwise append.'},
+  wrong:function(s,c){var x=s.a[s.i],has=s.dq.length>0,exp=has&&s.dq[0]<=s.i-s.k,dom=has&&s.a[s.dq[s.dq.length-1]]<x;
+    if(c==='A'&&exp)return 'The front candidate has already left the window. Remove expired elements first, or we could report a maximum that is no longer there.';
+    if(c==='A'&&dom)return 'The back candidate is smaller than the new element, so it is dominated. Remove it first, or the deque stops being decreasing and the front is no longer the maximum.';
+    if(!has)return 'The deque is empty, so there is nothing to remove. Just append.';
+    if(c==='F')return 'The front candidate is still inside the window. Removing it would throw away a valid candidate, perhaps the current maximum.';
+    if(exp)return 'Rule 1 comes first: the front has expired. Remove it before looking at the back.';
+    return 'The back candidate is not smaller than the new element, so it can still become the maximum. Keep it.'}
+});
+
+/* ---------- section 14: the mental shift ---------- */
+tabs('tbMind',['1. Compute it','2. Remember the max','3. Remember everything','4. Remember what could matter'],function(k){
+  var d=[
+    ['"I need the maximum of every window", so I will calculate the maximum.','Repeated work: overlapping windows are scanned again and again.'],
+    ['"I will remember the previous maximum."','The maximum can leave, and we need to know who comes next.'],
+    ['"I will remember every element."','We are back to scanning to find the new maximum.'],
+    ['"I will remember only the elements that could still become the maximum."','The conceptual breakthrough. The data structure is not the starting point; the reasoning is. The deque comes after the reasoning.']][k];
+  return '<table class="tt"><tr><td>The thought</td><td>'+d[0]+'</td></tr><tr><td>What happens</td><td>'+d[1]+'</td></tr></table>'});
+
+/* ---------- section 15: still sliding window ---------- */
+tabs('tbState',['Sum','Frequency map','Distinct count','Zero count','Ordered candidates'],function(k){
+  var d=[
+    ['window_sum','add the entering element, subtract the leaving one','total of the window'],
+    ['counts','increment on entry, decrement on exit','how many of each character'],
+    ['len(counts)','falls out of the frequency map','how many distinct elements'],
+    ['zeroes','+1 or −1 when a zero enters or leaves','whether replacements ≤ k'],
+    ['deque of candidates (decreasing)','pop expired from the front, pop dominated from the back, append','the maximum, at the front']][k];
+  return '<table class="tt"><tr><td>State</td><td>'+d[0]+'</td></tr><tr><td>How it updates</td><td>'+d[1]+'</td></tr><tr><td>What it answers</td><td>'+d[2]+'</td></tr></table>'+
+    '<p class="cap">The pointers are the same in every row: right explores, left removes expired elements. Only the state changes.</p>'});
+
+/* ===== CODE TOGGLE AND THEME: do not change ===== */
+var cb=$('codeBtn'),hid=false;
+cb.onclick=function(){hid=!hid;[].forEach.call(document.querySelectorAll('details'),function(d){d.open=!hid});cb.textContent=hid?'Show code':'Hide code'};
+var root=document.documentElement,tb=$('theme');
+function setTheme(t){root.setAttribute('data-theme',t);tb.textContent=t==='dark'?'Light':'Dark'}
+try{var sv=localStorage.getItem('theme');if(sv==='dark'||sv==='light')setTheme(sv)}catch(e){}
+tb.onclick=function(){var t=root.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);try{localStorage.setItem('theme',t)}catch(e){}};
+</script>
+</body>
+</html>

@@ -65,22 +65,11 @@ pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,
 .vl i{display:block;width:100%;max-width:60px;background:var(--acc);border-radius:4px 4px 0 0;min-height:3px}
 .tt td:first-child{font-weight:600}
 .tt td{text-align:left}
-.top-nav{display:flex;align-items:center;gap:8px;font-size:.95rem;margin-bottom:20px;color:var(--mut)}
-.top-nav a{color:var(--acc);text-decoration:none}
-.top-nav a:hover{text-decoration:underline}
-.nav-sep{color:var(--line)}
-.nav-current{color:var(--mut)}
-.article-nav{display:flex;justify-content:space-between;gap:16px;margin-top:48px;padding-top:24px;border-top:1px solid var(--line);flex-wrap:wrap}
-.article-nav a{display:flex;flex-direction:column;padding:12px 16px;border:1px solid var(--line);border-radius:6px;background:var(--card);text-decoration:none;color:var(--ink);transition:border-color .15s,background .15s;flex:1;min-width:200px}
-.article-nav a:hover{border-color:var(--acc);background:var(--mv)}
-.article-nav .an-sub{font-size:.8rem;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
-.article-nav .an-title{font-weight:600;color:var(--acc)}
 </style>
 </head>
 <body>
 <div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
 <main>
-<nav class="top-nav"><a href="../index.html">← DSA from First Principles</a> <span class="nav-sep">/</span> <span class="nav-current">Essay 05 · Two Pointers: Problems (Part 1)</span></nav>
 <h1>Two Pointers, From First Principles</h1>
 <p>Two pointers is often taught as a pattern: <em>“Keep one pointer at the beginning, another at the end, and move them according to some condition.”</em> That description is technically correct, but it misses the important part. It doesn’t explain <strong>why</strong> two pointers work. And it doesn’t explain how you would recognize a two-pointer problem if nobody told you the pattern beforehand.</p>
 <p>The real idea is much simpler:</p>
@@ -372,16 +361,6 @@ print(arr[:length])   # [2, 3, 6, 9]</pre></details>
 <blockquote><p>When solving a problem, look for a way to prove that some possibilities no longer matter.</p></blockquote>
 <p>That’s the beginning of algorithmic thinking. Brute force says <em>“let me check everything.”</em> Optimization asks <em>“do I really need to check everything?”</em> Two pointers gives one particularly elegant answer: <em>“if I know enough about the structure of the data, I can move a boundary and prove that an entire part of the search space is finished.”</em></p>
 <p>The magic isn’t in the two variables called <code>left</code> and <code>right</code>. The magic is in the <strong>proof that lets them move forward without looking back</strong>.</p>
-<div class="article-nav">
-  <a href="two%20pointers%20intuition.html">
-    <span class="an-sub">Previous Essay · 04</span>
-    <span class="an-title">← Two Pointers: Intuition</span>
-  </a>
-  <a href="problems%20on%20two%20pointers%202.html" style="text-align:right">
-    <span class="an-sub">Next Essay · 06</span>
-    <span class="an-title">Two Pointers: Beyond the Pattern (Part 2) →</span>
-  </a>
-</div>
 </main>
 <script>
 var $=function(i){return document.getElementById(i)};

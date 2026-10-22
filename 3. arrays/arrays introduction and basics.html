@@ -59,22 +59,11 @@ pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,
 .bars{display:flex;align-items:flex-end;gap:2px;height:100px;margin-top:8px}
 .bars div{flex:1;background:var(--acc);min-width:2px}
 .flag{font-size:.9rem;color:var(--mut)}
-.top-nav{display:flex;align-items:center;gap:8px;font-size:.95rem;margin-bottom:20px;color:var(--mut)}
-.top-nav a{color:var(--acc);text-decoration:none}
-.top-nav a:hover{text-decoration:underline}
-.nav-sep{color:var(--line)}
-.nav-current{color:var(--mut)}
-.article-nav{display:flex;justify-content:space-between;gap:16px;margin-top:48px;padding-top:24px;border-top:1px solid var(--line);flex-wrap:wrap}
-.article-nav a{display:flex;flex-direction:column;padding:12px 16px;border:1px solid var(--line);border-radius:6px;background:var(--card);text-decoration:none;color:var(--ink);transition:border-color .15s,background .15s;flex:1;min-width:200px}
-.article-nav a:hover{border-color:var(--acc);background:var(--mv)}
-.article-nav .an-sub{font-size:.8rem;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
-.article-nav .an-title{font-weight:600;color:var(--acc)}
 </style>
 </head>
 <body>
 <div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
 <main>
-<nav class="top-nav"><a href="../index.html">← DSA from First Principles</a> <span class="nav-sep">/</span> <span class="nav-current">Essay 03 · Arrays</span></nav>
 <h1>Arrays from First Principles</h1>
 <p>When learning data structures, it is tempting to memorize facts like these:</p>
 <ul><li>Array access is <code>O(1)</code></li><li>Searching is <code>O(n)</code></li><li>Insertion is <code>O(n)</code></li><li>Dynamic arrays have amortized <code>O(1)</code> append</li><li>Binary search is <code>O(log n)</code></li></ul>
@@ -285,16 +274,6 @@ print(binary_search(arr, 70))   # 6</pre></details>
 <p>The real lesson is bigger than arrays:</p>
 <blockquote><p>Don’t memorize the behavior of a data structure. Understand the physical and logical choices that created it.</p></blockquote>
 <p>Once you know <em>why</em> the data is organized in a particular way, the performance characteristics stop looking like arbitrary facts. They become consequences. And that is the real purpose of studying data structures from first principles.</p>
-<div class="article-nav">
-  <a href="../complexity%20analysis.html">
-    <span class="an-sub">Previous Essay · 02</span>
-    <span class="an-title">← Complexity Analysis from First Principles</span>
-  </a>
-  <a href="two%20pointers%20intuition.html" style="text-align:right">
-    <span class="an-sub">Next Essay · 04</span>
-    <span class="an-title">Two Pointers: Understanding the Idea →</span>
-  </a>
-</div>
 </main>
 <script>
 var $=function(i){return document.getElementById(i)};

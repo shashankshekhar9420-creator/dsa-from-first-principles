@@ -59,22 +59,11 @@ pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,
 .zones{display:flex;border:2px solid var(--line);border-radius:6px;overflow:hidden;text-align:center;font-size:.85rem}
 .zones div{padding:10px 6px}
 .flag{font-size:.9rem;color:var(--mut)}
-.top-nav{display:flex;align-items:center;gap:8px;font-size:.95rem;margin-bottom:20px;color:var(--mut)}
-.top-nav a{color:var(--acc);text-decoration:none}
-.top-nav a:hover{text-decoration:underline}
-.nav-sep{color:var(--line)}
-.nav-current{color:var(--mut)}
-.article-nav{display:flex;justify-content:space-between;gap:16px;margin-top:48px;padding-top:24px;border-top:1px solid var(--line);flex-wrap:wrap}
-.article-nav a{display:flex;flex-direction:column;padding:12px 16px;border:1px solid var(--line);border-radius:6px;background:var(--card);text-decoration:none;color:var(--ink);transition:border-color .15s,background .15s;flex:1;min-width:200px}
-.article-nav a:hover{border-color:var(--acc);background:var(--mv)}
-.article-nav .an-sub{font-size:.8rem;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
-.article-nav .an-title{font-weight:600;color:var(--acc)}
 </style>
 </head>
 <body>
 <div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
 <main>
-<nav class="top-nav"><a href="../index.html">← DSA from First Principles</a> <span class="nav-sep">/</span> <span class="nav-current">Essay 04 · Two Pointers Intuition</span></nav>
 <h1>Two Pointers: Understanding the Idea Before the Pattern</h1>
 <p>When learning DSA, we are often taught techniques as patterns: <em>“If you see a sorted array, try two pointers.”</em> Or: <em>“Use <code>left</code> and <code>right</code>.”</em> That is useful for solving problems quickly, but it doesn’t answer the more important question:</p>
 <blockquote><p>Why do two pointers exist in the first place?</p></blockquote>
@@ -214,16 +203,6 @@ pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,
 <h2>The core idea</h2>
 <blockquote><p>Two pointers are useful when keeping track of two moving positions lets us preserve information, eliminate unnecessary work, or maintain the structure of the answer as we move through an array.</p></blockquote>
 <p>The pointers themselves aren’t the clever part. <strong>Figuring out what each pointer should mean is the clever part.</strong> That is why learning two pointers as a template is less useful than learning to ask: <em>“What two positions do I actually need to keep track of, and why?”</em></p>
-<div class="article-nav">
-  <a href="arrays%20introduction%20and%20basics.html">
-    <span class="an-sub">Previous Essay · 03</span>
-    <span class="an-title">← Arrays from First Principles</span>
-  </a>
-  <a href="problems%20on%20two%20pointers%201.html" style="text-align:right">
-    <span class="an-sub">Next Essay · 05</span>
-    <span class="an-title">Two Pointers: Problems (Part 1) →</span>
-  </a>
-</div>
 </main>
 <script>
 var $=function(i){return document.getElementById(i)};

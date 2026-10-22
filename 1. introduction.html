@@ -56,23 +56,12 @@ svg .top{fill:var(--ok);stroke:var(--okb)}
 .flow li+li:before{content:"↓";display:block;color:var(--mut);margin:-4px 0 2px}
 .flow li.end{background:var(--ok);border-color:var(--okb);font-weight:600}
 .flag{font-size:.9rem;color:var(--mut)}
-.top-nav{display:flex;align-items:center;gap:8px;font-size:.95rem;margin-bottom:20px;color:var(--mut)}
-.top-nav a{color:var(--acc);text-decoration:none}
-.top-nav a:hover{text-decoration:underline}
-.nav-sep{color:var(--line)}
-.nav-current{color:var(--mut)}
-.article-nav{display:flex;justify-content:space-between;gap:16px;margin-top:48px;padding-top:24px;border-top:1px solid var(--line);flex-wrap:wrap}
-.article-nav a{display:flex;flex-direction:column;padding:12px 16px;border:1px solid var(--line);border-radius:6px;background:var(--card);text-decoration:none;color:var(--ink);transition:border-color .15s,background .15s;flex:1;min-width:200px}
-.article-nav a:hover{border-color:var(--acc);background:var(--mv)}
-.article-nav .an-sub{font-size:.8rem;color:var(--mut);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
-.article-nav .an-title{font-weight:600;color:var(--acc)}
 .theme{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5}
 </style>
 </head>
 <body>
 <button class="theme" id="theme" aria-label="Switch colour theme">Dark</button>
 <main>
-<nav class="top-nav"><a href="index.html">← DSA from First Principles</a> <span class="nav-sep">/</span> <span class="nav-current">Essay 01 · Introduction</span></nav>
 <h1>DSA from First Principles</h1>
 <p>Why do data structures exist in the first place?</p>
 <blockquote><p>A data structure is a way of organizing information so that the operations we care about become easier to perform.</p></blockquote>
@@ -221,16 +210,6 @@ svg .top{fill:var(--ok);stroke:var(--okb)}
 <p>DSA is not fundamentally about arrays, linked lists, trees, graphs, sorting, or interviews. At its deepest level:</p>
 <blockquote><p>DSA is about organizing information and choosing procedures so that the work a computer needs to do becomes as simple as possible.</p></blockquote>
 <p>A data structure asks: <strong>“How should I organize my information?”</strong> An algorithm asks: <strong>“Given that organization, what steps should I take?”</strong> Arrays, linked lists, stacks, queues, trees, heaps, graphs, hashing, searching, and sorting become different solutions to different problems of organization and work.</p>
-<div class="article-nav">
-  <a href="index.html">
-    <span class="an-sub">Overview</span>
-    <span class="an-title">← Table of Contents</span>
-  </a>
-  <a href="complexity%20analysis.html" style="text-align:right">
-    <span class="an-sub">Next Essay · 02</span>
-    <span class="an-title">Complexity Analysis from First Principles →</span>
-  </a>
-</div>
 </main>
 
 <script>

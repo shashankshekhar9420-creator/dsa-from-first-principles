@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sliding Window III: The State Inside the Window</title>
+<style>
+:root{--bg:#fff;--ink:#111;--mut:#555;--line:#ccc;--acc:#1f4e8c;--hi:#fff3b0;--hib:#c9a227;--ok:#dcf0dc;--okb:#3a8a3a;--mv:#e6edf7;--dim:#eee;--card:#fafafa;--red:#b5342b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#121212;--ink:#eee;--mut:#aaa;--line:#3a3a3a;--acc:#8ab4f8;--hi:#4a4220;--hib:#c9a227;--ok:#1d3a22;--okb:#5cb85c;--mv:#1c2a40;--dim:#2a2a2a;--card:#1a1a1a;--red:#ff7b72;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Roman",Times,serif}
+main{max-width:720px;margin:0 auto;padding:40px 20px 80px}
+h1,h2,h3{font-family:inherit;line-height:1.25}
+h1{font-size:2.1rem;margin:.2em 0 .6em}
+h2{font-size:1.5rem;margin:2.6em 0 .6em;padding-top:1.2em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin:1.6em 0 .4em}
+blockquote{margin:1.2em 0;padding:.4em 1em;border-left:4px solid var(--acc);font-size:1.12rem}
+blockquote p{margin:.3em 0}
+code{font:inherit;background:var(--card);padding:1px 5px;border-radius:4px}
+a{color:var(--acc)}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:1.2em 0}
+.cap{font-size:.9rem;color:var(--mut);margin:.6em 0 0}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:flex-end}
+.cw{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ix{font-size:.8rem;color:var(--mut);min-height:1.1em;font-weight:600}
+.cell{min-width:54px;padding:7px 6px;text-align:center;border:2px solid var(--line);background:var(--bg);border-radius:6px;font-weight:600;transition:background .2s}
+.gap{border-style:dashed;background:transparent}
+.ok{background:var(--ok);border-color:var(--okb)}
+.now{background:var(--hi);border-color:var(--hib)}
+.dim{background:var(--dim);color:var(--mut);border-color:var(--dim)}
+.mv{background:var(--mv);border-color:var(--acc)}
+.mx{display:grid;gap:3px;margin:8px 0}
+.mh{font-size:.8rem;color:var(--mut);text-align:center;align-self:center}
+.mx .cell{min-width:0;padding:3px 0;font-size:.8rem}
+button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
+button:hover:not(:disabled){background:var(--mv)}
+button:disabled{opacity:.4;cursor:default}
+button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--hib);outline-offset:2px}
+.tools{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5;display:flex;gap:8px}
+.ctl{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.pos{color:var(--mut);font-size:.9rem}
+.note{min-height:3em;margin:.4em 0 0;font-weight:500}
+.lbl{font-size:.9rem;margin:8px 0 3px}
+.bar{height:14px;border-radius:4px;background:var(--acc);min-width:3px}
+.bar.g{background:var(--okb)}.bar.r{background:var(--red)}
+input[type=range]{width:100%}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--dim)}
+details{margin:1em 0;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+summary{cursor:pointer;padding:8px 12px;font-size:.95rem;color:var(--acc)}
+pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,Menlo,Consolas,monospace}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.two{grid-template-columns:1fr}}
+.flow{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;font-size:.95rem}
+.flow .cell{min-width:140px}
+.zones{display:flex;border:2px solid var(--line);border-radius:6px;overflow:hidden;text-align:center;font-size:.85rem}
+.zones div{padding:10px 6px}
+.flag{font-size:.9rem;color:var(--mut)}
+.tt td:first-child{font-weight:600}
+.tt td{text-align:left}
+.vb{display:flex;gap:6px;align-items:flex-end;margin:6px 0}
+.vc{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:26px;max-width:60px;justify-content:flex-end}
+.vbar{width:100%;border:2px solid var(--line);background:var(--bg);border-radius:4px 4px 0 0;transition:height .2s,background .2s}
+</style>
+</head>
+<body>
+<div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
+<main>
+
+<h1>Sliding Window III: The State Inside the Window</h1>
+<p>By now, sliding window itself should no longer feel mysterious. We have a range <code>[left ... right]</code>. We move <code>right</code> to expand it, and when the window violates a condition we move <code>left</code> to shrink it. The hard part is no longer how to move two pointers. The harder question is what exactly we need to remember about everything inside the window.</p>
+<blockquote><p>The window is just the container. The state tells us what is happening inside it.</p></blockquote>
+<p>This post is about designing that state, from a derived value like "most frequent letter" to a whole contract of required counts. Every problem has a stepper, there are sliders and a "you drive it" widget, and the code can be hidden with the button at the top.</p>
+<ol>
+<li><a href="#s1">The window is only half the algorithm</a></li>
+<li><a href="#s2">Character Replacement: validity from derived state</a></li>
+<li><a href="#s3">Why don't we decrease <code>max_frequency</code>?</a></li>
+<li><a href="#s4">Ones after Replacement: a much simpler state</a></li>
+<li><a href="#s5">The problem tells us what state to keep</a></li>
+<li><a href="#s6">Matching: Permutation and Anagrams</a></li>
+<li><a href="#s7">A hierarchy of problems</a></li>
+<li><a href="#s8">Minimum Window Substring: the state becomes a contract</a></li>
+<li><a href="#s9">Words Concatenation</a></li>
+<li><a href="#s10">Product Less Than a Target: counting from a valid window</a></li>
+<li><a href="#s11">What these problems taught us</a></li>
+<li><a href="#s12">The bigger pattern</a></li>
+<li><a href="#s13">A useful way to recognize these problems</a></li>
+<li><a href="#s14">The evolution of the idea</a></li>
+</ol>
+
+<!-- ===== 1 ===== -->
+<h2 id="s1">1. The window is only half the algorithm</h2>
+<p>Given a string of uppercase letters, find the length of the longest substring that can be made to contain only one distinct letter after replacing at most <code>k</code> characters. Take <code>A A B A C A</code> with <code>k = 2</code>. Could we turn the whole string into one letter? The counts are <code>A</code>: 4, <code>B</code>: 1, <code>C</code>: 1. Keep <code>A</code>, replace <code>B</code> and <code>C</code>: 2 replacements. Valid.</p>
+<p>But how did we know? Window length was not enough, and neither was the number of distinct characters. We needed the frequency of each character, and specifically the frequency of the most common one.</p>
+<h3>The naive way</h3>
+<p>Try making everything <code>A</code> and count the replacements. Try <code>B</code> and count again. Try <code>C</code>. Take the best. Pick a letter below to see the cost of keeping it.</p>
+<div class="fig" id="keepT"></div>
+<h3>Key insight: keep the most frequent letter</h3>
+<p>We never need to try every letter. The letter that already appears most is the one that minimizes replacements, so:</p>
+<blockquote><p>replacements needed = window length − frequency of the most common character</p></blockquote>
+<p>The window is valid when that number is at most <code>k</code>. With <code>k = 2</code>, the window <code>A A B A C A</code> costs 6 − 4 = 2, valid. Add a <code>D</code> and it costs 7 − 4 = 3, invalid.</p>
+<div class="fig" id="fig1a"></div>
+<p>The sliding-window machinery stayed the same. Only the definition of valid became more sophisticated.</p>
+
+<!-- ===== 2 ===== -->
+<h2 id="s2">2. Character Replacement: validity from derived state</h2>
+<p>Our window now needs the frequency of every character and a <code>max_frequency</code>. Each time we expand we update the count and the max, then derive validity from <code>window_length - max_frequency</code>. Step through it. Blue is the window, yellow is what was just added, green is the best window at the end.</p>
+<div class="fig" id="stRep"></div>
+<p>Drag <code>k</code> to see how a bigger replacement budget lets the window grow on the string <code>AABABBA</code>.</p>
+<div class="fig" id="slK"></div>
+<h3>The complete algorithm</h3>
+<details open><summary>Python code (click to hide or show)</summary><pre>def character_replacement(s, k):
+    left = 0
+    counts = {}
+    max_frequency = 0
+    best = 0
+
+    for right in range(len(s)):
+        char = s[right]
+        counts[char] = counts.get(char, 0) + 1
+        max_frequency = max(max_frequency, counts[char])
+
+        while (right - left + 1) - max_frequency &gt; k:
+            counts[s[left]] -= 1
+            left += 1
+
+        best = max(best, right - left + 1)
+
+    return best</pre></details>
+<p>Do not memorize it. Understand this line: <code>(right - left + 1) - max_frequency</code> says "if I keep the most frequent character and change everything else, how many replacements do I need?". If that exceeds <code>k</code>, the window is too large, so we shrink it.</p>
+
+<!-- ===== 3 ===== -->
+<h2 id="s3">3. Why don't we decrease <code>max_frequency</code>?</h2>
+<p>Look back at the stepper: when we remove a letter from the left, the stored <code>max_frequency</code> can become larger than the true maximum in the window. Suppose the window is <code>A A A B</code> (max 3) and we remove an <code>A</code>. The real maximum is now 2, but we leave the stored value at 3. It looks wrong.</p>
+<h3>Why it is safe</h3>
+<p>Think about what the stored value means: it is the best frequency we have seen in any window so far, a high-water mark. The window can never need to be longer than <code>record + k</code>, and the answer only grows when a new record is set by a real window. A stale value cannot invent a longer answer; it only stops us from shrinking more than needed. Compare the stale version against the exact one that recomputes the true maximum every time:</p>
+<div class="fig" id="cmpMax"></div>
+<blockquote><p>We may keep a value that is no longer the exact maximum of the current window, but this does not make us miss a longer valid answer.</p></blockquote>
+<h3>The tradeoff: exact versus useful state</h3>
+<p>For an alphabet of 26 letters we could simply rescan the frequency table whenever we need the true maximum. That is simple and exact. Or we can maintain <code>max_frequency</code> incrementally, which keeps the validity check trivial.</p>
+<div class="fig scroll"><table class="tt"><tr><th></th><th>Exact max (rescan)</th><th>Stored max (stale)</th></tr>
+<tr><td>Time</td><td>O(n · alphabet)</td><td>O(n)</td></tr>
+<tr><td>Extra space</td><td>O(alphabet)</td><td>O(alphabet)</td></tr>
+<tr><td>Reasoning</td><td>obviously correct</td><td>needs the high-water-mark argument</td></tr></table></div>
+<p>Sometimes an algorithm maintains an exact state, and sometimes a carefully chosen useful approximation. Both are fine if we understand what the state is used for. This is the same principle as <code>old_sum - leaving + entering</code> from the first article, applied to frequencies.</p>
+
+<!-- ===== 4 ===== -->
+<h2 id="s4">4. Ones after Replacement: a much simpler state</h2>
+<p>Given a binary array, find the longest contiguous subarray of <code>1</code>s after replacing at most <code>k</code> zeroes. For <code>1 1 0 0 1 1 1 0</code> with <code>k = 2</code>, the window <code>1 1 0 0 1 1 1</code> has two zeroes, so it can become all ones. Add the final <code>0</code> and there are three zeroes, which is one too many.</p>
+<p>What state do we need? Just <code>number_of_zeroes</code>, and validity is <code>zeroes &lt;= k</code>. Step through it, then try driving it yourself.</p>
+<div class="fig" id="stOnes"></div>
+<div class="fig" id="drvZ"></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>def longest_ones_after_replacement(nums, k):
+    left = 0
+    zeroes = 0
+    best = 0
+
+    for right in range(len(nums)):
+        if nums[right] == 0:
+            zeroes += 1
+
+        while zeroes &gt; k:
+            if nums[left] == 0:
+                zeroes -= 1
+            left += 1
+
+        best = max(best, right - left + 1)
+
+    return best</pre></details>
+<p>The window mechanics are almost identical to character replacement. The state is different: a frequency map plus max frequency for one, a single zero count for the other.</p>
+<blockquote><p>Sliding window is not about a particular data structure. It is about maintaining enough state to describe the current window.</p></blockquote>
+
+<!-- ===== 5 ===== -->
+<h2 id="s5">5. The problem tells us what state to keep</h2>
+<p>Do not start with "I need a hashmap because this is sliding window". Start with "what question do I need to answer about my current window?" Pick a question:</p>
+<div class="fig" id="askT"></div>
+
+<!-- ===== 6 ===== -->
+<h2 id="s6">6. Matching: Permutation and Anagrams</h2>
+<p>So far we asked how long a valid window can become. Sliding window can also <strong>match</strong>. Given <code>s1 = "ab"</code> and <code>s2 = "eidbaooo"</code>, does <code>s2</code> contain a permutation of <code>s1</code>? <code>"ba"</code> does, so the answer is <code>True</code>.</p>
+<h3>The naive way</h3>
+<p>Sort every window and compare it with the sorted target. It works, but overlapping windows repeat the sorting work.</p>
+<h3>Key insight: fixed length, so a fixed window</h3>
+<p>Every permutation of <code>"ab"</code> has length 2, so we only look at windows of size 2. This is the fixed-size window from the first article, but the question is no longer a sum. It is whether the window has exactly the same character counts as the target.</p>
+<blockquote><p>When order does not matter, frequency information may be the right state.</p></blockquote>
+<p>The same idea solves String Anagrams (find all start positions), just collecting every match instead of stopping at the first. Pick a case:</p>
+<div class="fig" id="stPerm"></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>from collections import Counter
+
+def check_inclusion(s1, s2):
+    need = Counter(s1)
+    window = Counter()
+    m = len(s1)
+
+    for right, ch in enumerate(s2):
+        window[ch] += 1
+        if right &gt;= m:
+            out = s2[right - m]
+            window[out] -= 1
+            if window[out] == 0:
+                del window[out]
+        if window == need:
+            return True
+    return False</pre></details>
+
+<!-- ===== 7 ===== -->
+<h2 id="s7">7. A hierarchy of problems</h2>
+<p>Look at how the problems have evolved. This progression is much more useful than memorizing unrelated patterns.</p>
+<div class="fig scroll"><table class="tt"><tr><th>Level</th><th>Problems</th><th>State</th><th>Constraint</th></tr>
+<tr><td>1. Fixed size, simple state</td><td>Maximum sum subarray of size K</td><td>sum</td><td>maximize sum</td></tr>
+<tr><td>2. Variable size, simple state</td><td>Smallest subarray with given sum</td><td>sum</td><td>sum ≥ target</td></tr>
+<tr><td>3. Variable size, frequency state</td><td>K distinct, Fruits into Baskets, No-repeat</td><td>frequencies</td><td>distinct ≤ K, no duplicates</td></tr>
+<tr><td>4. Variable size, derived state</td><td>Character replacement, Ones after replacement</td><td>frequency + max, or zero count</td><td>replacements ≤ K</td></tr>
+<tr><td>5. Fixed size, exact matching</td><td>Permutation in a string, String anagrams</td><td>frequency counts</td><td>window counts == target counts</td></tr></table></div>
+
+<!-- ===== 8 ===== -->
+<h2 id="s8">8. Minimum Window Substring: the state becomes a contract</h2>
+<p>Given a string <code>s</code> and a pattern <code>t</code>, find the smallest substring of <code>s</code> containing every character of <code>t</code> with the required frequency. For <code>s = "ADOBECODEBANC"</code> and <code>t = "ABC"</code> the answer is <code>"BANC"</code>. We want the <strong>smallest</strong> valid window, so once valid we shrink aggressively.</p>
+<h3>Distinct characters are not required frequencies</h3>
+<p>If the target is <code>AABC</code>, it is not enough that <code>A</code>, <code>B</code>, <code>C</code> exist. We need <code>A → 2</code>, <code>B → 1</code>, <code>C → 1</code>. So <code>A B C</code> is not enough, but <code>A A B C</code> is.</p>
+<blockquote><p>Distinct characters are not the same thing as required frequencies.</p></blockquote>
+<h3>Think of the target as a contract</h3>
+<p>The target is a contract: <code>need</code> says how many of each letter. As the window grows we gradually satisfy clauses. Instead of re-comparing everything, we keep a single number: how many clauses are satisfied. When it equals the number of clauses, the window is valid, and we shrink until a removal breaks a clause.</p>
+<div class="fig" id="stMin"></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>from collections import Counter
+
+def min_window(s, t):
+    need = Counter(t)
+    have = {}
+    required, formed = len(need), 0
+    left = 0
+    best = (float("inf"), 0, 0)
+
+    for right, ch in enumerate(s):
+        have[ch] = have.get(ch, 0) + 1
+        if ch in need and have[ch] == need[ch]:
+            formed += 1
+
+        while formed == required:
+            if right - left + 1 &lt; best[0]:
+                best = (right - left + 1, left, right)
+            out = s[left]
+            have[out] -= 1
+            if out in need and have[out] &lt; need[out]:
+                formed -= 1
+            left += 1
+
+    return "" if best[0] == float("inf") else s[best[1]:best[2] + 1]</pre></details>
+<p>The key state is <code>formed</code>, a derived number: "how many requirements are satisfied". We do not keep what describes the window perfectly. We keep the cheapest information that lets us decide validity.</p>
+
+<!-- ===== 9 ===== -->
+<h2 id="s9">9. Words Concatenation</h2>
+<p>Given a string and a list of equal-length words, find all start positions where a concatenation of all the words appears. With <code>words = ["foo", "bar"]</code> we want <code>"foobar"</code> or <code>"barfoo"</code>. It looks much harder, but the same three questions apply.</p>
+<div class="fig scroll"><table class="tt"><tr><th>Question</th><th>Answer here</th></tr>
+<tr><td>What is the window?</td><td>a range of <code>number_of_words × word_length</code> characters</td></tr>
+<tr><td>What state?</td><td>counts of the <em>words</em> (not letters) inside it</td></tr>
+<tr><td>What is valid?</td><td>every required word appears the required number of times</td></tr></table></div>
+<p>Slide in whole-word steps (and repeat for each offset from 0 to <code>word_length - 1</code>). Here is offset 0 on <code>"barfoothefoobarman"</code>:</p>
+<div class="fig" id="stWords"></div>
+<p>The abstraction survives even as the bookkeeping gets more complex.</p>
+
+<!-- ===== 10 ===== -->
+<h2 id="s10">10. Product Less Than a Target: counting from a valid window</h2>
+<p>Count all contiguous subarrays whose product is less than <code>target</code> (positive numbers). The state is <code>window_product</code>: multiply on expand, divide on shrink. Here is the subtle insight. If <code>[left ... right]</code> is valid, then every subarray ending at <code>right</code> and starting anywhere from <code>left</code> to <code>right</code> is also valid. So we add <code>right - left + 1</code> at once, instead of counting them one by one.</p>
+<div class="fig" id="stProd"></div>
+<p>Change the target and check that the shortcut agrees with brute force on <code>[10, 5, 2, 6]</code>:</p>
+<div class="fig" id="slP"></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>def num_subarray_product_less_than_k(nums, k):
+    if k &lt;= 1:
+        return 0
+    left, prod, count = 0, 1, 0
+    for right, x in enumerate(nums):
+        prod *= x
+        while prod &gt;= k:
+            prod //= nums[left]
+            left += 1
+        count += right - left + 1
+    return count</pre></details>
+<p>This is another example of extracting more information from the current valid window than just its length.</p>
+
+<!-- ===== 11 ===== -->
+<h2 id="s11">11. What these problems taught us</h2>
+<p>The pattern is a reasoning framework, built from four questions: what is my window, what state does it maintain, what makes it valid, and what am I optimizing or counting. Pick a problem:</p>
+<div class="fig" id="formW"></div>
+<h3>Longest and smallest are mirror images</h3>
+<div class="fig" id="lsT"></div>
+<p>The mechanics are almost identical. The objective only changes when we decide to shrink.</p>
+<h3>Explorer and repair</h3>
+<p>Think of the right pointer as the explorer, discovering new elements. When something breaks the rule, the left pointer becomes the repair mechanism. The algorithm is a controlled interaction between four things:</p>
+<div class="fig scroll"><table class="tt"><tr><th>Piece</th><th>Role</th></tr>
+<tr><td><code>right</code></td><td>explore</td></tr><tr><td><code>left</code></td><td>repair</td></tr><tr><td>state</td><td>memory</td></tr><tr><td>condition</td><td>rule</td></tr></table></div>
+
+<!-- ===== 12 ===== -->
+<h2 id="s12">12. The bigger pattern</h2>
+<p>Sliding window is fast because it refuses to solve overlapping ranges from scratch. It removes what left, adds what entered, updates state, and checks validity. The window moves monotonically, so even complicated problems stay linear, provided the state updates and validity checks are cheap. The sophistication is not in the number of operations. It is in choosing the right state.</p>
+<blockquote><p>Don't memorize the sliding-window template. Learn to design the window's state.</p></blockquote>
+<h3>One final caution</h3>
+<p>Sliding window works because the boundaries move in one direction and we can reason about what happens to validity when they move. Positive sums grow when we expand and shrink when we contract; frequencies rise and fall predictably. Ask one more question before reaching for the technique:</p>
+<blockquote><p>If I move the left or right boundary, can I predict how the validity of the window changes?</p></blockquote>
+<p>If yes, sliding window may be a natural fit. If not, do not force it.</p>
+
+<!-- ===== 13 ===== -->
+<h2 id="s13">13. A useful way to recognize these problems</h2>
+<p>When you see a new problem, follow the reasoning path. The code comes afterward.</p>
+<ol>
+<li><strong>What ranges would I examine by brute force?</strong> These are the overlapping ranges.</li>
+<li><strong>What information would I repeatedly recalculate?</strong> That is your candidate state.</li>
+<li><strong>Can I maintain it as the window moves?</strong> Incrementally, on every expand and shrink.</li>
+<li><strong>What makes the current window valid?</strong> Write it in plain English, then derive it from the state.</li>
+<li><strong>When should I expand, and when should I shrink?</strong> Longest and smallest differ here.</li>
+<li><strong>What am I optimizing or counting?</strong> Longest, smallest, number of valid subarrays, existence, or all start positions.</li>
+<li><strong>Is the validity predictable when a boundary moves?</strong> If not, do not force a window.</li>
+</ol>
+
+<!-- ===== 14 ===== -->
+<h2 id="s14">14. The evolution of the idea</h2>
+<div class="fig scroll"><table class="tt"><tr><th>Problem</th><th>Window</th><th>State</th><th>Validity / goal</th></tr>
+<tr><td>Maximum Sum Subarray of Size K</td><td>Fixed</td><td>Sum</td><td>Maximize sum</td></tr>
+<tr><td>Smallest Subarray with Given Sum</td><td>Variable</td><td>Sum</td><td>Sum ≥ target</td></tr>
+<tr><td>K Distinct Characters</td><td>Variable</td><td>Frequencies</td><td>Distinct ≤ K</td></tr>
+<tr><td>Fruits into Baskets</td><td>Variable</td><td>Frequencies</td><td>Distinct ≤ 2</td></tr>
+<tr><td>No-repeat Substring</td><td>Variable</td><td>Frequencies / last seen</td><td>No duplicates</td></tr>
+<tr><td>Character Replacement</td><td>Variable</td><td>Frequencies + max frequency</td><td>Replacements ≤ K</td></tr>
+<tr><td>Ones after Replacement</td><td>Variable</td><td>Zero count</td><td>Zeroes ≤ K</td></tr>
+<tr><td>Permutation in String</td><td>Fixed</td><td>Frequencies</td><td>Counts match target</td></tr>
+<tr><td>String Anagrams</td><td>Fixed</td><td>Frequencies</td><td>Counts match target</td></tr>
+<tr><td>Minimum Size Substring</td><td>Variable</td><td>Required frequencies</td><td>All requirements satisfied</td></tr>
+<tr><td>Words Concatenation</td><td>Fixed</td><td>Word counts</td><td>Word counts match</td></tr>
+<tr><td>Product &lt; Target</td><td>Variable</td><td>Product</td><td>Product &lt; target; count valid subarrays</td></tr></table></div>
+<p>Notice how many different-looking problems collapse into the same small set of ideas. We started with a contiguous range and the wish not to recalculate overlapping ranges. Then the range became a window that expands and shrinks. Then the window gained state and a constraint. The window is the container, the state tells us what is happening inside it, the constraint says whether it is acceptable, and the objective says whether we want it larger, smaller, or counted.</p>
+<blockquote><p>Sliding window stops being a pattern you memorize and becomes a way of thinking about overlapping contiguous ranges.</p></blockquote>
+</main>
+
+<script>
+/* ===== SHARED HELPERS: do not change ===== */
+var $=function(i){return document.getElementById(i)};
+var L=function(v){return v.toLocaleString('en-US')};
+var num=function(x,y){return x-y};
+function isSorted(a){for(var i=1;i<a.length;i++)if(a[i-1]>a[i])return false;return true}
+
+/* cells(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label above'}, noix:true}) -> row of cells */
+function cells(a,o){o=o||{};var c=o.c||{};return '<div class="row">'+a.map(function(v,i){var g=v===''||v===null;return '<div class="cw"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="cell'+(g?' gap':'')+' '+(c[i]||'')+'">'+(g?'&nbsp;':v)+'</div><span class="ix">'+(o.noix?'':i)+'</span></div>'}).join('')+'</div>'}
+
+/* widget(id, presets, build): Previous/Next stepper.
+   presets = [[buttonLabel, params], ...]; build(params) returns [{h:htmlString, n:noteText}, ...] */
+function widget(id,opts,build){
+  var el=$(id),i=0,st=[];
+  el.innerHTML=(opts.length>1?'<div class="row" style="align-items:center">'+opts.map(function(o,k){return '<button data-k="'+k+'">'+o[0]+'</button>'}).join('')+'</div>':'')+'<div class="scroll v"></div><p class="note" aria-live="polite"></p><div class="ctl"><button class="pv">Previous</button><span class="pos"></span><button class="nx">Next</button><button class="pl">Play</button></div>';
+  var v=el.querySelector('.v'),n=el.querySelector('.note'),p=el.querySelector('.pos'),pv=el.querySelector('.pv'),nx=el.querySelector('.nx'),pl=el.querySelector('.pl'),tm=null;
+  function stop(){if(tm){clearInterval(tm);tm=null}pl.textContent='Play'}
+  function r(){v.innerHTML=st[i].h;n.textContent=st[i].n;p.textContent='Step '+(i+1)+' of '+st.length;pv.disabled=i===0;nx.disabled=i===st.length-1}
+  function pick(k){stop();st=build(opts[k][1]);i=0;[].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.k===k))});r()}
+  [].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.onclick=function(){pick(+b.dataset.k)}});
+  pv.onclick=function(){stop();if(i>0){i--;r()}};nx.onclick=function(){stop();if(i<st.length-1){i++;r()}};
+  pl.onclick=function(){if(tm){stop();return}if(i>=st.length-1){i=0;r()}pl.textContent='Pause';tm=setInterval(function(){if(i<st.length-1){i++;r()}else stop()},1100)};
+  pick(0);
+}
+
+/* tabs(id, labels, fn): tab buttons; fn(k) returns html for tab k */
+function tabs(id,labels,fn){var el=$(id);el.innerHTML='<div class="row" style="align-items:center"></div><div class="tv"></div>';var bar=el.firstChild,tv=el.lastChild;
+  labels.forEach(function(t,k){var b=document.createElement('button');b.textContent=t;b.onclick=function(){[].forEach.call(bar.children,function(x){x.setAttribute('aria-pressed',String(x===b))});tv.innerHTML=fn(k)};b.setAttribute('aria-pressed',String(k===0));bar.appendChild(b)});tv.innerHTML=fn(0)}
+
+/* growth(id, ns, bruteFn, betterFn, header1, header2): log-scale comparison table */
+function growth(id,ns,bf,tp,h1,h2){$(id).innerHTML='<table><tr><th>n</th><th>'+h1+'</th><th>'+h2+'</th></tr>'+ns.map(function(n){var b=bf(n),t=tp(n);return '<tr><td>'+L(n)+'</td><td>'+L(b)+'<div class="bar r" style="width:'+Math.max(1,Math.log10(b)/12*100)+'%;margin-left:auto"></div></td><td>'+L(t)+'<div class="bar g" style="width:'+Math.max(1,Math.log10(t)/12*100)+'%;margin-left:auto"></div></td></tr>'}).join('')+'</table><p class="cap">Bars use a log scale, otherwise the second column would be invisible.</p>'}
+
+/* flow(['step','step',...]) -> vertical arrow flow */
+function flow(a){return '<div class="flow">'+a.map(function(x){return '<div class="cell">'+x+'</div>'}).join('<span>↓</span>')+'</div>'}
+
+/* grid(matrix, {c:function(r,c){return 'ok|now|dim|mv'}, rh:[row headers], ch:[col headers]}) -> 2D table of cells (DP tables, grids, matrices) */
+function grid(m,o){o=o||{};var w=m[0].length,ch=o.ch,rh=o.rh;
+  var h='<div class="mx" style="grid-template-columns:'+(rh?'auto ':'')+'repeat('+w+',minmax(0,1fr))">';
+  if(ch){h+=(rh?'<span></span>':'')+ch.map(function(x){return '<span class="mh">'+x+'</span>'}).join('')}
+  m.forEach(function(r,i){if(rh)h+='<span class="mh">'+rh[i]+'</span>';r.forEach(function(v,j){h+='<div class="cell '+((o.c&&o.c(i,j))||'')+'">'+v+'</div>'})});
+  return h+'</div>'}
+
+/* vbars(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label'}}) -> vertical bar chart of an array (sorting, partitioning, heights) */
+function vbars(a,o){o=o||{};var c=o.c||{},mx=Math.max.apply(null,a.map(Math.abs))||1;
+  return '<div class="vb">'+a.map(function(v,i){return '<div class="vc"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="vbar '+(c[i]||'')+'" style="height:'+Math.max(4,Math.round(Math.abs(v)/mx*110))+'px"></div><span class="ix">'+v+'</span></div>'}).join('')+'</div>'}
+
+/* driver(id, cfg): "you drive the algorithm". The reader picks the move; wrong moves get a teaching message.
+   cfg = {
+     presets:[[label,param],...],
+     init:function(param){return state},
+     view:function(state,done){return html},
+     done:function(state){return bool},
+     prompt:function(state,done){return 'What should we do?'},
+     choices:[['A','button text'],['B','button text'],...],
+     expected:function(state){return 'A'},               // the correct choice id
+     apply:function(state,choiceId){ return 'Right. why it worked'},   // mutate state here
+     hint:function(state){return 'general hint'},
+     wrong:function(state,choiceId){return 'specific message for a tempting wrong choice, or undefined'}
+   } */
+function driver(id,cfg){
+  var el=$(id),k=0,s,msg='';
+  function init(){s=cfg.init(cfg.presets[k][1]);msg='';draw()}
+  function draw(){var done=cfg.done(s);
+    el.innerHTML='<div class="row" style="align-items:center">'+cfg.presets.map(function(p,j){return '<button data-p="'+j+'" aria-pressed="'+(j===k)+'">'+p[0]+'</button>'}).join('')+'</div><div class="scroll">'+cfg.view(s,done)+'</div><p class="note" aria-live="polite"><strong>'+cfg.prompt(s,done)+'</strong></p><div class="ctl">'+cfg.choices.map(function(c){return '<button data-c="'+c[0]+'"'+(done?' disabled':'')+'>'+c[1]+'</button>'}).join('')+'</div><p class="note" aria-live="polite">'+msg+'</p>';
+    [].forEach.call(el.querySelectorAll('button[data-p]'),function(b){b.onclick=function(){k=+b.dataset.p;init()}});
+    [].forEach.call(el.querySelectorAll('button[data-c]'),function(b){b.onclick=function(){choose(b.dataset.c)}})}
+  function choose(c){if(c!==cfg.expected(s)){msg=(cfg.wrong&&cfg.wrong(s,c))||('Not quite. '+cfg.hint(s));draw();return}
+    msg=cfg.apply(s,c)||'Right.';draw()}
+  init()}
+
+/* slider(id, {min,max,value,label,render:function(v){return html}}) -> "drag to see how the cost grows" figure */
+function slider(id,o){var el=$(id);el.innerHTML='<label for="'+id+'S">'+o.label+' = <strong class="so"></strong></label><input id="'+id+'S" type="range" min="'+o.min+'" max="'+o.max+'" value="'+o.value+'"><div class="sv"></div>';
+  var inp=el.querySelector('input'),out=el.querySelector('.so'),sv=el.querySelector('.sv');
+  function u(){out.textContent=inp.value;sv.innerHTML=o.render(+inp.value)}inp.oninput=u;u()}
+
+/* ===== PAGE-SPECIFIC ILLUSTRATIONS GO BELOW ===== */
+
+/* ---------- small shared helpers for this page ---------- */
+function mxv(c){var m=0;for(var x in c)if(c[x]>m)m=c[x];return m}
+function cs(c){return '{'+Object.keys(c).map(function(x){return x+':'+c[x]}).join(', ')+'}'}
+function rng(a,b){var r=[];for(var i=a;i<=b;i++)r.push(i);return r}
+function eqc(a,b){var ka=Object.keys(a),kb=Object.keys(b);if(ka.length!==kb.length)return false;for(var i=0;i<ka.length;i++)if(a[ka[i]]!==b[ka[i]])return false;return true}
+function cnt(str){var c={};str.split('').forEach(function(ch){c[ch]=(c[ch]||0)+1});return c}
+/* wv(array, l, r, {now:index, ok:[indices]}) -> window view; l>r means empty window */
+function wv(a,l,r,o){o=o||{};var c={},sub={},i;
+  for(i=0;i<a.length;i++)c[i]=(r>=0&&i>=l&&i<=r)?'mv':'dim';
+  if(o.now!=null&&o.now>=l&&o.now<=r)c[o.now]='now';
+  if(o.ok){for(i=0;i<o.ok.length;i++)c[o.ok[i]]='ok'}
+  if(r>=l&&r>=0){sub[l]='L';sub[r]=(l===r?'L,R':'R')}
+  return cells(a,{c:c,sub:sub})}
+
+/* ---------- character replacement simulation ---------- */
+function repSim(a,k){
+  var counts={},l=0,maxf=0,bl=0,br=-1,st=[];
+  function lab(l,r){var len=Math.max(0,r-l+1);
+    return '<p class="lbl">counts '+cs(counts)+' · stored max_frequency = '+maxf+' · true max in window = '+mxv(counts)+'</p><p class="lbl">replacements needed = length − max_frequency = '+len+' − '+maxf+' = '+(len-maxf)+' (k = '+k+')</p>'}
+  st.push({h:wv(a,0,-1)+lab(0,-1),n:'Empty window. Valid means length − max_frequency ≤ '+k+'.'});
+  for(var r=0;r<a.length;r++){
+    counts[a[r]]=(counts[a[r]]||0)+1;maxf=Math.max(maxf,counts[a[r]]);
+    var need=(r-l+1)-maxf;
+    st.push({h:wv(a,l,r,{now:r})+lab(l,r),n:'Add '+a[r]+'. Max frequency is now '+maxf+'. Replacements needed = '+need+'. '+(need<=k?'Valid.':'INVALID, shrink from the left.')});
+    while((r-l+1)-maxf>k){
+      var ch=a[l];counts[ch]--;l++;
+      var nd=(r-l+1)-maxf;
+      st.push({h:wv(a,l,r)+lab(l,r),n:'Remove '+ch+' from the left. Replacements needed = '+nd+'. '+(nd<=k?'Valid again.':'Still invalid.')+(mxv(counts)<maxf?' (Stored max '+maxf+' is now stale; true max is '+mxv(counts)+'.)':'')});
+    }
+    if(r-l+1>br-bl+1){bl=l;br=r}
+  }
+  st.push({h:wv(a,0,-1,{ok:rng(bl,br)}),n:'Done. Longest window that can become one letter: length '+(br-bl+1)+', "'+a.slice(bl,br+1).join('')+'".'});
+  st.best=[bl,br];
+  return st}
+
+function repAns(a,k,stale){
+  var c={},l=0,mf=0,best=0;
+  for(var r=0;r<a.length;r++){
+    c[a[r]]=(c[a[r]]||0)+1;mf=Math.max(mf,c[a[r]]);
+    while((r-l+1)-(stale?mf:mxv(c))>k){c[a[l]]--;l++}
+    best=Math.max(best,r-l+1)}
+  return best}
+
+/* ---------- section 1 ---------- */
+tabs('keepT',['Keep A','Keep B','Keep C'],function(k){
+  var a='AABACA'.split(''),ch='ABC'[k],c={},n=0,i;
+  for(i=0;i<a.length;i++){if(a[i]===ch){c[i]='ok';n++}else c[i]='now'}
+  return cells(a,{c:c})+'<p class="note">Keep '+ch+': '+n+' cells stay, '+(a.length-n)+' (yellow) must be replaced. Cost = 6 − '+n+' = <strong>'+(a.length-n)+'</strong>.</p><p class="cap">The most frequent letter always gives the smallest cost.</p>'});
+
+(function(){
+  var a='AABACA'.split(''),b='AABACAD'.split('');
+  $('fig1a').innerHTML=
+    '<p class="lbl">Window A A B A C A: length 6, max frequency 4, 6 − 4 = 2 ≤ k (k = 2): valid</p>'+cells(a,{c:{0:'ok',1:'ok',2:'now',3:'ok',4:'now',5:'ok'},noix:true})+
+    '<p class="lbl">Window A A B A C A D: length 7, max frequency 4, 7 − 4 = 3 &gt; k: invalid</p>'+cells(b,{c:{0:'ok',1:'ok',2:'now',3:'ok',4:'now',5:'ok',6:'now'},sub:{6:'breaks it'},noix:true})+
+    '<p class="cap">Green = letters we keep (the most frequent one). Yellow = letters we would replace.</p>';
+})();
+
+/* ---------- section 2 ---------- */
+widget('stRep',[
+  ['"AABABBA", k=1',['AABABBA',1]],
+  ['"AABACA", k=2',['AABACA',2]],
+  ['"ABAB", k=2',['ABAB',2]]
+],function(p){return repSim(p[0].split(''),p[1])});
+
+slider('slK',{min:0,max:4,value:1,label:'k (replacements allowed)',render:function(k){
+  var a='AABABBA'.split(''),b=repSim(a,k).best,c={},i;
+  for(i=0;i<a.length;i++)c[i]=(i>=b[0]&&i<=b[1])?'ok':'dim';
+  return cells(a,{c:c})+'<p class="cap">String "AABABBA". With k='+k+', the longest window that can become one letter is "'+a.slice(b[0],b[1]+1).join('')+'", length '+(b[1]-b[0]+1)+'.</p>'}});
+
+/* ---------- section 3 ---------- */
+tabs('cmpMax',['AABABBA, k=1','AABACA, k=2','ABBBACB, k=2','ABCDEF, k=1'],function(k){
+  var cfg=[['AABABBA',1],['AABACA',2],['ABBBACB',2],['ABCDEF',1]][k],a=cfg[0].split('');
+  var ex=repAns(a,cfg[1],false),sl=repAns(a,cfg[1],true);
+  return cells(a,{c:{},noix:true})+
+    '<table class="tt"><tr><th>Version</th><th>Answer</th></tr><tr><td>Exact max (recomputed each time)</td><td>'+ex+'</td></tr><tr><td>Stored max (never decreased)</td><td>'+sl+'</td></tr></table>'+
+    '<p class="cap">'+(ex===sl?'Same answer. The stale value never makes us overshoot or miss a longer window.':'Different answers!')+'</p>'});
+
+/* ---------- section 4 ---------- */
+function onesSim(a,k){
+  var l=0,z=0,bl=0,br=-1,st=[];
+  function lab(){return '<p class="lbl">zeroes in window = '+z+' (k = '+k+')</p>'}
+  st.push({h:wv(a,0,-1)+lab(),n:'Empty window. Valid means zeroes ≤ '+k+'.'});
+  for(var r=0;r<a.length;r++){
+    if(a[r]===0)z++;
+    st.push({h:wv(a,l,r,{now:r})+lab(),n:'Add '+a[r]+'. Zeroes = '+z+'. '+(z<=k?'Valid, length '+(r-l+1)+'.':'INVALID, shrink.')});
+    while(z>k){var g=a[l];if(g===0)z--;l++;
+      st.push({h:wv(a,l,r)+lab(),n:'Remove '+g+' from the left. Zeroes = '+z+'. '+(z<=k?'Valid again.':'Still invalid.')})}
+    if(r-l+1>br-bl+1){bl=l;br=r}
+  }
+  st.push({h:wv(a,0,-1,{ok:rng(bl,br)}),n:'Done. Longest run of ones after at most '+k+' flips: length '+(br-bl+1)+'.'});
+  return st}
+widget('stOnes',[
+  ['[1,1,0,0,1,1,1,0], k=2',[[1,1,0,0,1,1,1,0],2]],
+  ['[0,1,1,0,0,0,1,1], k=1',[[0,1,1,0,0,0,1,1],1]],
+  ['[1,0,1,1,0,1], k=1',[[1,0,1,1,0,1],1]]
+],function(p){return onesSim(p[0],p[1])});
+
+driver('drvZ',{
+  presets:[['[1,1,0,0,1,1,1,0], k=2',[[1,1,0,0,1,1,1,0],2]],['[0,1,1,0,0,0,1,1], k=1',[[0,1,1,0,0,0,1,1],1]]],
+  init:function(p){return {a:p[0],k:p[1],l:0,r:0,z:0,bl:0,br:-1}},
+  view:function(s,done){
+    var c={},sub={},i;
+    for(i=0;i<s.a.length;i++)c[i]=(i>=s.l&&i<s.r)?'mv':'dim';
+    if(done){for(i=s.bl;i<=s.br;i++)c[i]='ok'}
+    if(s.r>s.l)sub[s.l]='L';
+    if(s.r<s.a.length)sub[s.r]=(sub[s.r]?sub[s.r]+',':'')+'next';
+    return cells(s.a,{c:c,sub:sub})+'<p class="lbl">zeroes = '+s.z+' (limit '+s.k+') · best so far = '+(s.br-s.bl+1)+'</p>'},
+  done:function(s){return s.r>=s.a.length&&s.z<=s.k},
+  prompt:function(s,done){
+    if(done)return 'Done. The longest window has length '+(s.br-s.bl+1)+'.';
+    return s.z>s.k?'Too many zeroes ('+s.z+' &gt; '+s.k+'). What now?':'The window is valid. What now?'},
+  choices:[['E','Expand right'],['S','Shrink left']],
+  expected:function(s){return s.z>s.k?'S':'E'},
+  apply:function(s,c){
+    if(c==='E'){if(s.a[s.r]===0)s.z++;s.r++}
+    else{if(s.a[s.l]===0)s.z--;s.l++}
+    if(s.z<=s.k&&s.r-s.l>s.br-s.bl+1){s.bl=s.l;s.br=s.r-1}
+    return c==='E'?'Right. Valid, so grow and look for a longer run.':'Right. Moving left drops elements until the zero count is back within k.'},
+  hint:function(s){return 'Is the zero count within k? Yes, expand. No, shrink.'},
+  wrong:function(s,c){return c==='S'?'The window is valid and we want the longest. Shrinking now only loses length.':'Too many zeroes already. Adding more cannot reduce the zero count, so repair from the left first.'}
+});
+
+/* ---------- section 5 ---------- */
+tabs('askT',['Zeroes inside?','How many of each?','How many different?','What is the total?'],function(k){
+  var d=[
+    ['Zero replacement','How many zeroes are inside?','zero_count','zeroes &lt;= k'],
+    ['Character replacement','How many of each character are inside (and which is the most common)?','frequency map + max_frequency','length - max_frequency &lt;= k'],
+    ['K distinct characters','How many different characters are inside?','frequency map','len(counts) &lt;= k'],
+    ['Sum problems','What is the total sum?','window_sum','sum &gt;= target']][k];
+  return '<table class="tt"><tr><td>Problem</td><td>'+d[0]+'</td></tr><tr><td>Question about the window</td><td>'+d[1]+'</td></tr><tr><td>State to maintain</td><td><code>'+d[2]+'</code></td></tr><tr><td>Validity</td><td><code>'+d[3]+'</code></td></tr></table>'});
+
+/* ---------- section 6 ---------- */
+function permSim(p,s){
+  var a=s.split(''),m=p.length,need=cnt(p),win={},st=[],starts=[];
+  function lab(){return '<p class="lbl">target counts '+cs(need)+' · window counts '+cs(win)+'</p>'}
+  st.push({h:wv(a,0,-1)+lab(),n:'Fixed window of size '+m+'. Compare counts, not strings.'});
+  for(var r=0;r<a.length;r++){
+    win[a[r]]=(win[a[r]]||0)+1;var gone=null;
+    if(r>=m){gone=a[r-m];win[gone]--;if(!win[gone])delete win[gone]}
+    var l=Math.max(0,r-m+1),note,ok=false;
+    if(r<m-1)note='Window still filling.';
+    else{ok=eqc(win,need);if(ok)starts.push(l);note=ok?'Counts match the target: MATCH at index '+l+'.':'Counts differ.'}
+    st.push({h:wv(a,l,r,{ok:ok?rng(l,r):null})+lab(),n:(gone!==null?gone+' leaves, '+a[r]+' enters. ':'Add '+a[r]+'. ')+note});
+  }
+  var all=[];starts.forEach(function(x){all=all.concat(rng(x,x+m-1))});
+  st.push({h:wv(a,0,-1,{ok:all})+lab(),n:starts.length?'Done. Match start indices: ['+starts.join(', ')+'].':'Done. No permutation of "'+p+'" appears.'});
+  return st}
+widget('stPerm',[
+  ['"ab" in "eidbaooo"',['ab','eidbaooo']],
+  ['"abc" in "cbaebabacd"',['abc','cbaebabacd']],
+  ['"ab" in "eidboaoo"',['ab','eidboaoo']]
+],function(p){return permSim(p[0],p[1])});
+
+/* ---------- section 8 ---------- */
+function minSim(s,t){
+  var a=s.split(''),need=cnt(t),have={},req=Object.keys(need).length,formed=0,l=0,bl=0,br=-1,bestLen=1e9,st=[];
+  function lab(){return '<p class="lbl">contract need '+cs(need)+' · have '+cs(have)+' · clauses satisfied = '+formed+' / '+req+'</p>'}
+  st.push({h:wv(a,0,-1)+lab(),n:'Smallest window containing every letter of "'+t+'" with the required counts.'});
+  for(var r=0;r<a.length;r++){
+    var ch=a[r];have[ch]=(have[ch]||0)+1;
+    var hit=need[ch]&&have[ch]===need[ch];if(hit)formed++;
+    st.push({h:wv(a,l,r,{now:r})+lab(),n:'Add '+ch+'. '+(hit?'A clause is now satisfied. ':'')+(formed===req?'Window is VALID, shrink aggressively.':'Not valid yet, keep expanding.')});
+    while(formed===req){
+      var len=r-l+1;if(len<bestLen){bestLen=len;bl=l;br=r}
+      var out=a[l];have[out]--;if(!have[out])delete have[out];
+      var broke=need[out]&&(have[out]||0)<need[out];if(broke)formed--;l++;
+      st.push({h:wv(a,l,r)+lab(),n:'Recorded length '+len+' (best '+bestLen+'). Drop '+out+'. '+(broke?'That broke a clause, so the window is invalid again.':'Still valid, keep shrinking.')});
+    }
+  }
+  st.push({h:wv(a,0,-1,{ok:br>=0?rng(bl,br):[]}),n:br>=0?'Done. Smallest valid window: "'+a.slice(bl,br+1).join('')+'" (length '+bestLen+').':'Done. No valid window exists.'});
+  return st}
+widget('stMin',[
+  ['"ADOBECODEBANC", "ABC"',['ADOBECODEBANC','ABC']],
+  ['"AABXCAB", "AABC"',['AABXCAB','AABC']],
+  ['"ABC", "AB"',['ABC','AB']]
+],function(p){return minSim(p[0],p[1])});
+
+/* ---------- section 9 ---------- */
+widget('stWords',[['words = [foo, bar]',[['foo','bar'],'barfoothefoobarman']],['words = [foo, bar, the]',[['foo','bar','the'],'barfoothefoobarman']]],function(p){
+  var words=p[0],s=p[1],wl=words[0].length,n=words.length,chunks=[],i,st=[],found=[];
+  for(i=0;i+wl<=s.length;i+=wl)chunks.push(s.substr(i,wl));
+  var need={};words.forEach(function(w){need[w]=(need[w]||0)+1});
+  st.push({h:cells(chunks,{c:{},noix:true})+'<p class="lbl">need word counts '+cs(need)+'</p>',n:'Window = '+n+' words × '+wl+' letters = '+(n*wl)+' letters. State = counts of words.'});
+  for(var l=0;l+n<=chunks.length;l++){
+    var w={};for(i=l;i<l+n;i++)w[chunks[i]]=(w[chunks[i]]||0)+1;
+    var ok=eqc(w,need),c={};
+    for(i=0;i<chunks.length;i++)c[i]=(i>=l&&i<l+n)?(ok?'ok':'mv'):'dim';
+    if(ok)found.push(l*wl);
+    st.push({h:cells(chunks,{c:c,noix:true})+'<p class="lbl">window word counts '+cs(w)+'</p>',n:ok?'Word counts match: concatenation found at string index '+(l*wl)+'.':'Word counts do not match.'});
+  }
+  st.push({h:cells(chunks,{c:{},noix:true}),n:found.length?'Offset 0 gives start indices ['+found.join(', ')+'].':'Offset 0 gives no matches (other offsets are checked the same way).'});
+  return st});
+
+/* ---------- section 10 ---------- */
+function prodSim(a,t){
+  var l=0,prod=1,count=0,st=[];
+  function lab(){return '<p class="lbl">product = '+prod+' (target '+t+') · count so far = '+count+'</p>'}
+  st.push({h:wv(a,0,-1)+lab(),n:'Count subarrays with product < '+t+'.'});
+  for(var r=0;r<a.length;r++){
+    prod*=a[r];
+    st.push({h:wv(a,l,r,{now:r})+lab(),n:'Multiply by '+a[r]+'. Product = '+prod+'. '+(prod<t?'Valid.':'Too large, shrink.')});
+    while(prod>=t&&l<=r){var g=a[l];prod=prod/g;l++;
+      st.push({h:wv(a,l,r)+lab(),n:'Divide by '+g+'. Product = '+prod+'. '+(prod<t?'Valid again.':'Still too large.')})}
+    var add=r-l+1;count+=add;
+    var subs=[];for(var j=r;j>=l;j--)subs.push('['+a.slice(j,r+1).join(',')+']');
+    st.push({h:wv(a,l,r,{ok:rng(l,r)})+lab(),n:'Window valid, so every subarray ending at '+a[r]+' inside it is valid: '+(add?subs.join(' '):'none')+'. Add '+add+'.'});
+  }
+  st.push({h:wv(a,0,-1)+lab(),n:'Done. Total = '+count+'.'});
+  return st}
+widget('stProd',[
+  ['[10,5,2,6], target 100',[[10,5,2,6],100]],
+  ['[2,3,4], target 10',[[2,3,4],10]]
+],function(p){return prodSim(p[0],p[1])});
+
+function prodCount(a,t){var l=0,pr=1,c=0;for(var r=0;r<a.length;r++){pr*=a[r];while(pr>=t&&l<=r){pr=pr/a[l];l++}c+=r-l+1}return c}
+function prodBrute(a,t){var c=0;for(var i=0;i<a.length;i++){var pr=1;for(var j=i;j<a.length;j++){pr*=a[j];if(pr<t)c++;else break}}return c}
+slider('slP',{min:1,max:200,value:100,label:'target',render:function(t){
+  var a=[10,5,2,6],f=prodCount(a,t),b=prodBrute(a,t);
+  return cells(a,{noix:true})+'<p class="cap">Sliding window counts <strong>'+f+'</strong> subarrays with product &lt; '+t+'. Brute force counts <strong>'+b+'</strong>. '+(f===b?'They agree.':'Mismatch!')+'</p>'}});
+
+/* ---------- section 11 ---------- */
+tabs('formW',['Char replacement','Ones replacement','Permutation','Min window','Product'],function(k){
+  var r=[
+    ['<code>[left...right]</code> over letters','frequency map + max frequency','length − max_frequency ≤ K','longest'],
+    ['<code>[left...right]</code> over 0/1','zero count','zeroes ≤ K','longest'],
+    ['fixed size = length of pattern','frequency counts','window counts == target counts','does a match exist / all starts'],
+    ['<code>[left...right]</code> over letters','have-counts + number of satisfied clauses','all required frequencies satisfied','smallest'],
+    ['<code>[left...right]</code> over numbers','running product','product &lt; target','count valid subarrays']][k];
+  return '<table class="tt"><tr><td>Window</td><td>'+r[0]+'</td></tr><tr><td>State</td><td>'+r[1]+'</td></tr><tr><td>Validity</td><td>'+r[2]+'</td></tr><tr><td>Objective</td><td>'+r[3]+'</td></tr></table>'});
+
+tabs('lsT',['Longest valid window','Smallest valid window'],function(k){
+  if(k===0)return flow(['expand, expand, expand...','until invalid','shrink until valid','expand again'])+'<p class="cap">Shrink only when forced.</p>';
+  return flow(['expand, expand...','until valid','shrink while still valid','until invalid, expand again'])+'<p class="cap">Shrink as soon as you can.</p>'});
+
+/* ===== CODE TOGGLE AND THEME: do not change ===== */
+var cb=$('codeBtn'),hid=false;
+cb.onclick=function(){hid=!hid;[].forEach.call(document.querySelectorAll('details'),function(d){d.open=!hid});cb.textContent=hid?'Show code':'Hide code'};
+var root=document.documentElement,tb=$('theme');
+function setTheme(t){root.setAttribute('data-theme',t);tb.textContent=t==='dark'?'Light':'Dark'}
+try{var sv=localStorage.getItem('theme');if(sv==='dark'||sv==='light')setTheme(sv)}catch(e){}
+tb.onclick=function(){var t=root.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);try{localStorage.setItem('theme',t)}catch(e){}};
+</script>
+</body>
+</html>

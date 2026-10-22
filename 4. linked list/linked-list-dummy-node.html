@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>A Few Linked-List Ideas That Make Everything Easier</title>
+<style>
+:root{--bg:#fff;--ink:#111;--mut:#555;--line:#ccc;--acc:#1f4e8c;--hi:#fff3b0;--hib:#c9a227;--ok:#dcf0dc;--okb:#3a8a3a;--mv:#e6edf7;--dim:#eee;--card:#fafafa;--red:#b5342b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#121212;--ink:#eee;--mut:#aaa;--line:#3a3a3a;--acc:#8ab4f8;--hi:#4a4220;--hib:#c9a227;--ok:#1d3a22;--okb:#5cb85c;--mv:#1c2a40;--dim:#2a2a2a;--card:#1a1a1a;--red:#ff7b72;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Roman",Times,serif}
+main{max-width:720px;margin:0 auto;padding:40px 20px 80px}
+h1,h2,h3{font-family:inherit;line-height:1.25}
+h1{font-size:2.1rem;margin:.2em 0 .6em}
+h2{font-size:1.5rem;margin:2.6em 0 .6em;padding-top:1.2em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin:1.6em 0 .4em}
+blockquote{margin:1.2em 0;padding:.4em 1em;border-left:4px solid var(--acc);font-size:1.12rem}
+blockquote p{margin:.3em 0}
+code{font:inherit;background:var(--card);padding:1px 5px;border-radius:4px}
+a{color:var(--acc)}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:1.2em 0}
+.cap{font-size:.9rem;color:var(--mut);margin:.6em 0 0}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:flex-end}
+.cw{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ix{font-size:.8rem;color:var(--mut);min-height:1.1em;font-weight:600}
+.cell{min-width:54px;padding:7px 6px;text-align:center;border:2px solid var(--line);background:var(--bg);border-radius:6px;font-weight:600;transition:background .2s}
+.gap{border-style:dashed;background:transparent}
+.ok{background:var(--ok);border-color:var(--okb)}
+.now{background:var(--hi);border-color:var(--hib)}
+.dim{background:var(--dim);color:var(--mut);border-color:var(--dim)}
+.mv{background:var(--mv);border-color:var(--acc)}
+.mx{display:grid;gap:3px;margin:8px 0}
+.mh{font-size:.8rem;color:var(--mut);text-align:center;align-self:center}
+.mx .cell{min-width:0;padding:3px 0;font-size:.8rem}
+button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
+button:hover:not(:disabled){background:var(--mv)}
+button:disabled{opacity:.4;cursor:default}
+button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--hib);outline-offset:2px}
+.tools{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5;display:flex;gap:8px}
+.ctl{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.pos{color:var(--mut);font-size:.9rem}
+.note{min-height:3em;margin:.4em 0 0;font-weight:500}
+.lbl{font-size:.9rem;margin:8px 0 3px}
+.bar{height:14px;border-radius:4px;background:var(--acc);min-width:3px}
+.bar.g{background:var(--okb)}.bar.r{background:var(--red)}
+input[type=range]{width:100%}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--dim)}
+details{margin:1em 0;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+summary{cursor:pointer;padding:8px 12px;font-size:.95rem;color:var(--acc)}
+pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,Menlo,Consolas,monospace}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.two{grid-template-columns:1fr}}
+.flow{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;font-size:.95rem}
+.flow .cell{min-width:140px}
+.zones{display:flex;border:2px solid var(--line);border-radius:6px;overflow:hidden;text-align:center;font-size:.85rem}
+.zones div{padding:10px 6px}
+.flag{font-size:.9rem;color:var(--mut)}
+.tt td:first-child{font-weight:600}
+.tt td{text-align:left}
+.vb{display:flex;gap:6px;align-items:flex-end;margin:6px 0}
+.vc{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:26px;max-width:60px;justify-content:flex-end}
+.vbar{width:100%;border:2px solid var(--line);background:var(--bg);border-radius:4px 4px 0 0;transition:height .2s,background .2s}
+</style>
+</head>
+<body>
+<div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
+<main>
+
+<h1>A Few Linked-List Ideas That Make Everything Easier</h1>
+<p>We have now learned how to walk through a linked list, insert nodes, delete nodes, reverse a list and use multiple pointers. The basic mechanics are becoming familiar. But a few ideas make linked-list problems <strong>dramatically easier</strong> once you see them. One of them is particularly simple: what if we had a node before the first node?</p>
+<p>That sounds almost pointless. Why create a node that is not part of our data? It turns out that this tiny idea removes a surprising amount of complexity, and we will build up to it from scratch.</p>
+<blockquote><p>Sometimes adding something artificial makes the real logic simpler.</p></blockquote>
+<p>This post follows the dummy node into building, deleting and merging lists. Each idea has a figure to step through, there are sliders and a "you drive it" merge, and the code can be hidden with the button at the top.</p>
+<ol>
+<li><a href="#s1">The problem with building a list from scratch</a></li>
+<li><a href="#s2">Introducing the dummy node</a></li>
+<li><a href="#s3">The dummy node eliminates special cases</a></li>
+<li><a href="#s4">Merging two sorted arrays</a></li>
+<li><a href="#s5">Merging two sorted linked lists</a></li>
+<li><a href="#s6">A dangerous detail: save before you break</a></li>
+<li><a href="#s7">What happens when one list runs out?</a></li>
+<li><a href="#s8">Common mistakes</a></li>
+<li><a href="#s9">How much work is a merge?</a></li>
+<li><a href="#s10">What these problems taught us</a></li>
+<li><a href="#s11">The bigger pattern</a></li>
+<li><a href="#s12">A useful way to recognize these problems</a></li>
+<li><a href="#s13">The evolution of the idea</a></li>
+</ol>
+
+<!-- ===== 1 ===== -->
+<h2 id="s1">1. The problem with building a list from scratch</h2>
+<p>Say we are given data and need to construct <code>10 → 20 → 30</code> by adding nodes one at a time. There is an annoying question: what happens when the list is empty? Initially <code>head = None</code>. Adding <code>10</code> has no existing node, so it needs a special case. Adding <code>20</code> needs different logic.</p>
+<h3>The naive way</h3>
+<pre style="padding:0 0 0 14px">if head is None:        # first node: special
+    head = new_node
+else:                   # every later node: normal
+    tail.next = new_node
+    tail = new_node</pre>
+<p>Our algorithm has two worlds: an empty list with special handling, and a non-empty list with normal handling. This is not wrong, but special cases are where pointer code becomes hard to reason about.</p>
+<h3>Key insight: give ourselves something to build onto</h3>
+<p>Step through both constructions side by side.</p>
+<div class="fig" id="stBuild"></div>
+<blockquote><p>The dummy node gives us something to build onto from the very beginning.</p></blockquote>
+
+<!-- ===== 2 ===== -->
+<h2 id="s2">2. Introducing the dummy node</h2>
+<p>Let us invent a node that is not really part of our data. For the real list <code>10 → 20 → 30</code> we create <code>dummy → 10 → 20 → 30</code>. The dummy holds no real value. Its only purpose is to be a <strong>stable starting point</strong>, like scaffolding: we do not care about the dummy itself, we care about everything after it.</p>
+<p>When we add the first real node, it behaves exactly like every other insertion: <code>tail.next = node; tail = node</code>. The exceptional first case becomes an ordinary case.</p>
+<h3>The dummy is not part of the answer</h3>
+<p>At the end our real list begins at <code>dummy.next</code>. The pattern appears constantly:</p>
+<pre style="padding:0 0 0 14px">dummy = Node(0)        # the value (0, -1, anything) does not matter
+dummy.next = head
+current = dummy
+# ... work ...
+return dummy.next</pre>
+<div class="fig" id="tbScaf"></div>
+<blockquote><p>The dummy helps construct or manipulate the list. It does not belong to the final answer.</p></blockquote>
+
+<!-- ===== 3 ===== -->
+<h2 id="s3">3. The dummy node eliminates special cases</h2>
+<p>Here is the deeper reason we like it. Suppose we want to delete a node. Without a dummy, deleting the head is special (<code>head = head.next</code>), while deleting anything else needs its predecessor (<code>predecessor.next = ...</code>). Two cases, so more reasoning. With a dummy, the predecessor of <code>10</code> is simply <code>dummy</code>.</p>
+<blockquote><p>The dummy node manufactures a predecessor for the head.</p></blockquote>
+<h3>Removing every node with a given value</h3>
+<p>We start <code>current</code> at the dummy and inspect <code>current.next</code> rather than <code>current</code>, so that <code>current</code> always represents the <strong>predecessor</strong>. If <code>current.next</code> matches, we bypass it with <code>current.next = current.next.next</code>. Pick a target. Try <code>10</code> (the head) and watch that the same rule is used.</p>
+<div class="fig" id="stDel"></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>def remove_value(head, target):
+    dummy = Node(0)
+    dummy.next = head
+
+    current = dummy
+
+    while current.next is not None:
+        if current.next.value == target:
+            current.next = current.next.next   # bypass, do not move
+        else:
+            current = current.next             # move only when not deleting
+
+    return dummy.next</pre></details>
+<p>The same code handles deleting the head, the middle and the tail, with no separate cases. Notice that we do <em>not</em> advance <code>current</code> after a deletion, because the new <code>current.next</code> has not been checked yet.</p>
+<h3>Why not just use a tail pointer?</h3>
+<p>These two ideas are sometimes confused because both are extra references. They solve different problems.</p>
+<div class="fig scroll"><table class="tt"><tr><th>Tool</th><th>Question it answers</th><th>Helps with</th></tr>
+<tr><td><code>head</code></td><td>Where is the beginning?</td><td>finding the list</td></tr>
+<tr><td><code>tail</code></td><td>Where is the end?</td><td>appending efficiently</td></tr>
+<tr><td><code>dummy</code></td><td>What is a stable node before the beginning?</td><td>removing boundary cases at the head</td></tr></table></div>
+<p>They are not alternatives; we can use all three. Usually we do not even keep a separate <code>head</code> if the dummy already gives us <code>head = dummy.next</code>.</p>
+
+<!-- ===== 4 ===== -->
+<h2 id="s4">4. Merging two sorted arrays</h2>
+<p>Now let us combine two lists. Before touching linked lists, understand the idea with arrays: <code>A = [1, 4, 7]</code> and <code>B = [2, 3, 8]</code> should become <code>[1, 2, 3, 4, 7, 8]</code>.</p>
+<h3>The naive way</h3>
+<p>Concatenate and sort. But both inputs are already sorted, so sorting throws away information we already have.</p>
+<h3>Key insight: only the smallest remaining element of each matters</h3>
+<p>Compare the first elements. The smaller one must be the next element of the merged result. Take it, advance that pointer, and repeat. Drag the slider to place elements one at a time.</p>
+<div class="fig" id="slMerge"></div>
+<blockquote><p>Everything already placed in the result is in sorted order. The next answer must be the smaller of the two current candidates.</p></blockquote>
+<details open><summary>Python code (click to hide or show)</summary><pre>def merge_arrays(a, b):
+    i = 0
+    j = 0
+    result = []
+
+    while i &lt; len(a) and j &lt; len(b):
+        if a[i] &lt;= b[j]:
+            result.append(a[i])
+            i += 1
+        else:
+            result.append(b[j])
+            j += 1
+
+    while i &lt; len(a):
+        result.append(a[i])
+        i += 1
+
+    while j &lt; len(b):
+        result.append(b[j])
+        j += 1
+
+    return result</pre></details>
+
+<!-- ===== 5 ===== -->
+<h2 id="s5">5. Merging two sorted linked lists</h2>
+<p>With linked lists, <code>list1 = 1 → 4 → 7</code> and <code>list2 = 2 → 3 → 8</code>, the reasoning has not changed. At every point compare the current value of each list and take the smaller. Only <strong>how we move forward</strong> changes: <code>i += 1</code> for arrays becomes <code>current = current.next</code> for linked lists. The algorithm survives while the implementation changes with the data structure.</p>
+<p>We need somewhere to build the result, and this is exactly where the dummy node shines. Every insertion is the same two lines, and we never ask "is this the first node?":</p>
+<pre style="padding:0 0 0 14px">tail.next = chosen
+tail = tail.next</pre>
+<h3>Step through the full merge</h3>
+<p>Three pointers move: <code>list1</code> and <code>list2</code> mark the next unprocessed node of each input, and <code>tail</code> marks where the result ends. Yellow nodes are being compared, grey nodes have been taken, green nodes are in the result. Presets include an empty input and two empty inputs.</p>
+<div class="fig" id="stMerge"></div>
+<h3>The complete algorithm</h3>
+<details open><summary>Python code (click to hide or show)</summary><pre>class Node:
+    def __init__(self, value):
+        self.value = value
+        self.next = None
+
+
+def merge_two_lists(list1, list2):
+    dummy = Node(0)
+    tail = dummy
+
+    while list1 is not None and list2 is not None:
+        if list1.value &lt;= list2.value:
+            tail.next = list1
+            list1 = list1.next
+        else:
+            tail.next = list2
+            list2 = list2.next
+
+        tail = tail.next
+
+    if list1 is not None:
+        tail.next = list1
+    else:
+        tail.next = list2
+
+    return dummy.next</pre></details>
+<p>Do not memorize it. Give every pointer a job.</p>
+<div class="fig scroll"><table class="tt"><tr><th>Pointer</th><th>Job</th></tr>
+<tr><td><code>dummy</code></td><td>stable anchor: the beginning of the result</td></tr>
+<tr><td><code>tail</code></td><td>moving end: where the next node is attached</td></tr>
+<tr><td><code>list1</code></td><td>current unprocessed candidate from list 1</td></tr>
+<tr><td><code>list2</code></td><td>current unprocessed candidate from list 2</td></tr></table></div>
+<h3>Reuse existing nodes instead of creating new ones</h3>
+<p>We could create <code>Node(2)</code> and attach that copy. But the node containing <code>2</code> already exists, so we can move that very node into the merged chain with <code>tail.next = list2</code>. We are not copying data; we are changing relationships.</p>
+<div class="fig" id="tbReuse"></div>
+<blockquote><p>The merged list can be built by rearranging references rather than creating replacement nodes.</p></blockquote>
+
+<!-- ===== 6 ===== -->
+<h2 id="s6">6. A dangerous detail: save before you break</h2>
+<p>When we execute <code>tail.next = list2</code> we then need <code>list2 = list2.next</code>. More generally, we are changing links, and changing a link before saving where it used to point can cost us access to part of the structure. This is the same reason we needed <code>next_node</code> when reversing a list.</p>
+<p>Consider <code>current</code> at <code>10</code> in <code>10 → 20 → 30 → 40</code>. If we run <code>current.next = None</code>, then unless we saved <code>20</code> earlier, there is no path left to the rest. Compare the unsafe and the safe order.</p>
+<div class="fig" id="stSave"></div>
+<blockquote><p>Before breaking a link, preserve whatever lies beyond it if you will need it later.</p></blockquote>
+<p>The rhythm is <strong>save, change, move</strong>. You do not always need a temporary variable, but you should always <em>think</em> about whether you do: "If I change this link right now, can I still reach everything I need?"</p>
+
+<!-- ===== 7 ===== -->
+<h2 id="s7">7. What happens when one list runs out?</h2>
+<p>Suppose <code>list1 = 1 → 3 → 5</code> and <code>list2 = 2</code>. We take <code>1</code>, then <code>2</code>. Now <code>list2</code> is <code>None</code> and the comparison loop cannot continue, but we are not done: <code>3 → 5</code> remains. Because <code>list1</code> was already sorted, we do not compare those nodes against anything. We attach the <strong>whole remaining chain</strong> in one move:</p>
+<pre style="padding:0 0 0 14px">if list1 is not None:
+    tail.next = list1
+else:
+    tail.next = list2</pre>
+<h3>Why is attaching the remainder safe?</h3>
+<p>Every element already placed is at most <code>3</code>, because otherwise we would have chosen <code>3</code> earlier, and the rest of <code>list1</code> is sorted. So <code>3 → 5</code> is exactly the correct remainder.</p>
+<blockquote><p>Once one sorted input is exhausted, the remainder of the other input is already in the correct order.</p></blockquote>
+<h3>Now you drive</h3>
+<p>Decide at each moment which node comes next. Wrong moves get an explanation.</p>
+<div class="fig" id="drvMerge"></div>
+
+<!-- ===== 8 ===== -->
+<h2 id="s8">8. Common mistakes</h2>
+<p>Most merge bugs are one of six things. Pick one.</p>
+<div class="fig" id="tbMist"></div>
+
+<!-- ===== 9 ===== -->
+<h2 id="s9">9. How much work is a merge?</h2>
+<p>Every node is considered at most once, so with <code>m</code> nodes in <code>list1</code> and <code>n</code> in <code>list2</code>, the time is <code>O(m + n)</code>. We cannot do better in general, since we must at least process every node that appears in the result. Drag the slider for the total number of nodes.</p>
+<div class="fig" id="slComplex"></div>
+<div class="fig" id="grMerge"></div>
+<p>The extra space is <code>O(1)</code>: only the dummy node is created, and <code>list1</code>, <code>list2</code>, <code>tail</code> are references. A solution that creates <code>m + n</code> new nodes would use <code>O(m + n)</code> extra space.</p>
+<div class="fig scroll"><table class="tt"><tr><th></th><th>Create new nodes</th><th>Reuse nodes (ours)</th></tr>
+<tr><td>Time</td><td>O(m + n)</td><td>O(m + n)</td></tr>
+<tr><td>Extra space</td><td>O(m + n)</td><td>O(1)</td></tr>
+<tr><td>Original lists</td><td>left intact</td><td>consumed: their nodes are rearranged</td></tr></table></div>
+<p>The honest trade-off: reusing nodes is cheaper, but it destroys the original lists. If the caller still needs them, copying is the right choice. The lesson is not that one is better, but asking "do I need new data, or only a new arrangement of existing data?"</p>
+
+<!-- ===== 10 ===== -->
+<h2 id="s10">10. What these problems taught us</h2>
+<p>This post looked like it was about dummy nodes and merging, but we actually learned several reusable patterns. Pick one:</p>
+<div class="fig" id="formW"></div>
+
+<!-- ===== 11 ===== -->
+<h2 id="s11">11. The bigger pattern</h2>
+<p>Look at what we actually did. We had two ordered streams and, at every step, looked only at the <strong>frontier</strong> of each. We never inspected <code>7</code> while deciding between <code>1</code> and <code>2</code>. The sorted property let us ignore everything behind the current positions, the linked structure let us rearrange relationships cheaply, the dummy made construction uniform, and the pointers kept track of exactly where we are.</p>
+<p>At the beginning, linked lists looked like a row of nodes. Now they should look like relationships. With arrays, many problems are about <strong>positions</strong>. With linked lists, many problems are about <strong>relationships</strong>.</p>
+<blockquote><p>The question is often not "what value should I calculate?" but "what should each link point to after this operation?"</p></blockquote>
+
+<!-- ===== 12 ===== -->
+<h2 id="s12">12. A useful way to recognize these problems</h2>
+<p>When manipulating a linked list, develop the habit of asking four questions.</p>
+<ol>
+<li><strong>Where am I?</strong> That is <code>current</code>.</li>
+<li><strong>Where do I need to go next?</strong> That is <code>current.next</code>.</li>
+<li><strong>What am I about to disconnect?</strong> If it is the only path to something I need, save it: <code>next_node = current.next</code>.</li>
+<li><strong>What relationship needs to change?</strong> For example <code>previous.next = current.next</code>, or <code>tail.next = chosen_node</code>, or <code>current.next = previous</code>.</li>
+</ol>
+<p>And before you start, ask whether the head is awkward. If an operation treats the first node differently, a dummy node can probably make it ordinary.</p>
+
+<!-- ===== 13 ===== -->
+<h2 id="s13">13. The evolution of the idea</h2>
+<p>We now know how to construct a list, traverse it, count it, search it, insert into it, delete from it, reverse it, use multiple pointers, maintain a fixed distance between pointers, build a new chain, use a dummy node to eliminate boundary cases, reuse existing nodes, preserve references before changing links, and merge sorted structures.</p>
+<div class="fig scroll"><table class="tt"><tr><th>Idea</th><th>What it teaches</th></tr>
+<tr><td>Traverse, insert, delete</td><td>Follow links, change links.</td></tr>
+<tr><td>Reverse a list</td><td>Preserve links before overwriting them.</td></tr>
+<tr><td>Slow and fast pointers, fixed gap</td><td>Relative position finds the middle and the nth from the end.</td></tr>
+<tr><td>Dummy node</td><td>Turn an awkward boundary into an ordinary case.</td></tr>
+<tr><td>Merge two sorted lists</td><td>Exploit sortedness, reuse nodes, attach the known-good remainder.</td></tr></table></div>
+<p>These are not isolated tricks. They all come from a few simple ideas: follow links, change links, preserve links, maintain invariants. And now there is one unresolved question. We have seen that <code>slow</code> moving one step while <code>fast</code> moves two finds the middle, and a fixed gap finds the nth node from the end. But what else can <strong>relative speed</strong> tell us? What happens when the list does not end, when following <code>next</code> eventually brings us back to a node we have already visited?</p>
+<blockquote><p>The pointers will no longer just help us traverse the list. They will help us reason about the shape of the list itself.</p></blockquote>
+</main>
+
+<script>
+/* ===== SHARED HELPERS: do not change ===== */
+var $=function(i){return document.getElementById(i)};
+var L=function(v){return v.toLocaleString('en-US')};
+var num=function(x,y){return x-y};
+function isSorted(a){for(var i=1;i<a.length;i++)if(a[i-1]>a[i])return false;return true}
+
+/* cells(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label above'}, noix:true}) -> row of cells */
+function cells(a,o){o=o||{};var c=o.c||{};return '<div class="row">'+a.map(function(v,i){var g=v===''||v===null;return '<div class="cw"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="cell'+(g?' gap':'')+' '+(c[i]||'')+'">'+(g?'&nbsp;':v)+'</div><span class="ix">'+(o.noix?'':i)+'</span></div>'}).join('')+'</div>'}
+
+/* widget(id, presets, build): Previous/Next stepper.
+   presets = [[buttonLabel, params], ...]; build(params) returns [{h:htmlString, n:noteText}, ...] */
+function widget(id,opts,build){
+  var el=$(id),i=0,st=[];
+  el.innerHTML=(opts.length>1?'<div class="row" style="align-items:center">'+opts.map(function(o,k){return '<button data-k="'+k+'">'+o[0]+'</button>'}).join('')+'</div>':'')+'<div class="scroll v"></div><p class="note" aria-live="polite"></p><div class="ctl"><button class="pv">Previous</button><span class="pos"></span><button class="nx">Next</button><button class="pl">Play</button></div>';
+  var v=el.querySelector('.v'),n=el.querySelector('.note'),p=el.querySelector('.pos'),pv=el.querySelector('.pv'),nx=el.querySelector('.nx'),pl=el.querySelector('.pl'),tm=null;
+  function stop(){if(tm){clearInterval(tm);tm=null}pl.textContent='Play'}
+  function r(){v.innerHTML=st[i].h;n.textContent=st[i].n;p.textContent='Step '+(i+1)+' of '+st.length;pv.disabled=i===0;nx.disabled=i===st.length-1}
+  function pick(k){stop();st=build(opts[k][1]);i=0;[].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.k===k))});r()}
+  [].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.onclick=function(){pick(+b.dataset.k)}});
+  pv.onclick=function(){stop();if(i>0){i--;r()}};nx.onclick=function(){stop();if(i<st.length-1){i++;r()}};
+  pl.onclick=function(){if(tm){stop();return}if(i>=st.length-1){i=0;r()}pl.textContent='Pause';tm=setInterval(function(){if(i<st.length-1){i++;r()}else stop()},1100)};
+  pick(0);
+}
+
+/* tabs(id, labels, fn): tab buttons; fn(k) returns html for tab k */
+function tabs(id,labels,fn){var el=$(id);el.innerHTML='<div class="row" style="align-items:center"></div><div class="tv"></div>';var bar=el.firstChild,tv=el.lastChild;
+  labels.forEach(function(t,k){var b=document.createElement('button');b.textContent=t;b.onclick=function(){[].forEach.call(bar.children,function(x){x.setAttribute('aria-pressed',String(x===b))});tv.innerHTML=fn(k)};b.setAttribute('aria-pressed',String(k===0));bar.appendChild(b)});tv.innerHTML=fn(0)}
+
+/* growth(id, ns, bruteFn, betterFn, header1, header2): log-scale comparison table */
+function growth(id,ns,bf,tp,h1,h2){$(id).innerHTML='<table><tr><th>n</th><th>'+h1+'</th><th>'+h2+'</th></tr>'+ns.map(function(n){var b=bf(n),t=tp(n);return '<tr><td>'+L(n)+'</td><td>'+L(b)+'<div class="bar r" style="width:'+Math.max(1,Math.log10(b)/12*100)+'%;margin-left:auto"></div></td><td>'+L(t)+'<div class="bar g" style="width:'+Math.max(1,Math.log10(t)/12*100)+'%;margin-left:auto"></div></td></tr>'}).join('')+'</table><p class="cap">Bars use a log scale, otherwise the second column would be invisible.</p>'}
+
+/* flow(['step','step',...]) -> vertical arrow flow */
+function flow(a){return '<div class="flow">'+a.map(function(x){return '<div class="cell">'+x+'</div>'}).join('<span>↓</span>')+'</div>'}
+
+/* grid(matrix, {c:function(r,c){return 'ok|now|dim|mv'}, rh:[row headers], ch:[col headers]}) -> 2D table of cells (DP tables, grids, matrices) */
+function grid(m,o){o=o||{};var w=m[0].length,ch=o.ch,rh=o.rh;
+  var h='<div class="mx" style="grid-template-columns:'+(rh?'auto ':'')+'repeat('+w+',minmax(0,1fr))">';
+  if(ch){h+=(rh?'<span></span>':'')+ch.map(function(x){return '<span class="mh">'+x+'</span>'}).join('')}
+  m.forEach(function(r,i){if(rh)h+='<span class="mh">'+rh[i]+'</span>';r.forEach(function(v,j){h+='<div class="cell '+((o.c&&o.c(i,j))||'')+'">'+v+'</div>'})});
+  return h+'</div>'}
+
+/* vbars(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label'}}) -> vertical bar chart of an array (sorting, partitioning, heights) */
+function vbars(a,o){o=o||{};var c=o.c||{},mx=Math.max.apply(null,a.map(Math.abs))||1;
+  return '<div class="vb">'+a.map(function(v,i){return '<div class="vc"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="vbar '+(c[i]||'')+'" style="height:'+Math.max(4,Math.round(Math.abs(v)/mx*110))+'px"></div><span class="ix">'+v+'</span></div>'}).join('')+'</div>'}
+
+/* driver(id, cfg): "you drive the algorithm". The reader picks the move; wrong moves get a teaching message.
+   cfg = {
+     presets:[[label,param],...],
+     init:function(param){return state},
+     view:function(state,done){return html},
+     done:function(state){return bool},
+     prompt:function(state,done){return 'What should we do?'},
+     choices:[['A','button text'],['B','button text'],...],
+     expected:function(state){return 'A'},               // the correct choice id
+     apply:function(state,choiceId){ return 'Right. why it worked'},   // mutate state here
+     hint:function(state){return 'general hint'},
+     wrong:function(state,choiceId){return 'specific message for a tempting wrong choice, or undefined'}
+   } */
+function driver(id,cfg){
+  var el=$(id),k=0,s,msg='';
+  function init(){s=cfg.init(cfg.presets[k][1]);msg='';draw()}
+  function draw(){var done=cfg.done(s);
+    el.innerHTML='<div class="row" style="align-items:center">'+cfg.presets.map(function(p,j){return '<button data-p="'+j+'" aria-pressed="'+(j===k)+'">'+p[0]+'</button>'}).join('')+'</div><div class="scroll">'+cfg.view(s,done)+'</div><p class="note" aria-live="polite"><strong>'+cfg.prompt(s,done)+'</strong></p><div class="ctl">'+cfg.choices.map(function(c){return '<button data-c="'+c[0]+'"'+(done?' disabled':'')+'>'+c[1]+'</button>'}).join('')+'</div><p class="note" aria-live="polite">'+msg+'</p>';
+    [].forEach.call(el.querySelectorAll('button[data-p]'),function(b){b.onclick=function(){k=+b.dataset.p;init()}});
+    [].forEach.call(el.querySelectorAll('button[data-c]'),function(b){b.onclick=function(){choose(b.dataset.c)}})}
+  function choose(c){if(c!==cfg.expected(s)){msg=(cfg.wrong&&cfg.wrong(s,c))||('Not quite. '+cfg.hint(s));draw();return}
+    msg=cfg.apply(s,c)||'Right.';draw()}
+  init()}
+
+/* slider(id, {min,max,value,label,render:function(v){return html}}) -> "drag to see how the cost grows" figure */
+function slider(id,o){var el=$(id);el.innerHTML='<label for="'+id+'S">'+o.label+' = <strong class="so"></strong></label><input id="'+id+'S" type="range" min="'+o.min+'" max="'+o.max+'" value="'+o.value+'"><div class="sv"></div>';
+  var inp=el.querySelector('input'),out=el.querySelector('.so'),sv=el.querySelector('.sv');
+  function u(){out.textContent=inp.value;sv.innerHTML=o.render(+inp.value)}inp.oninput=u;u()}
+
+/* ===== PAGE-SPECIFIC ILLUSTRATIONS GO BELOW ===== */
+
+/* chn(values, {dummy:bool, c:{idx:cls}, sub:{idx:label}, nonone:bool}) -> a linked chain of nodes with arrows.
+   index -1 is the dummy node; index values.length is the trailing None. */
+function chn(vals,o){o=o||{};var c=o.c||{},sub=o.sub||{},items=[],i;
+  if(o.dummy)items.push([-1,'dummy',c[-1]||'mv']);
+  for(i=0;i<vals.length;i++)items.push([i,vals[i],c[i]||'']);
+  if(!o.nonone)items.push([vals.length,'None',c[vals.length]||'dim']);
+  return '<div class="row">'+items.map(function(it,k){
+    var cell='<div class="cw"><span class="ix">'+(sub[it[0]]||'&nbsp;')+'</span><div class="cell '+it[2]+'">'+it[1]+'</div></div>';
+    return (k?'<span class="ix" style="align-self:center;margin-top:1em">→</span>':'')+cell}).join('')+'</div>'}
+function ttl(t){return '<p class="lbl"><strong>'+t+'</strong></p>'}
+
+/* ---------- section 1: build with and without a dummy ---------- */
+widget('stBuild',[['Build 10 → 20 → 30',null]],function(){
+  var vals=[10,20,30],st=[],k;
+  for(k=0;k<=3;k++){
+    var sa={},sb={};
+    if(k===0){sa[0]='head';sb[-1]='tail'}
+    else{sa[0]='head';sa[k-1]=k===1?'head, tail':'tail';sb[k-1]='tail'}
+    var left=ttl('Without a dummy')+chn(vals.slice(0,k),{sub:sa});
+    var right=ttl('With a dummy')+chn(vals.slice(0,k),{dummy:true,sub:sb});
+    var n=k===0?'Start: head = None on the left; dummy → None on the right. Nothing added yet.'
+      :(k===1?'Add 10. Without a dummy this is the SPECIAL case (if head is None: head = node). With a dummy it is the normal case: tail.next = node; tail = node.'
+      :'Add '+vals[k-1]+'. Both sides use the normal case: tail.next = node; tail = node.');
+    st.push({h:'<div class="two"><div class="scroll">'+left+'</div><div class="scroll">'+right+'</div></div>',n:n})}
+  return st});
+
+/* ---------- section 2: the dummy is scaffolding ---------- */
+tabs('tbScaf',['dummy → 10 → 20 → 30','return dummy.next'],function(k){
+  if(k===0)return chn([10,20,30],{dummy:true,sub:{'-1':'anchor'}})+'<p class="cap">The dummy (blue) is visually distinct from the real nodes. It is scaffolding.</p>';
+  return chn([10,20,30],{dummy:true,c:{'-1':'dim',0:'ok',1:'ok',2:'ok'},sub:{0:'dummy.next'}})+'<p class="cap">The dummy fades out. The answer starts at <code>dummy.next</code>: 10 → 20 → 30. The chain is intact.</p>'});
+
+/* ---------- section 3: one deletion rule ---------- */
+function delSim(vals,target){
+  var a=vals.slice(),cur=-1,st=[];
+  function view(hi,mode){var c={},s={},i;c[-1]='mv';c[cur]='mv';s[cur]='current';
+    if(hi!=null){c[hi]=mode==='del'?'dim':'now';s[hi]=mode==='del'?'bypass':'current.next'}
+    return chn(a,{dummy:true,c:c,sub:s})}
+  st.push({h:view(),n:'List: dummy → '+a.join(' → ')+'. Delete every '+target+'. current starts at the dummy.'});
+  while(cur+1<a.length){
+    var nx=a[cur+1];
+    if(nx===target){
+      st.push({h:view(cur+1,'del'),n:'current.next is '+nx+', a match. Bypass it.'+(cur===-1?' This is the head, but the rule is the same because the dummy is its predecessor.':'')});
+      a.splice(cur+1,1);
+      st.push({h:view(),n:'current.next = current.next.next. current does NOT move, because the new current.next has not been checked yet.'})}
+    else{
+      st.push({h:view(cur+1),n:'current.next is '+nx+', not '+target+'. Move current forward.'});
+      cur++}
+  }
+  st.push({h:chn(a,{c:{}}),n:'current.next is None, done. return dummy.next: '+(a.length?a.join(' → '):'None')+'.'});
+  return st}
+widget('stDel',[
+  ['delete 10 (head)',[[10,20,30,20,40],10]],
+  ['delete 20 (twice)',[[10,20,30,20,40],20]],
+  ['delete 40 (tail)',[[10,20,30,20,40],40]],
+  ['delete 99 (absent)',[[10,20,30,20,40],99]]
+],function(p){return delSim(p[0],p[1])});
+
+/* ---------- section 4: merge sorted arrays (slider scrubs the steps) ---------- */
+function arrSteps(a,b){
+  var i=0,j=0,res=[],st=[{i:0,j:0,res:[],n:'Start. Compare the first element of each array.'}];
+  while(i<a.length&&j<b.length){
+    var x=a[i],y=b[j],t;
+    if(x<=y){res.push(x);i++;t=x+' vs '+y+': '+x+' is smaller, take it from A.'}
+    else{res.push(y);j++;t=x+' vs '+y+': '+y+' is smaller, take it from B.'}
+    st.push({i:i,j:j,res:res.slice(),n:t})}
+  while(i<a.length){res.push(a[i]);i++;st.push({i:i,j:j,res:res.slice(),n:'B is exhausted. Copy the rest of A.'})}
+  while(j<b.length){res.push(b[j]);j++;st.push({i:i,j:j,res:res.slice(),n:'A is exhausted. Copy the rest of B.'})}
+  return st}
+(function(){
+  var A=[1,4,7],B=[2,3,8],st=arrSteps(A,B);
+  slider('slMerge',{min:0,max:st.length-1,value:0,label:'elements placed',render:function(k){
+    var s=st[k],ca={},cb={},sa={},sb={},cr={},i;
+    for(i=0;i<A.length;i++)if(i<s.i)ca[i]='dim';
+    for(i=0;i<B.length;i++)if(i<s.j)cb[i]='dim';
+    if(s.i<A.length&&s.j<B.length&&k<st.length){ca[s.i]='now';cb[s.j]='now'}
+    sa[s.i]='i';sb[s.j]='j';
+    for(i=0;i<s.res.length;i++)cr[i]='ok';
+    return '<p class="lbl">A</p>'+cells(A,{c:ca,sub:sa})+'<p class="lbl">B</p>'+cells(B,{c:cb,sub:sb})+'<p class="lbl">Result</p>'+cells(s.res.length?s.res:[''],{c:cr,noix:true})+'<p class="note">'+s.n+'</p>'}});
+})();
+
+/* ---------- section 5: merge two linked lists ---------- */
+function mergeView(a,b,i,j,res,o){o=o||{};
+  var c1={},s1={},c2={},s2={},cr={},sr={},k,shown=res.slice();
+  for(k=0;k<i;k++)c1[k]='dim';
+  for(k=0;k<j;k++)c2[k]='dim';
+  if(o.cmp&&i<a.length&&j<b.length){c1[i]='now';c2[j]='now'}
+  if(o.rem==='a')for(k=i;k<a.length;k++)c1[k]='ok';
+  if(o.rem==='b')for(k=j;k<b.length;k++)c2[k]='ok';
+  s1[i]='list1';s2[j]='list2';
+  for(k=0;k<res.length;k++)cr[k]='ok';
+  sr[res.length-1]='tail';
+  if(o.rem){var rem=o.rem==='a'?a.slice(i):b.slice(j);for(k=0;k<rem.length;k++)cr[res.length+k]='mv';shown=shown.concat(rem)}
+  return ttl('list1')+chn(a,{c:c1,sub:s1})+ttl('list2')+chn(b,{c:c2,sub:s2})+ttl('result')+chn(shown,{dummy:true,c:cr,sub:sr})+
+    '<p class="lbl">Invariant: everything up to <code>tail</code> is merged and sorted: ['+res.join(', ')+']</p>'}
+
+function mergeSim(a,b){
+  var i=0,j=0,res=[],st=[];
+  st.push({h:mergeView(a,b,0,0,[],{cmp:true}),n:'Start: dummy → None, tail = dummy. list1 and list2 point at their first nodes.'});
+  while(i<a.length&&j<b.length){
+    var x=a[i],y=b[j],t1=x<=y;
+    st.push({h:mergeView(a,b,i,j,res,{cmp:true}),n:'Compare '+x+' vs '+y+': '+(t1?x+' is smaller (or equal), take it from list1.':y+' is smaller, take it from list2.')});
+    if(t1){res.push(x);i++}else{res.push(y);j++}
+    st.push({h:mergeView(a,b,i,j,res,{cmp:true}),n:'tail.next = '+(t1?x:y)+'; list'+(t1?'1':'2')+' moves forward; tail = tail.next.'})}
+  var rem=i<a.length?'a':(j<b.length?'b':null);
+  if(rem){
+    var rv=rem==='a'?a.slice(i):b.slice(j);
+    st.push({h:mergeView(a,b,i,j,res,{rem:rem}),n:'list'+(rem==='a'?'2':'1')+' is None. Attach the WHOLE remaining chain ('+rv.join(' → ')+') with one assignment: tail.next = list'+(rem==='a'?'1':'2')+'.'});
+    res=res.concat(rv)}
+  else st.push({h:mergeView(a,b,i,j,res),n:'Both lists are None. Nothing to attach: tail.next = list2 (None).'});
+  st.push({h:ttl('return dummy.next')+chn(res,{c:(function(){var c={};for(var k=0;k<res.length;k++)c[k]='ok';return c})()}),n:'Result: '+(res.length?res.join(' → ')+' → None':'None')+'.'});
+  return st}
+widget('stMerge',[
+  ['1→4→7 and 2→3→8',[[1,4,7],[2,3,8]]],
+  ['1→3→5 and 2',[[1,3,5],[2]]],
+  ['None and 1→2→3',[[],[1,2,3]]],
+  ['None and None',[[],[]]]
+],function(p){return mergeSim(p[0],p[1])});
+
+tabs('tbReuse',['Copy nodes','Reuse nodes'],function(k){
+  if(k===0)return ttl('list2: 2 → 3 (original nodes #A, #B)')+chn(['2 (#A)','3 (#B)'])+ttl('result built by creating Node(2), Node(3)')+chn([1,"2' (#C new)","3' (#D new)"],{dummy:true,c:{1:'now',2:'now'}})+
+    '<p class="cap">New nodes (yellow) are allocated and the data is copied. The originals still exist separately.</p>';
+  return ttl('list2: 2 → 3 (nodes #A, #B)')+chn(['2 (#A)','3 (#B)'],{c:{0:'ok',1:'ok'}})+ttl('result: tail.next = list2')+chn([1,'2 (#A)','3 (#B)'],{dummy:true,c:{1:'ok',2:'ok'}})+
+    '<p class="cap">The same node objects (#A, #B) are connected into the new chain. Only the relationships changed.</p>'});
+
+/* ---------- section 6: save before breaking ---------- */
+widget('stSave',[['Unsafe: overwrite first','u'],['Safe: save, change, move','s']],function(m){
+  var v=[10,20,30,40],st=[];
+  var cur={0:'current'};
+  st.push({h:ttl('start')+chn(v,{c:{0:'mv'},sub:cur}),n:'current is at 10. The only reference to 20 → 30 → 40 is current.next.'});
+  if(m==='u'){
+    st.push({h:ttl('after current.next = None')+chn([10],{c:{0:'mv'},sub:cur})+ttl('20 → 30 → 40 (no variable points here)')+chn([20,30,40],{c:{0:'dim',1:'dim',2:'dim'}}),n:'We overwrote the only path. 20 → 30 → 40 is now unreachable, lost, unless something else still points at it.'});
+  }else{
+    st.push({h:ttl('step 1: next_node = current.next')+chn(v,{c:{0:'mv',1:'now'},sub:{0:'current',1:'next_node'}}),n:'Save: next_node now also points at 20.'});
+    st.push({h:ttl('step 2: current.next = None')+chn([10],{c:{0:'mv'},sub:cur})+ttl('still reachable through next_node')+chn([20,30,40],{c:{0:'ok',1:'ok',2:'ok'},sub:{0:'next_node'}}),n:'Change: the link is broken, but next_node keeps the remaining chain reachable.'});
+    st.push({h:ttl('step 3: move on')+chn([10],{c:{0:'mv'}})+ttl('continue from next_node')+chn([20,30,40],{c:{0:'now',1:'ok',2:'ok'},sub:{0:'current'}}),n:'Move: continue working with next_node. Save, change, move.'})}
+  return st});
+
+/* ---------- section 7: you drive the merge ---------- */
+driver('drvMerge',{
+  presets:[['1→4→7 and 2→3→8',[[1,4,7],[2,3,8]]],['1→3→5 and 2',[[1,3,5],[2]]],['None and 1→2',[[],[1,2]]]],
+  init:function(p){return {a:p[0],b:p[1],i:0,j:0,res:[],fin:false}},
+  view:function(s,done){return mergeView(s.a,s.b,s.i,s.j,s.res,{cmp:!done})},
+  done:function(s){return s.fin},
+  prompt:function(s,done){
+    if(done)return 'Done. return dummy.next gives: '+(s.res.length?s.res.join(' → ')+' → None':'None')+'.';
+    if(s.i<s.a.length&&s.j<s.b.length)return 'Compare '+s.a[s.i]+' (list1) with '+s.b[s.j]+' (list2). What goes onto the tail?';
+    return (s.i>=s.a.length?'list1':'list2')+' is None. What now?'},
+  choices:[['A','Take the list1 node'],['B','Take the list2 node'],['R','Attach the remainder']],
+  expected:function(s){
+    if(s.i<s.a.length&&s.j<s.b.length)return s.a[s.i]<=s.b[s.j]?'A':'B';
+    return 'R'},
+  apply:function(s,c){
+    if(c==='A'){s.res.push(s.a[s.i]);s.i++;return 'Right. The smaller current node must come next. Attach it, advance list1, advance tail.'}
+    if(c==='B'){s.res.push(s.b[s.j]);s.j++;return 'Right. The smaller current node must come next. Attach it, advance list2, advance tail.'}
+    s.res=s.res.concat(s.i<s.a.length?s.a.slice(s.i):s.b.slice(s.j));s.i=s.a.length;s.j=s.b.length;s.fin=true;
+    return 'Right. The rest is already sorted, so one assignment attaches the whole chain.'},
+  hint:function(s){return 'If both lists still have nodes, take the smaller. If one is None, attach the rest of the other.'},
+  wrong:function(s,c){
+    var both=s.i<s.a.length&&s.j<s.b.length;
+    if(c==='R'&&both)return 'Both lists still have nodes. The remainder trick only works once one list is None, otherwise the order could be wrong.';
+    if(!both)return 'One list is already None, so no comparison is needed. Attach the rest in one move instead of node by node.';
+    return 'That node is larger than the other candidate. The smaller of the two current nodes must come next, otherwise the result would not be sorted.'}
+});
+
+/* ---------- section 8: common mistakes ---------- */
+tabs('tbMist',['Input pointer','tail pointer','New nodes','Losing the rest','list1 empty','Both empty'],function(k){
+  if(k===0)return '<p class="note"><strong>Forgetting to move the input pointer.</strong> After <code>tail.next = list1</code> we forget <code>list1 = list1.next</code>.</p>'+
+    chn([1],{dummy:true,c:{0:'now'},sub:{0:'list1 and tail',},nonone:true})+
+    '<p class="cap">Next iteration the same node 1 is processed again: <code>tail.next = list1</code> makes node 1 point to itself. The loop never ends. Rhythm: take the node, then move the input pointer.</p>';
+  if(k===1)return '<p class="note"><strong>Forgetting to move <code>tail</code>.</strong></p>'+
+    ttl('attach 1 (tail never moves)')+chn([1],{dummy:true,sub:{'-1':'tail'}})+ttl('attach 2 from the same tail')+chn([2],{dummy:true,sub:{'-1':'tail'}})+
+    '<p class="cap">The second attach overwrites <code>dummy.next</code>, so node 1 is lost. Rhythm: attach, move input pointer, move tail.</p>';
+  if(k===2)return '<p class="note"><strong>Creating new nodes unnecessarily.</strong> <code>tail.next = Node(list1.value)</code> works, but allocates a node for every element.</p>'+
+    '<p class="cap">If the goal is to merge existing lists, <code>tail.next = list1</code> reuses the node. Ask: do I need new data, or only a new arrangement of existing data?</p>';
+  if(k===3)return '<p class="note"><strong>Losing the rest of a list.</strong> Overwriting a link before preserving what it pointed to.</p>'+
+    chn([10],{c:{0:'mv'},sub:{0:'current'}})+chn([20,30,40],{c:{0:'dim',1:'dim',2:'dim'}})+
+    '<p class="cap">Ask: "If I change this link right now, can I still reach everything I need?" If not, save <code>next_node = current.next</code> first.</p>';
+  if(k===4)return '<p class="note"><strong>Forgetting the empty list.</strong> <code>list1 = None</code>, <code>list2 = 1 → 2 → 3</code>.</p>'+
+    chn([1,2,3],{dummy:true,c:{0:'mv',1:'mv',2:'mv'}})+
+    '<p class="cap">No special case needed. The loop does not run, <code>tail.next = list2</code> attaches the whole chain, and <code>dummy.next</code> returns it.</p>';
+  return '<p class="note"><strong>Mishandling the empty result.</strong> Both lists are <code>None</code>.</p>'+chn([],{dummy:true})+
+    '<p class="cap">Nothing is attached, and <code>return dummy.next</code> returns <code>None</code>, exactly what we want. No special case required.</p>'});
+
+/* ---------- section 9: complexity ---------- */
+slider('slComplex',{min:2,max:60,value:12,label:'total nodes (m + n)',render:function(N){
+  var m=Math.floor(N/2),n=N-m;
+  return '<p class="lbl">m = '+m+', n = '+n+'. Comparisons at most <strong>'+(N-1)+'</strong> (each node examined once).</p>'+
+    '<div class="lbl">Extra nodes created: copy approach ('+N+')</div><div class="bar r" style="width:'+(N/60*100)+'%"></div>'+
+    '<div class="lbl">Extra nodes created: reuse approach (1, the dummy)</div><div class="bar g" style="width:'+(1/60*100)+'%"></div>'+
+    '<p class="cap">Reusing nodes keeps the auxiliary space O(1); copying costs O(m + n).</p>'}});
+growth('grMerge',[10,100,1000,10000,100000],function(n){return n*Math.ceil(Math.log(n)/Math.log(2))},function(n){return n},'Concatenate + sort (≈ n log n)','Merge sorted (m + n)');
+
+/* ---------- section 10: the patterns ---------- */
+tabs('formW',['1. Add structure','2. Every pointer a job','3. Relationships','4. Preserve first','5. Sortedness','6. Attach known-good'],function(k){
+  var d=[
+    ['Add structure to remove special cases','The dummy does not solve the problem; it simplifies the boundaries around it.','head is special → head behaves like every other node'],
+    ['Give every pointer a job','dummy = stable anchor, tail = end of result, list1/list2 = current candidates.','Good pointer algorithms need precise pointer meanings.'],
+    ['Relationships matter more than objects','Reconnect the existing nodes 1 → 4 → 7 and 2 → 3 → 8 into 1 → 2 → 3 → 4 → 7 → 8.','The nodes were already there; we changed the relationships.'],
+    ['Preserve information before destroying it','Before changing current.next, ask: am I about to destroy the only path to something I still need?','If yes: next_node = current.next first, then change the link.'],
+    ['Exploit sortedness','The smallest remaining element must be list1.current or list2.current.','Everything behind those positions is greater or equal, so we never search.'],
+    ['Attach known-good structure instead of rebuilding','When one list runs out, the rest of the other is already sorted.','If a structure already satisfies the invariant, reuse it.']][k];
+  return '<table class="tt"><tr><td>Pattern</td><td>'+d[0]+'</td></tr><tr><td>Idea</td><td>'+d[1]+'</td></tr><tr><td>In one line</td><td>'+d[2]+'</td></tr></table>'});
+
+/* ===== CODE TOGGLE AND THEME: do not change ===== */
+var cb=$('codeBtn'),hid=false;
+cb.onclick=function(){hid=!hid;[].forEach.call(document.querySelectorAll('details'),function(d){d.open=!hid});cb.textContent=hid?'Show code':'Hide code'};
+var root=document.documentElement,tb=$('theme');
+function setTheme(t){root.setAttribute('data-theme',t);tb.textContent=t==='dark'?'Light':'Dark'}
+try{var sv=localStorage.getItem('theme');if(sv==='dark'||sv==='light')setTheme(sv)}catch(e){}
+tb.onclick=function(){var t=root.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);try{localStorage.setItem('theme',t)}catch(e){}};
+</script>
+</body>
+</html>
