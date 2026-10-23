@@ -160,8 +160,12 @@ pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,
   <ol>
   <li><a href="#t8-1">The Problem: Alternating First and Last Nodes</a></li>
   <li><a href="#t8-2">Why Naive Traversal Becomes O(n²)</a></li>
-  <li><a href="#t8-3">Interactive 3-Phase Weaving Pipeline</a></li>
-  <li><a href="#t8-4">Complete Implementation</a></li>
+  <li><a href="#t8-3">The Key Insight: Three Problems We Already Know</a></li>
+  <li><a href="#t8-4">Phase 1 in Detail: Finding the Middle and Splitting</a></li>
+  <li><a href="#t8-5">Phase 2 in Detail: Reversing the Second Half</a></li>
+  <li><a href="#t8-6">Phase 3 in Detail: Weaving the Two Halves</a></li>
+  <li><a href="#t8-7">Common Mistakes</a></li>
+  <li><a href="#t8-8">Complete Implementation</a></li>
   </ol>
 </li>
 <li><a href="#t9"><strong>Problem 8: Cycle in a Circular Array</strong></a>
@@ -169,7 +173,9 @@ pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,
   <li><a href="#t9-1">Array Traversal with Modulo Arithmetic</a></li>
   <li><a href="#t9-2">Constraints: Direction Consistency & Self-Loop Rejection</a></li>
   <li><a href="#t9-3">Interactive Circular Array Stepper</a></li>
-  <li><a href="#t9-4">Full Implementation</a></li>
+  <li><a href="#t9-4">Reading the Code Line by Line</a></li>
+  <li><a href="#t9-5">Full Implementation</a></li>
+  <li><a href="#t9-6">Complexity, Optimization and Common Mistakes</a></li>
   </ol>
 </li>
 <li><a href="#t10"><strong>The Deeper Pattern: Movement as Information</strong></a>
@@ -475,57 +481,170 @@ When fast reaches the end (Distance = n), slow must have travelled <span class="
 <p>Operating in <var>O</var>(1) space temporarily mutates the list's second half. In production environments, it is good practice to run the reverse function on the second half once more before returning to restore the list to its original state.</p>
 
 <h2 id="t8">8. Problem 7: Rearrange / Reorder a Linked List</h2>
+
 <h3 id="t8-1">The Problem: Alternating First and Last Nodes</h3>
-<p>Given <code>1 → 2 → 3 → 4 → 5 → 6</code>, reorder the list into: <code>1 → 6 → 2 → 5 → 3 → 4</code> (first, last, second, second-last...).</p>
+<p>Given <code>1 → 2 → 3 → 4 → 5 → 6</code>, reorder the list into <code>1 → 6 → 2 → 5 → 3 → 4</code>. In words: take the first node, then the last, then the second, then the second-to-last, and keep alternating until the nodes run out.</p>
+<p>The easiest way to see the pattern is to <strong>pair the nodes from the outside in</strong>:</p>
+<div class="fig scroll"><table class="tt">
+<tr><th>Pair</th><th>Front node</th><th>Back node</th><th>Output order</th></tr>
+<tr><td>1st pair</td><td>1</td><td>6</td><td>1, 6</td></tr>
+<tr><td>2nd pair</td><td>2</td><td>5</td><td>2, 5</td></tr>
+<tr><td>3rd pair</td><td>3</td><td>4</td><td>3, 4</td></tr>
+</table></div>
+<p>Reading the output column top to bottom gives <code>1, 6, 2, 5, 3, 4</code>. The front nodes are the first half read forward, and the back nodes are the second half read <strong>backward</strong>.</p>
+<p>Two rules of the problem matter for everything below:</p>
+<ul>
+<li><strong>In place:</strong> we must change the <code>next</code> pointers of the existing nodes. We do not create new nodes, and we do not just overwrite values.</li>
+<li><strong>No return value:</strong> the function reorders the list starting from the same <code>head</code> node. Node 1 stays first, so <code>head</code> never changes.</li>
+</ul>
 
 <h3 id="t8-2">Why Naive Traversal Becomes O(n²)</h3>
 <p>Because singly linked lists cannot jump to the tail, finding the last node repeatedly costs <var>O</var>(<var>n</var>) work per node, totaling <var>O</var>(<var>n</var><sup>2</sup>).</p>
+<p>Here is what that looks like on our 6-node list. To move the last node next to the first, we walk from the head to find the tail (5 hops) and its predecessor. Then the list is shorter, so the next round is a little cheaper, but still a long walk:</p>
+<div class="fig scroll"><table class="tt">
+<tr><th>Round</th><th>What we do</th><th>Hops to reach the tail</th></tr>
+<tr><td>1</td><td>Walk from 1 to 6, detach it, insert it after 1 (list becomes 1, 6, 2, 3, 4, 5)</td><td>5</td></tr>
+<tr><td>2</td><td>Walk from 2 to 5, detach it, insert it after 2 (list becomes 1, 6, 2, 5, 3, 4)</td><td>3</td></tr>
+<tr><td>3</td><td>Walk from 3 to 4. It is already in place, so we are done</td><td>1</td></tr>
+</table></div>
+<p>Each round the walk is shorter by two hops, so the totals add up to <code>5 + 3 + 1</code> here, or roughly <code>n + (n−2) + (n−4) + …</code> in general, which is about <code>n²/4</code>. That is <var>O</var>(<var>n</var><sup>2</sup>), and for a list of 100,000 nodes it means billions of pointer hops.</p>
+<p>Two other tempting ideas have their own cost:</p>
+<ul>
+<li><strong>Copy every node into an array</strong>, then use two index pointers (front and back) to relink. This is <var>O</var>(<var>n</var>) time but needs <var>O</var>(<var>n</var>) extra memory.</li>
+<li><strong>Push the second half onto a stack.</strong> Popping a stack returns nodes in reverse order, which is what we want, but again it costs <var>O</var>(<var>n</var>) extra memory.</li>
+</ul>
+<p>The three-phase approach below gets <var>O</var>(<var>n</var>) time <em>and</em> <var>O</var>(1) extra space. In effect, "reverse the second half" is a stack that lives inside the list itself.</p>
 
-<h3 id="t8-3">Interactive 3-Phase Weaving Pipeline</h3>
-<p>We decompose the task into three linear-time operations:</p>
+<h3 id="t8-3">The Key Insight: Three Problems We Already Know</h3>
+<p>The trick is to notice that the answer is built from tools we have already used in this guide:</p>
 <ol>
-<li>Find middle: <code>1 → 2 → 3</code> and <code>4 → 5 → 6</code></li>
-<li>Reverse second half: <code>6 → 5 → 4</code></li>
-<li>Weave nodes alternately: <code>1 → 6 → 2 → 5 → 3 → 4</code></li>
+<li><strong>Find the middle</strong> (Problem 5): split the list into a front half <code>1 → 2 → 3</code> and a back half <code>4 → 5 → 6</code>.</li>
+<li><strong>Reverse the second half</strong> (Problem 6): <code>4 → 5 → 6</code> becomes <code>6 → 5 → 4</code>.</li>
+<li><strong>Weave</strong> the two halves together, taking one node from each in turn: <code>1 → 6 → 2 → 5 → 3 → 4</code>.</li>
 </ol>
+<p><strong>Why reverse the second half?</strong> We want to visit the back nodes in the order 6, 5, 4. A singly linked list can only be walked forward, so the back half <code>4 → 5 → 6</code> gives us 4, 5, 6, which is the wrong order. After reversing, walking forward through <code>6 → 5 → 4</code> is exactly the same as walking the original list backward from the tail. Reversal is how we manufacture the missing "previous" pointers.</p>
+<p>Use the stepper below to watch the three phases happen on the whole list. The sections after it zoom in on each phase with exact pointer values.</p>
 <div class="fig" id="reorderW"></div>
 
-<h3 id="t8-4">Complete Implementation</h3>
+<h3 id="t8-4">Phase 1 in Detail: Finding the Middle and Splitting</h3>
+<p>We use <code>slow</code> and <code>fast</code> exactly like Problem 5. The only decision is where <code>fast</code> starts, because it controls which node <code>slow</code> ends on when the length is even. In this solution we start with <code>slow = head</code> and <code>fast = head.next</code>. That makes <code>slow</code> stop on the <strong>last node of the first half</strong>, which is exactly the node we need to cut after.</p>
+<p>Trace on <code>1 → 2 → 3 → 4 → 5 → 6</code>:</p>
+<div class="fig scroll"><table class="tt">
+<tr><th>Step</th><th><code>slow</code></th><th><code>fast</code></th><th>Loop check: <code>fast and fast.next</code></th></tr>
+<tr><td>Start</td><td>1</td><td>2</td><td>2 exists, 2.next = 3 exists: continue</td></tr>
+<tr><td>After round 1</td><td>2</td><td>4</td><td>4 exists, 4.next = 5 exists: continue</td></tr>
+<tr><td>After round 2</td><td>3</td><td>6</td><td>6 exists, but 6.next is None: <strong>stop</strong></td></tr>
+</table></div>
+<p><code>slow</code> ends on node 3. The first half is <code>1 → 2 → 3</code> and the second half starts at <code>slow.next</code>, which is node 4.</p>
+<p>Now the odd case, <code>1 → 2 → 3 → 4 → 5</code>:</p>
+<div class="fig scroll"><table class="tt">
+<tr><th>Step</th><th><code>slow</code></th><th><code>fast</code></th><th>Loop check</th></tr>
+<tr><td>Start</td><td>1</td><td>2</td><td>continue</td></tr>
+<tr><td>After round 1</td><td>2</td><td>4</td><td>4 exists, 4.next = 5 exists: continue</td></tr>
+<tr><td>After round 2</td><td>3</td><td>None</td><td>fast is None: <strong>stop</strong></td></tr>
+</table></div>
+<p>Here <code>slow</code> ends on the true middle node 3. The first half is <code>1 → 2 → 3</code> (the middle goes with the front) and the second half is <code>4 → 5</code>. So the front half is either the same length as the back half (even case) or exactly one node longer (odd case). The weave step relies on that.</p>
+<p><strong>Quick rule:</strong> <code>slow</code> stops on the last node of the first half, so <code>slow.next</code> is always the head of the second half.</p>
+
+<h3 id="t8-5">Phase 2 in Detail: Reversing the Second Half</h3>
+<p>Before reversing, we <strong>cut the list in two</strong> with <code>slow.next = None</code>. This line is easy to forget and it matters (see the pitfalls below). After the cut we have two independent lists: <code>1 → 2 → 3 → None</code> and <code>4 → 5 → 6 → None</code>.</p>
+<p>Reversal uses three variables. <code>curr</code> is the node being processed, <code>prev</code> is the already-reversed part (it starts empty), and <code>nxt</code> remembers where to go next before we overwrite <code>curr.next</code>. Trace on <code>4 → 5 → 6</code>:</p>
+<div class="fig scroll"><table class="tt">
+<tr><th>Iteration</th><th><code>curr</code> at start</th><th><code>nxt = curr.next</code></th><th>Then <code>curr.next = prev</code></th><th><code>prev</code> after</th><th><code>curr</code> after</th></tr>
+<tr><td>1</td><td>4</td><td>5</td><td>4 → None</td><td>4</td><td>5</td></tr>
+<tr><td>2</td><td>5</td><td>6</td><td>5 → 4</td><td>5</td><td>6</td></tr>
+<tr><td>3</td><td>6</td><td>None</td><td>6 → 5</td><td>6</td><td>None</td></tr>
+</table></div>
+<p>When <code>curr</code> becomes <code>None</code>, the loop ends and <code>prev</code> points at node 6. That is the head of the reversed half: <code>6 → 5 → 4 → None</code>.</p>
+<p>Why do we need <code>nxt</code>? The moment we write <code>curr.next = prev</code>, we lose the link to the rest of the original list. Saving it first is what keeps the walk going.</p>
+
+<h3 id="t8-6">Phase 3 in Detail: Weaving the Two Halves</h3>
+<p>Now we hold two lists: <code>first</code> walks the front half <code>1 → 2 → 3</code> and <code>second</code> walks the reversed half <code>6 → 5 → 4</code>. Each round does a "zipper" move: node from the front, then node from the back, then continue the front.</p>
+<p>The four lines inside the loop must stay in this order:</p>
+<ol>
+<li><code>tmp1 = first.next</code> and <code>tmp2 = second.next</code>: <strong>save</strong> both "rest of the list" links before we overwrite anything.</li>
+<li><code>first.next = second</code>: the front node now points to the back node.</li>
+<li><code>second.next = tmp1</code>: the back node now points to the next front node.</li>
+<li><code>first = tmp1</code> and <code>second = tmp2</code>: move both pointers forward using the saved links.</li>
+</ol>
+<p>Trace on our example:</p>
+<div class="fig scroll"><table class="tt">
+<tr><th>Round</th><th><code>first</code> / <code>second</code></th><th>Saved <code>tmp1</code> / <code>tmp2</code></th><th>Links written</th><th>List so far</th></tr>
+<tr><td>1</td><td>1 / 6</td><td>2 / 5</td><td>1 → 6, 6 → 2</td><td>1 → 6 → 2 → 3</td></tr>
+<tr><td>2</td><td>2 / 5</td><td>3 / 4</td><td>2 → 5, 5 → 3</td><td>1 → 6 → 2 → 5 → 3</td></tr>
+<tr><td>3</td><td>3 / 4</td><td>None / None</td><td>3 → 4, 4 → None</td><td>1 → 6 → 2 → 5 → 3 → 4</td></tr>
+</table></div>
+<p>After round 3, <code>second</code> becomes <code>None</code> and the loop ends. The finished list is <code>1 → 6 → 2 → 5 → 3 → 4</code>, as required.</p>
+<p><strong>Why <code>while second</code> and not <code>while first</code>?</strong> The second half is never longer than the first half, so it runs out first. If the original length is odd, the first half has one extra node. Trace <code>1 → 2 → 3 → 4 → 5</code>, whose halves are <code>1 → 2 → 3</code> and the reversed <code>5 → 4</code>:</p>
+<div class="fig scroll"><table class="tt">
+<tr><th>Round</th><th><code>first</code> / <code>second</code></th><th>Saved <code>tmp1</code> / <code>tmp2</code></th><th>Links written</th><th>List so far</th></tr>
+<tr><td>1</td><td>1 / 5</td><td>2 / 4</td><td>1 → 5, 5 → 2</td><td>1 → 5 → 2 → 3</td></tr>
+<tr><td>2</td><td>2 / 4</td><td>3 / None</td><td>2 → 4, 4 → 3</td><td>1 → 5 → 2 → 4 → 3</td></tr>
+</table></div>
+<p>Now <code>second</code> is <code>None</code>, so we stop. Node 3 is the left-over middle node. It is already the tail because we cut its link earlier (<code>3.next</code> is <code>None</code>) and nothing points past it. The result is <code>1 → 5 → 2 → 4 → 3</code>.</p>
+
+<h3 id="t8-7">Common Mistakes</h3>
+<ul>
+<li><strong>Forgetting <code>slow.next = None</code>.</strong> Without the cut, node 3 still points to node 4. In round 3 above, <code>tmp1 = first.next</code> would be node 4 instead of <code>None</code>, so the line <code>second.next = tmp1</code> would make <code>4.next = 4</code>, which is a self-loop. Any later traversal of the list would never end.</li>
+<li><strong>Overwriting before saving.</strong> If you write <code>first.next = second</code> before saving <code>tmp1</code>, the original link from the front half is gone and you can no longer continue along it.</li>
+<li><strong>Picking the wrong middle.</strong> If <code>slow</code> lands one node too far to the right on an even list, the second half is shorter than expected. The weave can still work, but your explanation of the halves will not match the code. Starting with <code>fast = head.next</code> removes that ambiguity.</li>
+<li><strong>Reversing before cutting.</strong> The reversal must happen on a detached second half. Reversing it while it is still attached to the first half creates tangled links.</li>
+<li><strong>Edge cases.</strong> A list with 0 or 1 nodes is already in order, which is why the function returns immediately at the top. A 2-node list also works: <code>slow</code> ends on node 1, the second half is node 2, and the weave produces <code>1 → 2</code> unchanged.</li>
+</ul>
+
+<h3 id="t8-8">Complete Implementation</h3>
 <details open><summary>Python code (click to hide or show)</summary><pre>def reorder_list(head):
     if not head or not head.next:
         return
 
-    # 1. Find middle
+    # 1. Find the end of the first half.
+    #    fast starts one step ahead so that slow stops on the
+    #    LAST node of the first half (for both odd and even lengths).
     slow = head
-    fast = head
+    fast = head.next
     while fast and fast.next:
         slow = slow.next
         fast = fast.next.next
 
-    # 2. Reverse second half
+    # 2. Cut the list, then reverse the second half.
     prev = None
     curr = slow.next
-    slow.next = None
+    slow.next = None          # detach: first half now ends at slow
     while curr:
-        nxt = curr.next
-        curr.next = prev
-        prev = curr
-        curr = nxt
+        nxt = curr.next       # remember the rest
+        curr.next = prev      # flip the link
+        prev = curr           # grow the reversed part
+        curr = nxt            # move on
+    # prev is now the head of the reversed second half
 
-    # 3. Weave alternate links
+    # 3. Weave alternate links.
     first = head
     second = prev
     while second:
-        tmp1 = first.next
+        tmp1 = first.next     # save both "rest of list" links first
         tmp2 = second.next
-        first.next = second
-        second.next = tmp1
+        first.next = second   # front -> back
+        second.next = tmp1    # back -> next front
         first = tmp1
         second = tmp2</pre></details>
+<p><strong>Complexity:</strong> finding the middle visits about <code>n/2</code> nodes, reversing visits <code>n/2</code> nodes, and weaving visits <code>n/2</code> pairs. The total is <var>O</var>(<var>n</var>) time. We only use a few pointer variables, so extra space is <var>O</var>(1).</p>
 
 <h2 id="t9">9. Problem 8: Cycle in a Circular Array</h2>
+
 <h3 id="t9-1">Array Traversal with Modulo Arithmetic</h3>
 <p>Suppose <code>nums = [2, -1, 1, 2, 2]</code>. Each value indicates jump distance (positive = forward, negative = backward). The array wraps around circularly: <code>next_index = (i + nums[i]) % n</code>.</p>
+<p>This is the same "array as a graph" idea from Problem 4, with one difference. There, every value was already a valid index, so we jumped <em>to</em> <code>nums[i]</code>. Here the value is a <strong>distance</strong>, so we jump <em>by</em> <code>nums[i]</code> positions from where we are, and wrap around if we fall off either end.</p>
+<p>Compute where every index sends us (here <code>n = 5</code>):</p>
+<div class="fig scroll"><table class="tt">
+<tr><th>Index <code>i</code></th><th><code>nums[i]</code></th><th>Direction</th><th><code>(i + nums[i]) % 5</code></th><th>Next index</th></tr>
+<tr><td>0</td><td>+2</td><td>forward</td><td>2 % 5</td><td>2</td></tr>
+<tr><td>1</td><td>−1</td><td>backward</td><td>0 % 5</td><td>0</td></tr>
+<tr><td>2</td><td>+1</td><td>forward</td><td>3 % 5</td><td>3</td></tr>
+<tr><td>3</td><td>+2</td><td>forward</td><td>5 % 5</td><td>0 (wrapped around)</td></tr>
+<tr><td>4</td><td>+2</td><td>forward</td><td>6 % 5</td><td>1 (wrapped around)</td></tr>
+</table></div>
+<p>Every index has <strong>exactly one</strong> outgoing arrow, so this is just a linked list in disguise: following the arrows from any start never gets stuck. It either ends in a loop or returns to where it started. That is why fast/slow pointers apply. Following the table from index 0 gives <code>0 → 2 → 3 → 0 → 2 → 3 → …</code>, a loop of length 3.</p>
+<p><strong>A note on negative jumps.</strong> The wrap-around has to produce an index between <code>0</code> and <code>n − 1</code>. In Python, <code>%</code> already returns a non-negative result, so <code>(0 + (−1)) % 5 = 4</code>. In Java, C++ and JavaScript, <code>-1 % 5</code> is <code>-1</code>, so you must write <code>((i + nums[i]) % n + n) % n</code>.</p>
 
 <h3 id="t9-2">Constraints: Direction Consistency & Self-Loop Rejection</h3>
 <p>Unlike normal cycle finding, a valid loop must fulfill two critical criteria:</p>
@@ -533,22 +652,76 @@ When fast reaches the end (Distance = n), slow must have travelled <span class="
 <li><strong>Single Direction:</strong> The cycle must move exclusively forward or exclusively backward (no direction flips).</li>
 <li><strong>Cycle Length &gt; 1:</strong> Single-element self-loops (<code>nums[i] % n == 0</code>) do not count.</li>
 </ul>
+<p>Both rules add a reason for a walk to be <strong>rejected</strong> even when the graph does contain a cycle. Here is each one in a tiny example.</p>
+
+<p><strong>Rule 1: direction flips disqualify a cycle.</strong> Take <code>nums = [1, -1]</code> with <code>n = 2</code>. Index 0 jumps forward to index 1, and index 1 jumps backward to index 0. As a graph this is a cycle (<code>0 → 1 → 0</code>), but the cycle uses one forward jump and one backward jump, so it is <strong>not valid</strong>. If we start at index 0 (direction forward), the next step lands on index 1, whose value is negative. That does not match "forward", so the walk is rejected on the spot.</p>
+<p>The check in code is <code>nums[i] * direction &gt; 0</code>. A positive times positive is positive, and a negative times negative is positive, so a positive result means "this node moves the same way as the walk". A zero or negative result means the direction changed.</p>
+
+<p><strong>Rule 2: self-loops are not cycles.</strong> Take <code>nums = [3, 1, 2]</code> with <code>n = 3</code>. From index 0 we jump 3 positions and wrap around to <code>(0 + 3) % 3 = 0</code>: we land on ourselves. That is a loop of length 1, which the problem does not count. The code sees <code>nxt == i</code> and returns <code>-1</code> (reject).</p>
+<p>The same array shows a real cycle: from index 1, <code>1 → 2</code> (since <code>1 + 1 = 2</code>), and <code>2 → 1</code> (since <code>(2 + 2) % 3 = 1</code>). That is a loop of length 2, all forward, so it <strong>is</strong> valid.</p>
+
+<div class="fig scroll"><table class="tt">
+<tr><th>Array</th><th>Graph has a cycle?</th><th>Valid?</th><th>Reason</th></tr>
+<tr><td><code>[2, -1, 1, 2, 2]</code></td><td>Yes: 0 → 2 → 3 → 0</td><td>Yes</td><td>All jumps forward, length 3</td></tr>
+<tr><td><code>[1, -1]</code></td><td>Yes: 0 → 1 → 0</td><td>No</td><td>Forward then backward (direction flip)</td></tr>
+<tr><td><code>[3, 1, 2]</code> (from index 0)</td><td>Yes: 0 → 0</td><td>No</td><td>Self-loop of length 1</td></tr>
+<tr><td><code>[3, 1, 2]</code> (from index 1)</td><td>Yes: 1 → 2 → 1</td><td>Yes</td><td>All forward, length 2</td></tr>
+</table></div>
 
 <h3 id="t9-3">Interactive Circular Array Stepper</h3>
+<p>The stepper traces <code>nums = [2, -1, 1, 2, 2]</code> starting from index 0. Keep these points in mind while you press Next:</p>
+<ul>
+<li><code>slow</code> makes one jump per step, and <code>fast</code> makes two. Because the graph is a loop of length 3 here, <code>fast</code> gains one position on <code>slow</code> every round.</li>
+<li>The numbers inside the boxes are signed (<code>+2</code>, <code>-1</code>) so you can verify the direction of each jump at a glance.</li>
+<li>The collision at index 0 is the signal that a loop exists. The direction check has been happening silently at every jump (every node visited was positive).</li>
+</ul>
 <div class="fig" id="circArrayW"></div>
+<p>The loop above only follows the starting index 0, which succeeds. The full algorithm tries <strong>every index as a start</strong>, because a bad start (one that walks into a dead end) does not rule out other starts. Here is what would happen for each start on this same array if the algorithm began there:</p>
+<div class="fig scroll"><table class="tt">
+<tr><th>Start</th><th>Direction</th><th>What happens</th><th>Result</th></tr>
+<tr><td>0</td><td>forward</td><td>0 → 2 → 3 → 0, all forward, <code>slow</code> and <code>fast</code> meet</td><td>Valid cycle found, return <code>True</code></td></tr>
+<tr><td>1</td><td>backward</td><td>1 → 0 is backward, but 0 holds +2 (forward), so <code>fast</code> is rejected on its second jump</td><td>Dead end for this start</td></tr>
+<tr><td>2</td><td>forward</td><td>2 → 3 → 0 → 2 …, all forward</td><td>Valid cycle (same loop as start 0)</td></tr>
+<tr><td>3</td><td>forward</td><td>3 → 0 → 2 → 3 …, all forward</td><td>Valid cycle (same loop)</td></tr>
+<tr><td>4</td><td>forward</td><td>4 → 1, but 1 holds −1 (backward), so the walk is rejected</td><td>Dead end for this start</td></tr>
+</table></div>
+<p>Starts 1 and 4 are dead ends, yet the answer is still <code>True</code> because other starts reach the loop. This is why the algorithm must keep trying new starting indices before it can answer <code>False</code>.</p>
 
-<h3 id="t9-4">Full Implementation</h3>
+<h3 id="t9-4">Reading the Code Line by Line</h3>
+<p>The implementation below has three layers. Here is what each layer is responsible for.</p>
+<ol>
+<li><strong>The helper <code>next_index(i, direction)</code></strong> performs one jump and decides whether it is allowed.
+  <ul>
+  <li><code>nums[i] * direction &lt;= 0</code>: the node at <code>i</code> moves opposite to the walk, so return <code>-1</code> (direction mismatch).</li>
+  <li><code>nxt = (i + nums[i]) % n</code>: compute the wrapped destination.</li>
+  <li><code>nxt == i</code>: the jump lands on the same index, a self-loop, so return <code>-1</code>.</li>
+  <li>Otherwise return <code>nxt</code>. The value <code>-1</code> is a sentinel meaning "this walk cannot be part of a valid cycle".</li>
+  </ul>
+</li>
+<li><strong>The outer loop <code>for i in range(n)</code></strong> tries every index as a start. The <code>direction</code> is fixed by the sign of <code>nums[i]</code> and stays the same for the whole walk. That is how "no direction flips" is enforced.</li>
+<li><strong>The inner loop</strong> is Floyd's algorithm with a safety check after every single jump:
+  <ul>
+  <li><code>slow</code> jumps once.</li>
+  <li><code>fast</code> jumps twice, and we check <code>-1</code> after <strong>each</strong> of the two jumps. A check only after the second jump would be wrong: the first jump might already be illegal, and the next call would then index <code>nums[-1]</code> (the last element, in Python) without any error.</li>
+  <li><code>slow == fast</code> means the pointers collided inside a loop that used only legal jumps. Return <code>True</code>.</li>
+  <li>Any <code>-1</code> breaks out of the inner loop. We abandon this start and try the next index.</li>
+  </ul>
+</li>
+</ol>
+<p>If every start fails, the function returns <code>False</code>.</p>
+
+<h3 id="t9-5">Full Implementation</h3>
 <details open><summary>Python code (click to hide or show)</summary><pre>def circular_array_loop(nums):
     n = len(nums)
 
     def next_index(i, direction):
-        if nums[i] * direction <= 0:
+        if nums[i] * direction &lt;= 0:
             return -1  # Direction mismatch
         nxt = (i + nums[i]) % n
         return -1 if nxt == i else nxt  # Reject self-loops
 
     for i in range(n):
-        direction = 1 if nums[i] > 0 else -1
+        direction = 1 if nums[i] &gt; 0 else -1
         slow = i
         fast = i
 
@@ -563,6 +736,50 @@ When fast reaches the end (Distance = n), slow must have travelled <span class="
                 return True
 
     return False</pre></details>
+
+<h3 id="t9-6">Complexity, Optimization and Common Mistakes</h3>
+<p><strong>Complexity of the code above.</strong> Each walk from one start takes <var>O</var>(<var>n</var>) jumps, and there are <var>n</var> starts, so the worst case is <var>O</var>(<var>n</var><sup>2</sup>) time with <var>O</var>(1) space. It is the simplest correct version and is usually fine for interview-sized inputs.</p>
+<p><strong>Getting to <var>O</var>(<var>n</var>).</strong> The waste is that a failed walk may re-walk nodes that earlier starts already proved to be dead ends. The fix is to <strong>erase the failed path</strong>: after a walk fails, set <code>nums[j] = 0</code> for every node on it, and skip any start whose value is <code>0</code>. A zero fails the <code>nums[i] * direction &gt; 0</code> test automatically, so later walks stop immediately when they touch an erased node. Each node is erased at most once, so the total work is <var>O</var>(<var>n</var>). The trade-off is that this version <strong>modifies the input array</strong>.</p>
+<details><summary>Optimized Python code (click to show)</summary><pre>def circular_array_loop_linear(nums):
+    n = len(nums)
+
+    def step(i, d):
+        if nums[i] * d &lt;= 0:
+            return -1
+        nxt = (i + nums[i]) % n
+        return -1 if nxt == i else nxt
+
+    for i in range(n):
+        if nums[i] == 0:          # erased earlier: known dead end
+            continue
+        d = 1 if nums[i] &gt; 0 else -1
+        slow = fast = i
+
+        while True:
+            slow = step(slow, d)
+            if slow == -1: break
+            fast = step(fast, d)
+            if fast == -1: break
+            fast = step(fast, d)
+            if fast == -1: break
+            if slow == fast:
+                return True
+
+        # This start failed: erase its same-direction path.
+        j = i
+        while nums[j] * d &gt; 0:
+            nxt = (j + nums[j]) % n
+            nums[j] = 0
+            j = nxt
+
+    return False</pre></details>
+<p><strong>Common mistakes:</strong></p>
+<ul>
+<li><strong>Using the wrong modulo for negatives</strong> in languages where <code>%</code> can return a negative number. Always normalize with <code>((x % n) + n) % n</code> there.</li>
+<li><strong>Forgetting the self-loop check.</strong> An element like <code>nums[i] = n</code> or <code>nums[i] = -n</code> jumps a full lap back to itself. Without the check, <code>slow</code> and <code>fast</code> would collide immediately and you would return <code>True</code> for a non-cycle.</li>
+<li><strong>Checking only the direction of the start</strong> and not every node along the walk. The direction test must run on every jump, because a cycle can contain a backward node even if the start looks forward.</li>
+<li><strong>Treating a collision as enough.</strong> A collision proves that a loop exists in the graph. It only counts here because every jump that led to it passed the direction and self-loop checks.</li>
+</ul>
 
 <h2 id="t10">10. The Deeper Pattern: Movement as Information</h2>
 <h3 id="t10-1">The Two Major Superpowers</h3>
