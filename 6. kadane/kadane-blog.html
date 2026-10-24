@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kadane’s Pattern: The Subarray That Taught Us to Forget</title>
+<style>
+:root{--bg:#fff;--ink:#111;--mut:#555;--line:#ccc;--acc:#1f4e8c;--hi:#fff3b0;--hib:#c9a227;--ok:#dcf0dc;--okb:#3a8a3a;--mv:#e6edf7;--dim:#eee;--card:#fafafa;--red:#b5342b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#121212;--ink:#eee;--mut:#aaa;--line:#3a3a3a;--acc:#8ab4f8;--hi:#4a4220;--hib:#c9a227;--ok:#1d3a22;--okb:#5cb85c;--mv:#1c2a40;--dim:#2a2a2a;--card:#1a1a1a;--red:#ff7b72;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Roman",Times,serif}
+main{max-width:720px;margin:0 auto;padding:40px 20px 80px}
+h1,h2,h3{font-family:inherit;line-height:1.25}
+h1{font-size:2.1rem;margin:.2em 0 .6em}
+h2{font-size:1.5rem;margin:2.6em 0 .6em;padding-top:1.2em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin:1.3em 0 .3em}
+blockquote{margin:1em 0;padding:.4em 1em;border-left:4px solid var(--acc);font-size:1.12rem}
+blockquote p{margin:.3em 0}
+code{font:inherit;background:var(--card);padding:1px 5px;border-radius:4px}
+a{color:var(--acc)}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:1.2em 0}
+.cap{font-size:.9rem;color:var(--mut);margin:.6em 0 0}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:flex-end}
+.cw{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ix{font-size:.8rem;color:var(--mut);min-height:1.1em;font-weight:600}
+.cell{min-width:40px;padding:7px 6px;text-align:center;border:2px solid var(--line);background:var(--bg);border-radius:6px;font-weight:600;transition:background .2s}
+.gap{border-style:dashed;background:transparent}
+.ok{background:var(--ok);border-color:var(--okb)}
+.now{background:var(--hi);border-color:var(--hib)}
+.dim{background:var(--dim);color:var(--mut);border-color:var(--dim)}
+.mv{background:var(--mv);border-color:var(--acc)}
+.mx{display:grid;gap:3px;margin:8px 0}
+.mh{font-size:.8rem;color:var(--mut);text-align:center;align-self:center}
+.mx .cell{min-width:0;padding:3px 0;font-size:.8rem}
+button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
+button:hover:not(:disabled){background:var(--mv)}
+button:disabled{opacity:.4;cursor:default}
+button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--hib);outline-offset:2px}
+.tools{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5;display:flex;gap:8px}
+.ctl{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.pos{color:var(--mut);font-size:.9rem}
+.note{min-height:3em;margin:.4em 0 0;font-weight:500}
+.lbl{font-size:.9rem;margin:8px 0 3px}
+.bar{height:14px;border-radius:4px;background:var(--acc);min-width:3px}
+.bar.g{background:var(--okb)}.bar.r{background:var(--red)}
+input[type=range]{width:100%}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--dim)}
+details{margin:.6em 0 .9em;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+summary{cursor:pointer;padding:8px 12px;font-size:.95rem;color:var(--acc)}
+pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,Menlo,Consolas,monospace}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.two{grid-template-columns:1fr}}
+.flow{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;font-size:.95rem}
+.flow .cell{min-width:140px}
+.zones{display:flex;border:2px solid var(--line);border-radius:6px;overflow:hidden;text-align:center;font-size:.85rem}
+.zones div{padding:10px 6px}
+.flag{font-size:.9rem;color:var(--mut)}
+.tt td:first-child{font-weight:600}
+.tt td{text-align:left}
+p{margin:.7em 0}
+ul,ol{margin:.7em 0}
+li{margin:.15em 0}
+.dg{margin:.4em 0 .9em;padding:.1em 0 .1em 14px;border-left:3px solid var(--line);overflow-x:auto}
+.dg pre{padding:0;font-size:.88rem;line-height:1.45}
+.st{display:flex;gap:5px;flex-wrap:wrap;align-items:flex-end;margin:.4em 0 .9em}
+.st .cell{min-width:38px;padding:3px 10px}
+.st .ix{min-height:0}
+.st-n{display:flex;flex-direction:column;gap:2px;margin:.4em 0 .9em;font-size:.9rem;color:var(--mut)}
+.vb{display:flex;gap:6px;align-items:flex-end;margin:6px 0}
+.vc{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:26px;max-width:60px;justify-content:flex-end}
+.vbar{width:100%;border:2px solid var(--line);background:var(--bg);border-radius:4px 4px 0 0;transition:height .2s,background .2s}
+</style>
+</head>
+<body>
+<div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
+<main>
+<h1>Kadane’s Pattern: The Subarray That Taught Us to Forget</h1>
+<p>We have spent the last few articles learning to think in terms of <strong>constraints</strong>. We didn’t begin with patterns. We began with a problem. The problem gave us a constraint, the constraint made some approaches painful, the pain gave us an idea, and the idea eventually became a pattern.</p>
+<p>Sliding Window followed exactly this path. We noticed that instead of rebuilding contiguous ranges, we could move a window and reuse what we already knew. Now we look at another family of contiguous-subarray problems, but the question changes. It is no longer <em>how do we move the window?</em> It is <em>what should we do with the past?</em> Sometimes the past helps us. Sometimes it hurts us.</p>
+<blockquote><p>Is the past helping me, or is it hurting me?</p></blockquote>
+<p>Each idea has a stepper or a slider you can play with, and the code can be hidden with the button at the top.</p>
+<ol>
+<li><a href="#s1">A new problem, and the obvious way to solve it</a></li>
+<li><a href="#s2">What are we maintaining?</a></li>
+<li><a href="#s3">Should we carry the past forward?</a></li>
+<li><a href="#s4">Watching it happen, then driving it yourself</a></li>
+<li><a href="#s5">Why two values?</a></li>
+<li><a href="#s6">What if every number is negative?</a></li>
+<li><a href="#s7">The same idea as dynamic programming</a></li>
+<li><a href="#s8">What these problems taught us</a></li>
+<li><a href="#s9">The bigger pattern</a></li>
+<li><a href="#s10">A useful way to recognize these problems</a></li>
+<li><a href="#s11">The evolution of the idea</a></li>
+</ol>
+
+<h2 id="s1">1. A new problem, and the obvious way to solve it</h2>
+<p>Consider the array <code>[-2, 1, -3, 4, -1, 2, 1, -5, 4]</code>. We want a <strong>contiguous subarray</strong> with the largest possible sum. For example <code>[4, -1, 2, 1]</code> has sum <code>4 + (-1) + 2 + 1 = 6</code>, and 6 is the maximum. This is the famous <strong>Maximum Subarray</strong> problem. But let’s pretend we have never heard of Kadane’s algorithm.</p>
+<div class="fig" id="fig1a"></div>
+<h3>The naive way</h3>
+<p>A subarray is defined by two boundaries, a start and an end. So try every start, and for each start try every end: <code>[-2]</code>, <code>[-2, 1]</code>, <code>[-2, 1, -3]</code>, and so on, then move the start and repeat. For an array of length <code>n</code> there are roughly <code>n²</code> subarrays. That is already uncomfortable.</p>
+<p>Drag the slider to feel it.</p>
+<div class="fig" id="sl1"></div>
+<div class="fig scroll" id="gr"></div>
+<h3>Can we at least make each sum cheap?</h3>
+<p>If we already know <code>sum([4, -1, 2]) = 5</code>, there is no reason to recompute the whole thing for <code>[4, -1, 2, 1]</code>. We just add the new element: <code>5 + 1 = 6</code>. This is the sliding-window instinct again: don’t throw away work that can be reused. So we scan with a running sum. But that raises a new question.</p>
+
+<h2 id="s2">2. What are we maintaining?</h2>
+<p>Walk through the array extending one subarray forever. The running sum goes <code>-2</code>, then <code>-1</code>, then <code>-4</code>, then <code>0</code> when we reach <code>4</code>.</p>
+<div class="fig" id="fig2a"></div>
+<p>Something feels wrong. We have reached a <code>4</code>, but our history <code>[-2, 1, -3]</code> (sum <code>-4</code>) is dragging us down. Attach the 4 to it and we get <code>0</code>. Forget everything and take just <code>[4]</code>, and we get <code>4</code>. That is much better, and it leads to the important question.</p>
+
+<h2 id="s3">3. Should we carry the past forward?</h2>
+<p>At every element <code>x</code> we have exactly two choices.</p>
+<ul>
+<li><strong>Extend</strong> the existing subarray: <code>previous_sum + x</code></li>
+<li><strong>Restart</strong> at this element: <code>x</code></li>
+</ul>
+<p>So the decision is <code>max(previous_sum + x, x)</code>. That is the heart of Kadane’s idea, but there is a deeper reason it works.</p>
+<h3>When does the past become harmful?</h3>
+<p>Suppose the previous sum is <code>-4</code> and the next number is <code>7</code>. Carrying the past gives <code>3</code>; forgetting it gives <code>7</code>. The history actively made things worse. And it doesn’t matter what created the <code>-4</code>. It could be <code>[-2, -2]</code>, or <code>[10, -20, 6]</code>, or <code>[-100, 96]</code>. Once the best sum we can carry forward is negative, the details are irrelevant. This is our first major compression of information. Try it:</p>
+<div class="fig" id="sl2"></div>
+<blockquote><p>A negative-sum subarray can never improve the sum of a future subarray. If we must choose between carrying a negative sum forward and starting fresh, starting fresh is always at least as good.</p></blockquote>
+
+<h2 id="s4">4. Watching it happen, then driving it yourself</h2>
+<p>Step through the array. At each element, the figure shows both choices and which one wins. When a restart happens, the discarded history fades out. Pick the first preset and watch the negative history disappear right before the <code>4</code>.</p>
+<div class="fig" id="stepper1"></div>
+<p class="cap">Yellow is the current element, green is the subarray being carried, grey is forgotten history.</p>
+<p>Now you make the decisions. The wrong answers will tell you why they are wrong.</p>
+<div class="fig" id="drv1"></div>
+<blockquote><p>At every element, Kadane’s asks one question: is my history helping me or hurting me?</p></blockquote>
+<h3>We have accidentally discovered the algorithm</h3>
+<details open><summary>Python code (click to hide or show)</summary><pre>def max_subarray(nums):
+    current = nums[0]
+    best = nums[0]
+
+    for x in nums[1:]:
+        current = max(x, current + x)
+        best = max(best, current)
+
+    return best</pre></details>
+<p>The code is almost the least interesting part. The interesting part is <em>why the two variables exist</em>.</p>
+
+<h2 id="s5">5. Why two values?</h2>
+<p><code>current</code> answers: what is the best sum of a subarray that <strong>must end here</strong>? <code>best</code> answers: what is the best sum we have seen <strong>anywhere so far</strong>? These are different questions. Take <code>[4, -1, 2, 1, -10]</code>. After the first four elements both are <code>6</code>. Then <code>-10</code> arrives and <code>current</code> becomes <code>-4</code>, since the best subarray ending here is the whole array. Have we forgotten that 6 was achievable? No. That is what <code>best</code> remembers.</p>
+<div class="fig" id="fig5a"></div>
+<h3>Forgetting is not erasing</h3>
+<p>When we restart, we are not saying “everything before this was useless.” Maybe it was the best subarray we have seen. We are saying something more precise: everything before this is no longer useful for <strong>extending a subarray into the future</strong>. There are two kinds of memory, and <code>current</code> and <code>best</code> hold one each.</p>
+<h3>Why does contiguity matter so much?</h3>
+<p>If elements could be picked freely, we would just take all the positives. We can’t. Once we continue a subarray we <em>must</em> take the next element. So every new element creates a binary decision, extend or restart, and because we only care about the best subarray ending here, all worse histories can be discarded.</p>
+
+<h2 id="s6">6. What if every number is negative?</h2>
+<p>This is where careless implementations go wrong. For <code>[-8, -3, -6, -2, -5]</code> the answer is <code>[-2]</code> with sum <code>-2</code>. If we initialize <code>current = 0</code> and <code>best = 0</code>, we return <code>0</code>, which is not the sum of any non-empty subarray.</p>
+<div class="fig" id="edge"></div>
+<p>So we initialize from the first element. “Restart” means <em>start a real subarray at this element</em>, not “choose nothing.” This also gives the recurrence a clean meaning from the very first step.</p>
+
+<h2 id="s7">7. The same idea as dynamic programming</h2>
+<p>Another mental model: every subarray carries a <strong>score</strong>, and if it falls to <code>-7</code> you would rather open a new account than carry that debt. Formally, define <code>dp[i]</code> as the maximum sum of a subarray ending at index <code>i</code>. Then <code>dp[i] = max(nums[i], dp[i-1] + nums[i])</code> and the answer is <code>max(dp[i])</code>.</p>
+<p>We never said “let’s use DP.” We asked what information about the past actually matters, and the answer was the best subarray ending at the previous position. Then we noticed that <code>dp[i]</code> only depends on <code>dp[i-1]</code>, so why store the whole table?</p>
+<p>The brute force wasn’t wasted either. Two subarrays ending at the same index with sums <code>-5</code> and <code>-2</code> are interchangeable from the future’s point of view, except that <code>-2</code> is better, so we keep only the best one.</p>
+<h3>Why not the simpler approach?</h3>
+<div class="fig scroll"><table class="tt"><tr><th></th><th>Try every subarray</th><th>DP array</th><th>Kadane’s</th></tr><tr><td>Time</td><td><code>O(n²)</code> with a running sum</td><td><code>O(n)</code></td><td><code>O(n)</code></td></tr><tr><td>Extra space</td><td><code>O(1)</code></td><td><code>O(n)</code></td><td><code>O(1)</code></td></tr><tr><td>Reasoning</td><td>Easy to trust, slow</td><td>Makes the state explicit</td><td>Keeps only the state the next decision needs</td></tr></table></div>
+<p>The DP array isn’t wrong. It is the best way to <em>discover</em> the state, and writing it first is a perfectly good habit. The lesson is: first discover the state, then ask how much of it you actually need to keep.</p>
+
+<h2 id="s8">8. What these problems taught us</h2>
+<p>Two kinds of state, two different jobs. Click through them.</p>
+<div class="fig" id="formW"></div>
+
+<h2 id="s9">9. The bigger pattern</h2>
+<p>It is tempting to write “Kadane’s = maximum subarray sum.” That is too shallow. The deeper pattern is to <strong>maintain the best useful state ending at the current position, and decide whether extending it beats starting fresh</strong>. Negative history is discarded, useful history is carried, and independently the global best is tracked because the winner may have ended earlier.</p>
+<p>When a problem seems to demand remembering a huge number of possibilities, don’t immediately ask what data structure stores them all. Ask whether you really need all of them. Maybe many histories are indistinguishable from the future’s perspective. Maybe only the best one matters. Sometimes that realization is the entire algorithm.</p>
+<blockquote><p>What is the smallest piece of information from the past that is sufficient for the next decision?</p></blockquote>
+
+<h2 id="s10">10. A useful way to recognize these problems</h2>
+<ol>
+<li><strong>Is the answer contiguous?</strong> A subarray or substring that must be one unbroken piece.</li>
+<li><strong>Does every element force a choice?</strong> Continue what we have, or begin again here.</li>
+<li><strong>Can a bad history be recognized without knowing its details?</strong> If one number summarizes how harmful it is, we can discard it.</li>
+<li><strong>Can the best answer end earlier than the current position?</strong> If so, keep a separate <code>best</code>.</li>
+</ol>
+
+<h2 id="s11">11. The evolution of the idea</h2>
+<p>These next problems aren’t unrelated tricks. They are the same idea under a changing constraint.</p>
+<div class="fig scroll"><table class="tt"><tr><th>Problem</th><th>What it teaches</th></tr>
+<tr><td>Maximum sum</td><td>One state: the best sum ending here. Forget negative history.</td></tr>
+<tr><td>Minimum sum</td><td>The mirror image. The reasoning should feel familiar.</td></tr>
+<tr><td>Maximum product</td><td>A negative result can suddenly become extremely valuable, so we may need to track the minimum too.</td></tr>
+<tr><td>Delete one element</td><td>One state is no longer enough; we need to track whether the deletion has been used.</td></tr>
+<tr><td>Circular array</td><td>The best subarray may wrap around the end.</td></tr>
+<tr><td>Repeated array</td><td>Do we really need to build the repeated array?</td></tr></table></div>
+<p>Every time, the loop is the same: constraint, what information matters, what can be forgotten, what state survives, what decision we can make.</p>
+<blockquote><p>The most important thing to remember is not the formula <code>current = max(x, current + x)</code>, but the question that produced it. Sometimes the smartest thing an algorithm can do with the past is let it go.</p></blockquote>
+</main>
+
+<script>
+/* ===== SHARED HELPERS: do not change ===== */
+var $=function(i){return document.getElementById(i)};
+var L=function(v){return v.toLocaleString('en-US')};
+var num=function(x,y){return x-y};
+function isSorted(a){for(var i=1;i<a.length;i++)if(a[i-1]>a[i])return false;return true}
+
+/* cells(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label above'}, noix:true}) -> row of cells */
+function cells(a,o){o=o||{};var c=o.c||{};return '<div class="row">'+a.map(function(v,i){var g=v===''||v===null;return '<div class="cw"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="cell'+(g?' gap':'')+' '+(c[i]||'')+'">'+(g?'&nbsp;':v)+'</div><span class="ix">'+(o.noix?'':i)+'</span></div>'}).join('')+'</div>'}
+
+/* widget(id, presets, build): Previous/Next stepper.
+   presets = [[buttonLabel, params], ...]; build(params) returns [{h:htmlString, n:noteText}, ...] */
+function widget(id,opts,build){
+  var el=$(id),i=0,st=[];
+  el.innerHTML=(opts.length>1?'<div class="row" style="align-items:center">'+opts.map(function(o,k){return '<button data-k="'+k+'">'+o[0]+'</button>'}).join('')+'</div>':'')+'<div class="scroll v"></div><p class="note" aria-live="polite"></p><div class="ctl"><button class="pv">Previous</button><span class="pos"></span><button class="nx">Next</button><button class="pl">Play</button></div>';
+  var v=el.querySelector('.v'),n=el.querySelector('.note'),p=el.querySelector('.pos'),pv=el.querySelector('.pv'),nx=el.querySelector('.nx'),pl=el.querySelector('.pl'),tm=null;
+  function stop(){if(tm){clearInterval(tm);tm=null}pl.textContent='Play'}
+  function r(){v.innerHTML=st[i].h;n.textContent=st[i].n;p.textContent='Step '+(i+1)+' of '+st.length;pv.disabled=i===0;nx.disabled=i===st.length-1}
+  function pick(k){stop();st=build(opts[k][1]);i=0;[].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.k===k))});r()}
+  [].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.onclick=function(){pick(+b.dataset.k)}});
+  pv.onclick=function(){stop();if(i>0){i--;r()}};nx.onclick=function(){stop();if(i<st.length-1){i++;r()}};
+  pl.onclick=function(){if(tm){stop();return}if(i>=st.length-1){i=0;r()}pl.textContent='Pause';tm=setInterval(function(){if(i<st.length-1){i++;r()}else stop()},1100)};
+  pick(0);
+}
+
+/* tabs(id, labels, fn): tab buttons; fn(k) returns html for tab k */
+function tabs(id,labels,fn){var el=$(id);el.innerHTML='<div class="row" style="align-items:center"></div><div class="tv"></div>';var bar=el.firstChild,tv=el.lastChild;
+  labels.forEach(function(t,k){var b=document.createElement('button');b.textContent=t;b.onclick=function(){[].forEach.call(bar.children,function(x){x.setAttribute('aria-pressed',String(x===b))});tv.innerHTML=fn(k)};b.setAttribute('aria-pressed',String(k===0));bar.appendChild(b)});tv.innerHTML=fn(0)}
+
+/* growth(id, ns, bruteFn, betterFn, header1, header2): log-scale comparison table */
+function growth(id,ns,bf,tp,h1,h2){$(id).innerHTML='<table><tr><th>n</th><th>'+h1+'</th><th>'+h2+'</th></tr>'+ns.map(function(n){var b=bf(n),t=tp(n);return '<tr><td>'+L(n)+'</td><td>'+L(b)+'<div class="bar r" style="width:'+Math.max(1,Math.log10(b)/12*100)+'%;margin-left:auto"></div></td><td>'+L(t)+'<div class="bar g" style="width:'+Math.max(1,Math.log10(t)/12*100)+'%;margin-left:auto"></div></td></tr>'}).join('')+'</table><p class="cap">Bars use a log scale, otherwise the second column would be invisible.</p>'}
+
+/* flow(['step','step',...]) -> vertical arrow flow */
+function flow(a){return '<div class="flow">'+a.map(function(x){return '<div class="cell">'+x+'</div>'}).join('<span>↓</span>')+'</div>'}
+
+/* grid(matrix, {c:function(r,c){return 'ok|now|dim|mv'}, rh:[row headers], ch:[col headers]}) -> 2D table of cells (DP tables, grids, matrices) */
+function grid(m,o){o=o||{};var w=m[0].length,ch=o.ch,rh=o.rh;
+  var h='<div class="mx" style="grid-template-columns:'+(rh?'auto ':'')+'repeat('+w+',minmax(0,1fr))">';
+  if(ch){h+=(rh?'<span></span>':'')+ch.map(function(x){return '<span class="mh">'+x+'</span>'}).join('')}
+  m.forEach(function(r,i){if(rh)h+='<span class="mh">'+rh[i]+'</span>';r.forEach(function(v,j){h+='<div class="cell '+((o.c&&o.c(i,j))||'')+'">'+v+'</div>'})});
+  return h+'</div>'}
+
+/* vbars(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label'}}) -> vertical bar chart of an array (sorting, partitioning, heights) */
+function vbars(a,o){o=o||{};var c=o.c||{},mx=Math.max.apply(null,a.map(Math.abs))||1;
+  return '<div class="vb">'+a.map(function(v,i){return '<div class="vc"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="vbar '+(c[i]||'')+'" style="height:'+Math.max(4,Math.round(Math.abs(v)/mx*110))+'px"></div><span class="ix">'+v+'</span></div>'}).join('')+'</div>'}
+
+/* driver(id, cfg): "you drive the algorithm". The reader picks the move; wrong moves get a teaching message.
+   cfg = {
+     presets:[[label,param],...],
+     init:function(param){return state},
+     view:function(state,done){return html},
+     done:function(state){return bool},
+     prompt:function(state,done){return 'What should we do?'},
+     choices:[['A','button text'],['B','button text'],...],
+     expected:function(state){return 'A'},               // the correct choice id
+     apply:function(state,choiceId){ return 'Right. why it worked'},   // mutate state here
+     hint:function(state){return 'general hint'},
+     wrong:function(state,choiceId){return 'specific message for a tempting wrong choice, or undefined'}
+   } */
+function driver(id,cfg){
+  var el=$(id),k=0,s,msg='';
+  function init(){s=cfg.init(cfg.presets[k][1]);msg='';draw()}
+  function draw(){var done=cfg.done(s);
+    el.innerHTML='<div class="row" style="align-items:center">'+cfg.presets.map(function(p,j){return '<button data-p="'+j+'" aria-pressed="'+(j===k)+'">'+p[0]+'</button>'}).join('')+'</div><div class="scroll">'+cfg.view(s,done)+'</div><p class="note" aria-live="polite"><strong>'+cfg.prompt(s,done)+'</strong></p><div class="ctl">'+cfg.choices.map(function(c){return '<button data-c="'+c[0]+'"'+(done?' disabled':'')+'>'+c[1]+'</button>'}).join('')+'</div><p class="note" aria-live="polite">'+msg+'</p>';
+    [].forEach.call(el.querySelectorAll('button[data-p]'),function(b){b.onclick=function(){k=+b.dataset.p;init()}});
+    [].forEach.call(el.querySelectorAll('button[data-c]'),function(b){b.onclick=function(){choose(b.dataset.c)}})}
+  function choose(c){if(c!==cfg.expected(s)){msg=(cfg.wrong&&cfg.wrong(s,c))||('Not quite. '+cfg.hint(s));draw();return}
+    msg=cfg.apply(s,c)||'Right.';draw()}
+  init()}
+
+/* slider(id, {min,max,value,label,render:function(v){return html}}) -> "drag to see how the cost grows" figure */
+function slider(id,o){var el=$(id);el.innerHTML='<label for="'+id+'S">'+o.label+' = <strong class="so"></strong></label><input id="'+id+'S" type="range" min="'+o.min+'" max="'+o.max+'" value="'+o.value+'"><div class="sv"></div>';
+  var inp=el.querySelector('input'),out=el.querySelector('.so'),sv=el.querySelector('.sv');
+  function u(){out.textContent=inp.value;sv.innerHTML=o.render(+inp.value)}inp.oninput=u;u()}
+
+/* ===== PAGE-SPECIFIC ===== */
+var A0=[-2,1,-3,4,-1,2,1,-5,4];
+$('fig1a').innerHTML=cells(A0,{c:{3:'ok',4:'ok',5:'ok',6:'ok'}})+'<p class="cap">The best subarray (green) is <code>[4, -1, 2, 1]</code> with sum 6.</p>';
+slider('sl1',{min:1,max:60,value:9,label:'Array length n',render:function(n){var c=n*(n+1)/2;return '<div class="lbl">Subarrays to consider: <strong>'+L(c)+'</strong></div><div class="bar r" style="width:'+(c/1830*100)+'%"></div><div class="lbl">Elements in one pass: <strong>'+n+'</strong></div><div class="bar g" style="width:'+(n/1830*100)+'%"></div>'}});
+growth('gr',[10,1000,100000,1000000],function(n){return n*n},function(n){return n},'Every pair (n²)','One pass (n)');
+$('fig2a').innerHTML=cells(['-2','1','-3','4'],{c:{3:'now'},sub:{0:'-2',1:'-1',2:'-4',3:'0'},noix:true})+'<p class="cap">Running sum above each element. At the 4, the history is worth −4.</p>';
+slider('sl2',{min:-10,max:10,value:-4,label:'Previous sum (the history)',render:function(p){var e=p+7,w=e>7?0:1;return cells([e,7],{c:(function(){var o={};o[w]='ok';return o})(),sub:{0:'extend',1:'restart'},noix:true})+'<p class="note">Next number is 7. '+(e>7?'The history is positive, so it helps. Extend.':e===7?'A tie. History adds nothing.':'The history is negative, so it hurts. Restart.')+'</p>'}});
+function sv(a,i,st,cur,best,bs,be,line,pend){var c={},sub={},n=a.length;for(var j=0;j<n&&j<=i;j++)c[j]=j<st?'dim':'ok';if(i<n)c[i]=pend?'mv':'now';sub[st]='start';
+ return cells(a,{c:c,sub:sub})+(line?'<p>'+line+'</p>':'')+'<p><code>current</code> = <strong>'+cur+'</strong> &nbsp; <code>best</code> = <strong>'+best+'</strong> from ['+a.slice(bs,be+1).join(', ')+']</p>'}
+function kdSteps(a){var s=[],cur=a[0],best=a[0],st=0,bs=0,be=0;
+ s.push({h:sv(a,0,st,cur,best,bs,be,''),n:'Start with the first element. Both current and best are '+a[0]+'.'});
+ for(var i=1;i<a.length;i++){var x=a[i],pv=cur,ext=cur+x,rs=x>ext;
+  var line='Extend: '+pv+' + '+x+' = '+ext+' &nbsp;|&nbsp; Restart: '+x+' &nbsp;→&nbsp; <strong>'+(rs?'restart':'extend')+' wins</strong>';
+  if(rs){cur=x;st=i}else cur=ext;if(cur>best){best=cur;bs=st;be=i}
+  s.push({h:sv(a,i,st,cur,best,bs,be,line),n:rs?'The history ('+pv+') was hurting us, so we forget it and start fresh at '+x+'.':'The history ('+pv+') is not hurting us, so we carry it forward.'})}
+ return s}
+widget('stepper1',[['[-2, 1, -3, 4, -1, 2, 1, -5, 4]',A0],['[4, -1, 2, 1, -10]',[4,-1,2,1,-10]],['[-8, -3, -6, -2, -5]',[-8,-3,-6,-2,-5]]],kdSteps);
+driver('drv1',{presets:[['Main array',A0],['[5, -9, 6, -2, 3]',[5,-9,6,-2,3]],['[-3, -1, -2]',[-3,-1,-2]]],
+ init:function(a){return {a:a,i:1,cur:a[0],st:0,best:a[0],bs:0,be:0}},
+ view:function(s){return sv(s.a,s.i,s.st,s.cur,s.best,s.bs,s.be,'',true)},
+ done:function(s){return s.i>=s.a.length},
+ prompt:function(s,d){if(d)return 'Done. The maximum subarray sum is '+s.best+'.';var x=s.a[s.i];return 'Next is x = '+x+'. Extend gives '+(s.cur+x)+', restart gives '+x+'. Which do you choose?'},
+ choices:[['E','Extend'],['R','Restart']],
+ expected:function(s){return s.cur<0?'R':'E'},
+ apply:function(s,c){var x=s.a[s.i],old=s.cur;if(c==='R'){s.cur=x;s.st=s.i}else s.cur+=x;if(s.cur>s.best){s.best=s.cur;s.bs=s.st;s.be=s.i}s.i++;return c==='R'?'Right. A history of '+old+' only drags us down.':'Right. A history of '+old+' is not negative, so it cannot hurt.'},
+ hint:function(s){return 'Compare current + x with x. Is the history negative?'},
+ wrong:function(s,c){return c==='R'?'Not quite. The history ('+s.cur+') is not negative, so carrying it is at least as good as starting at '+s.a[s.i]+'.':'Not quite. The history ('+s.cur+') is negative. Carrying it only lowers the next sum, so forget it.'}});
+$('fig5a').innerHTML=cells([4,-1,2,1,-10],{c:{0:'ok',1:'ok',2:'ok',3:'ok',4:'now'},sub:{3:'best = 6',4:'current = -4'}})+'<p class="cap"><code>current</code> dropped to −4, but <code>best</code> still remembers the 6.</p>';
+tabs('edge',['Wrong: best = 0','Right: best = first element'],function(k){var a=[-8,-3,-6,-2,-5];return cells(a,k?{c:{3:'ok'},sub:{3:'best'}}:{})+'<p class="note">'+(k?'<strong>best = -2</strong>, from <code>[-2]</code>. A real subarray.':'<strong>best = 0</strong>, which is the sum of nothing. No non-empty subarray has this sum.')+'</p>'});
+tabs('formW',['current','best','Together'],function(k){return '<p class="note">'+['<code>current</code> is what can help me continue: the best sum of a subarray that must end here. It can drop, even go negative, and then it is reset.','<code>best</code> is the best answer I have seen anywhere. It never decreases.','Each step: <code>current = max(x, current + x)</code>, then <code>best = max(best, current)</code>. Two numbers replace an astronomical number of subarrays.'][k]+'</p>'});
+
+/* ===== CODE TOGGLE AND THEME: do not change ===== */
+var cb=$('codeBtn'),hid=false;
+cb.onclick=function(){hid=!hid;[].forEach.call(document.querySelectorAll('details'),function(d){d.open=!hid});cb.textContent=hid?'Show code':'Hide code'};
+var root=document.documentElement,tb=$('theme');
+function setTheme(t){root.setAttribute('data-theme',t);tb.textContent=t==='dark'?'Light':'Dark'}
+try{var th=localStorage.getItem('theme');if(th==='dark'||th==='light')setTheme(th)}catch(e){}
+tb.onclick=function(){var t=root.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);try{localStorage.setItem('theme',t)}catch(e){}};
+</script>
+</body>
+</html>

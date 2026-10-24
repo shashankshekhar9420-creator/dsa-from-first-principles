@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kadane’s Pattern: When Kadane Is Hiding Somewhere Else</title>
+<style>
+:root{--bg:#fff;--ink:#111;--mut:#555;--line:#ccc;--acc:#1f4e8c;--hi:#fff3b0;--hib:#c9a227;--ok:#dcf0dc;--okb:#3a8a3a;--mv:#e6edf7;--dim:#eee;--card:#fafafa;--red:#b5342b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#121212;--ink:#eee;--mut:#aaa;--line:#3a3a3a;--acc:#8ab4f8;--hi:#4a4220;--hib:#c9a227;--ok:#1d3a22;--okb:#5cb85c;--mv:#1c2a40;--dim:#2a2a2a;--card:#1a1a1a;--red:#ff7b72;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Roman",Times,serif}
+main{max-width:720px;margin:0 auto;padding:40px 20px 80px}
+h1,h2,h3{font-family:inherit;line-height:1.25}
+h1{font-size:2.1rem;margin:.2em 0 .6em}
+h2{font-size:1.5rem;margin:2.6em 0 .6em;padding-top:1.2em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin:1.3em 0 .3em}
+blockquote{margin:1em 0;padding:.4em 1em;border-left:4px solid var(--acc);font-size:1.12rem}
+blockquote p{margin:.3em 0}
+code{font:inherit;background:var(--card);padding:1px 5px;border-radius:4px}
+a{color:var(--acc)}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:1.2em 0}
+.cap{font-size:.9rem;color:var(--mut);margin:.6em 0 0}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:flex-end}
+.cw{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ix{font-size:.8rem;color:var(--mut);min-height:1.1em;font-weight:600}
+.cell{min-width:40px;padding:7px 6px;text-align:center;border:2px solid var(--line);background:var(--bg);border-radius:6px;font-weight:600;transition:background .2s}
+.gap{border-style:dashed;background:transparent}
+.ok{background:var(--ok);border-color:var(--okb)}
+.now{background:var(--hi);border-color:var(--hib)}
+.dim{background:var(--dim);color:var(--mut);border-color:var(--dim)}
+.mv{background:var(--mv);border-color:var(--acc)}
+.mx{display:grid;gap:3px;margin:8px 0}
+.mh{font-size:.8rem;color:var(--mut);text-align:center;align-self:center}
+.mx .cell{min-width:0;padding:3px 0;font-size:.8rem}
+button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
+button:hover:not(:disabled){background:var(--mv)}
+button:disabled{opacity:.4;cursor:default}
+button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--hib);outline-offset:2px}
+.tools{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5;display:flex;gap:8px}
+.ctl{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.pos{color:var(--mut);font-size:.9rem}
+.note{min-height:3em;margin:.4em 0 0;font-weight:500}
+.lbl{font-size:.9rem;margin:8px 0 3px}
+.bar{height:14px;border-radius:4px;background:var(--acc);min-width:3px}
+.bar.g{background:var(--okb)}.bar.r{background:var(--red)}
+input[type=range]{width:100%}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--dim)}
+details{margin:.6em 0 .9em;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+summary{cursor:pointer;padding:8px 12px;font-size:.95rem;color:var(--acc)}
+pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,Menlo,Consolas,monospace}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.two{grid-template-columns:1fr}}
+.flow{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;font-size:.95rem}
+.flow .cell{min-width:140px}
+.zones{display:flex;border:2px solid var(--line);border-radius:6px;overflow:hidden;text-align:center;font-size:.85rem}
+.zones div{padding:10px 6px}
+.flag{font-size:.9rem;color:var(--mut)}
+.tt td:first-child{font-weight:600}
+.tt td{text-align:left}
+p{margin:.7em 0}
+ul,ol{margin:.7em 0}
+li{margin:.15em 0}
+.dg{margin:.4em 0 .9em;padding:.1em 0 .1em 14px;border-left:3px solid var(--line);overflow-x:auto}
+.dg pre{padding:0;font-size:.88rem;line-height:1.45}
+.st{display:flex;gap:5px;flex-wrap:wrap;align-items:flex-end;margin:.4em 0 .9em}
+.st .cell{min-width:38px;padding:3px 10px}
+.st .ix{min-height:0}
+.st-n{display:flex;flex-direction:column;gap:2px;margin:.4em 0 .9em;font-size:.9rem;color:var(--mut)}
+.vb{display:flex;gap:6px;align-items:flex-end;margin:6px 0}
+.vc{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:26px;max-width:60px;justify-content:flex-end}
+.vbar{width:100%;border:2px solid var(--line);background:var(--bg);border-radius:4px 4px 0 0;transition:height .2s,background .2s}
+</style>
+</head>
+<body>
+<div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
+<main>
+<h1>Kadane’s Pattern: When Kadane Is Hiding Somewhere Else</h1>
+<p>So far Kadane’s has looked deceptively simple. We don’t need to remember every subarray, only the best useful history ending at the current position. Then sometimes one state wasn’t enough, sometimes the constraint changed the state, and sometimes the problem could be transformed into one Kadane already knew how to solve. This final article is about that last idea.</p>
+<p>The goal is not to look at a problem and think “this is a Kadane problem.” It is to ask whether we can transform the problem until Kadane’s way of thinking becomes visible.</p>
+<blockquote><p>Can I transform this problem until Kadane’s way of thinking becomes visible?</p></blockquote>
+<p>Each problem has an interactive figure, and the code can be hidden with the button at the top.</p>
+<ol>
+<li><a href="#s1">K-Concatenation Maximum Sum (LeetCode 1191)</a></li>
+<li><a href="#s2">Maximum Score of a Spliced Array (LeetCode 2321)</a></li>
+<li><a href="#s3">Substring With Largest Variance (LeetCode 2272)</a></li>
+<li><a href="#s4">What these problems taught us</a></li>
+<li><a href="#s5">The bigger pattern</a></li>
+<li><a href="#s6">A useful way to recognize these problems</a></li>
+<li><a href="#s7">The evolution of the idea, and what comes next</a></li>
+</ol>
+
+<h2 id="s1">1. K-Concatenation Maximum Sum (LeetCode 1191)</h2>
+<p>Take <code>nums = [1, -2, 1]</code> and concatenate it 3 times: <code>[1, -2, 1, 1, -2, 1, 1, -2, 1]</code>. Find the maximum subarray sum. If <code>k</code> is small we can build the array and run Kadane’s. But what if <code>k = 1,000,000,000</code>? We still want a maximum subarray, but we can’t afford to construct the thing we’re supposed to search.</p>
+<h3>The naive way</h3>
+<p>Build the repeated array and scan it. That costs <code>O(n·k)</code> time and memory, which is hopeless for a billion copies.</p>
+<h3>What can one copy tell us?</h3>
+<p>Four things matter: the <strong>best subarray inside one copy</strong> (Kadane’s), the <strong>best prefix</strong>, the <strong>best suffix</strong>, and the <strong>total sum</strong>. Prefix and suffix matter because a subarray crossing the boundary between two copies is exactly <em>best suffix of the left copy + best prefix of the right copy</em>. The total matters because passing through a complete extra copy adds <code>total</code> to the sum. If the total is positive, more copies keep helping. If it is zero or negative, they don’t.</p>
+<blockquote><p>When the input is huge because of repetition, look for a compact summary of one repeated unit.</p></blockquote>
+<p>Pick an array, drag <code>k</code>, and compare the answer from the real built array with the one from the summary. The array grows, but the information needed to reason about it does not.</p>
+<div class="fig" id="kc"></div>
+<h3>The complete algorithm</h3>
+<p>For <code>k = 1</code> the answer is the best subarray. For <code>k ≥ 2</code>, run Kadane over two copies, which covers the boundary crossing, then add <code>(k − 2) × total</code> if the total is positive. LeetCode 1191 allows an empty subarray, so Kadane here starts from <code>0</code>.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def k_concatenation_max_sum(nums, k):
+    MOD = 10**9 + 7
+    total = sum(nums)
+
+    def kadane(arr):
+        current = best = 0          # empty subarray is allowed
+        for x in arr:
+            current = max(0, current + x)
+            best = max(best, current)
+        return best
+
+    if k == 1:
+        return kadane(nums) % MOD
+
+    best = kadane(nums * 2)
+    if total &gt; 0:
+        best += (k - 2) * total
+
+    return best % MOD</pre></details>
+<h3>Why not the simpler approach?</h3>
+<div class="fig scroll"><table class="tt"><tr><th></th><th>Build the array</th><th>Two copies + total</th></tr><tr><td>Time</td><td><code>O(n·k)</code></td><td><code>O(n)</code></td></tr><tr><td>Extra space</td><td><code>O(n·k)</code></td><td><code>O(n)</code> for two copies</td></tr><tr><td>Reasoning</td><td>Obvious, impossible for huge <code>k</code></td><td>Uses what one copy says about all of them</td></tr></table></div>
+<p>Building two copies is a convenience. We could also compute prefix and suffix directly and need only <code>O(1)</code> extra space. The lesson is the compression, not the implementation.</p>
+
+<h2 id="s2">2. Maximum Score of a Spliced Array (LeetCode 2321)</h2>
+<p>Now a problem that doesn’t look like Maximum Subarray at all. We have <code>nums1</code> and <code>nums2</code>, and we may choose one contiguous segment and replace it in <code>nums1</code> with the matching segment from <code>nums2</code>. Maximize the sum. It sounds like array manipulation, so let’s slow down and ask what actually changes.</p>
+<h3>The naive way</h3>
+<p>Try every segment <code>[l, r]</code>, swap it, and re-sum. That is cubic, or quadratic with prefix sums.</p>
+<h3>Look at each position independently</h3>
+<p>With <code>nums1 = [1, 2, 3, 4]</code> and <code>nums2 = [2, 2, 5, 1]</code>, define <code>gain[i] = nums2[i] − nums1[i]</code>, giving <code>[1, 0, 2, -3]</code>. If we splice a segment, the array gets better by exactly the sum of the gains inside it.</p>
+<blockquote><p>Replacement becomes gain, and the best splice is the maximum-sum contiguous subarray of the gain array. That is Kadane’s.</p></blockquote>
+<p>We didn’t recognize Kadane’s from the surface of the problem. We <em>created</em> a problem Kadane’s can solve. Choose a segment yourself and watch the score.</p>
+<div class="fig" id="sp"></div>
+<p>Now watch Kadane’s run over the gain array. The first preset borrows from <code>nums2</code>, the second borrows the other way.</p>
+<div class="fig" id="spk"></div>
+<p class="cap">Yellow is the current element, green the carried segment, grey forgotten history.</p>
+<h3>The other direction</h3>
+<p>We may also splice from <code>nums1</code> into <code>nums2</code>, so we do the same thing with <code>gain[i] = nums1[i] − nums2[i]</code> and take the better result: <code>max(sum(nums1) + best_gain_2_to_1, sum(nums2) + best_gain_1_to_2)</code>.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def maximum_spliced_array(nums1, nums2):
+    def kadane_gain(a, b):
+        current = best = a[0] - b[0]
+
+        for x, y in zip(a[1:], b[1:]):
+            gain = x - y
+            current = max(gain, current + gain)
+            best = max(best, current)
+
+        return best
+
+    sum1 = sum(nums1)
+    sum2 = sum(nums2)
+
+    gain_1_to_2 = kadane_gain(nums2, nums1)
+    gain_2_to_1 = kadane_gain(nums1, nums2)
+
+    return max(sum1 + gain_1_to_2,
+               sum2 + gain_2_to_1)</pre></details>
+<p>This is pattern recognition at a deeper level: replacement → gain → maximum subarray → Kadane’s.</p>
+
+<h2 id="s3">3. Substring With Largest Variance (LeetCode 2272)</h2>
+<p>This problem is harder because Kadane’s isn’t waiting for us. We have to uncover it. The variance of a substring is the largest difference between the counts of two characters in it, and we want the substring where that is greatest.</p>
+<h3>The naive way</h3>
+<p>Try every substring and count every pair of characters. Too slow, so let’s simplify by fixing one pair of characters, <code>a</code> (the major) and <code>b</code> (the minor), and ignoring every other letter.</p>
+<h3>Turn characters into numbers</h3>
+<p>Give <code>a</code> the value <code>+1</code> and <code>b</code> the value <code>-1</code>. A substring’s sum is then <code>count(a) − count(b)</code>. For <code>"aababa"</code> that is <code>+1 +1 −1 +1 −1 +1 = 2</code>. We want the contiguous region with the largest sum, which looks suspiciously like Maximum Subarray.</p>
+<h3>The catch</h3>
+<p>The substring must contain <strong>both</strong> characters. Plain Kadane’s on <code>"aaaaa"</code> would happily return 5, but there is no <code>b</code>. So the old state, <code>current_sum</code>, isn’t enough. We must also know <strong>whether a <code>b</code> is actually included</strong>. The state exists because the future needs information the old state didn’t preserve.</p>
+<h3>Resetting, carefully</h3>
+<p>When the running difference goes bad (<code>count_b &gt; count_a</code>), normal Kadane’s says forget the past. We do, but with a twist. The reset happens right after reading a <code>b</code>, so that <code>b</code> is available as the first character of the next substring. A third state, <code>can_extend</code>, remembers that. Then a later run like <code>"aaa"</code> counts as <code>3 − 1</code> by borrowing that <code>b</code>. Step through it. The second preset, <code>"baaa"</code>, is where the borrowing matters.</p>
+<div class="fig" id="vr"></div>
+<p class="cap">Green is the current candidate segment, grey is discarded. A candidate is valid only if it contains a <code>b</code>, or can borrow the one just before it.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def largest_variance(s):
+    best = 0
+
+    for major in set(s):
+        for minor in set(s):
+            if major == minor:
+                continue
+
+            major_count = 0
+            minor_count = 0
+            can_extend = False   # a minor sits just before this segment
+
+            for ch in s:
+                if ch == major:
+                    major_count += 1
+                elif ch == minor:
+                    minor_count += 1
+
+                if minor_count &gt; 0:
+                    best = max(best, major_count - minor_count)
+                elif can_extend:
+                    best = max(best, major_count - 1)
+
+                if minor_count &gt; major_count:
+                    major_count = 0
+                    minor_count = 0
+                    can_extend = True
+
+    return best</pre></details>
+<h3>Why not the simpler approach?</h3>
+<div class="fig scroll"><table class="tt"><tr><th></th><th>Reset and forget everything</th><th>Reset but keep <code>can_extend</code></th></tr><tr><td>Time</td><td><code>O(26²·n)</code></td><td><code>O(26²·n)</code></td></tr><tr><td>Extra space</td><td><code>O(1)</code></td><td><code>O(1)</code></td></tr><tr><td>Reasoning</td><td>Misses <code>"baaa"</code>: the useful <code>b</code> was thrown away</td><td>Remembers that the next segment can start with the <code>b</code> that caused the reset</td></tr></table></div>
+<p>A forgetful reset looks like it works on easy inputs and fails on inputs like <code>"abaccc"</code> (the answer is 2, from <code>"accc"</code>). It is the same lesson as the product problem: don’t discard information until you can show the future will never need it.</p>
+
+<h2 id="s4">4. What these problems taught us</h2>
+<p>They all began somewhere different. Click through each.</p>
+<div class="fig" id="formW"></div>
+
+<h2 id="s5">5. The bigger pattern</h2>
+<p>Kadane’s is not really about <code>current = max(x, current + x)</code>. That is only the simplest expression of a deeper idea: maintain the smallest amount of information about the past that is sufficient to make the best decision about the future. Sometimes that is one number, sometimes two (max and min), sometimes a small state machine (no deletion, one deletion). Sometimes we don’t add state at all and transform the problem. And sometimes we transform it and then discover the transformed problem needs a modified state.</p>
+<blockquote><p>Kadane’s doesn’t live in a memorized recurrence. It lives in the state.</p></blockquote>
+<p>When a new contiguous-range problem appears, don’t ask “is this Kadane’s?” Ask what the problem is actually trying to optimize, then run it through this flow.</p>
+<div class="fig" id="fl"></div>
+
+<h2 id="s6">6. A useful way to recognize these problems</h2>
+<ol>
+<li><strong>What is this problem actually optimizing?</strong> Name the quantity, not the story.</li>
+<li><strong>Can I express each element’s contribution more simply?</strong> Replacement became gain, letters became <code>±1</code>.</li>
+<li><strong>Does it reduce to the best contiguous accumulation?</strong> If so, Kadane’s is hiding there.</li>
+<li><strong>What does the future need to know about the past?</strong> That decides the state.</li>
+<li><strong>Did the transformation create invalid answers?</strong> “At least one <code>b</code>” and “non-empty” are the usual traps.</li>
+<li><strong>Is the input huge because of repetition?</strong> Summarize one unit instead of building the whole.</li>
+</ol>
+
+<h2 id="s7">7. The evolution of the idea, and what comes next</h2>
+<div class="fig scroll"><table class="tt"><tr><th>Problem</th><th>What it teaches</th></tr>
+<tr><td>Maximum subarray</td><td>The past either helps or hurts. If it hurts, throw it away.</td></tr>
+<tr><td>Minimum subarray</td><td>Same idea, opposite objective.</td></tr>
+<tr><td>Maximum absolute sum</td><td>One direction isn’t enough. Combine max and min.</td></tr>
+<tr><td>Maximum product</td><td>A bad state can become good, so keep <code>current_max</code> and <code>current_min</code>.</td></tr>
+<tr><td>One deletion</td><td>The future cares about an action already taken, so track it.</td></tr>
+<tr><td>Circular subarray</td><td>Transform: wrapping sum = total − minimum subarray.</td></tr>
+<tr><td>K-concatenation</td><td>Summarize the repeated unit instead of constructing it.</td></tr>
+<tr><td>Spliced array</td><td>Replacement → gain → maximum subarray.</td></tr>
+<tr><td>Largest variance</td><td>Letters → <code>±1</code>, then an extra validity constraint forces extra state.</td></tr></table></div>
+<p>We have spent a lot of time on one question: how do I maintain the best contiguous segment while scanning? Now we approach contiguous ranges from a different direction. Instead of maintaining the best segment dynamically, can I preprocess the array so the sum of <em>any</em> range is available almost immediately? That question leads to our next pattern, <strong>Prefix Sum</strong>, and like Kadane’s it exists because a simpler approach eventually runs into a constraint.</p>
+<blockquote><p>The formula may change. The reasoning doesn’t.</p></blockquote>
+</main>
+
+<script>
+/* ===== SHARED HELPERS: do not change ===== */
+var $=function(i){return document.getElementById(i)};
+var L=function(v){return v.toLocaleString('en-US')};
+var num=function(x,y){return x-y};
+function isSorted(a){for(var i=1;i<a.length;i++)if(a[i-1]>a[i])return false;return true}
+
+/* cells(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label above'}, noix:true}) -> row of cells */
+function cells(a,o){o=o||{};var c=o.c||{};return '<div class="row">'+a.map(function(v,i){var g=v===''||v===null;return '<div class="cw"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="cell'+(g?' gap':'')+' '+(c[i]||'')+'">'+(g?'&nbsp;':v)+'</div><span class="ix">'+(o.noix?'':i)+'</span></div>'}).join('')+'</div>'}
+
+/* widget(id, presets, build): Previous/Next stepper.
+   presets = [[buttonLabel, params], ...]; build(params) returns [{h:htmlString, n:noteText}, ...] */
+function widget(id,opts,build){
+  var el=$(id),i=0,st=[];
+  el.innerHTML=(opts.length>1?'<div class="row" style="align-items:center">'+opts.map(function(o,k){return '<button data-k="'+k+'">'+o[0]+'</button>'}).join('')+'</div>':'')+'<div class="scroll v"></div><p class="note" aria-live="polite"></p><div class="ctl"><button class="pv">Previous</button><span class="pos"></span><button class="nx">Next</button><button class="pl">Play</button></div>';
+  var v=el.querySelector('.v'),n=el.querySelector('.note'),p=el.querySelector('.pos'),pv=el.querySelector('.pv'),nx=el.querySelector('.nx'),pl=el.querySelector('.pl'),tm=null;
+  function stop(){if(tm){clearInterval(tm);tm=null}pl.textContent='Play'}
+  function r(){v.innerHTML=st[i].h;n.textContent=st[i].n;p.textContent='Step '+(i+1)+' of '+st.length;pv.disabled=i===0;nx.disabled=i===st.length-1}
+  function pick(k){stop();st=build(opts[k][1]);i=0;[].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.k===k))});r()}
+  [].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.onclick=function(){pick(+b.dataset.k)}});
+  pv.onclick=function(){stop();if(i>0){i--;r()}};nx.onclick=function(){stop();if(i<st.length-1){i++;r()}};
+  pl.onclick=function(){if(tm){stop();return}if(i>=st.length-1){i=0;r()}pl.textContent='Pause';tm=setInterval(function(){if(i<st.length-1){i++;r()}else stop()},1100)};
+  pick(0);
+}
+
+/* tabs(id, labels, fn): tab buttons; fn(k) returns html for tab k */
+function tabs(id,labels,fn){var el=$(id);el.innerHTML='<div class="row" style="align-items:center"></div><div class="tv"></div>';var bar=el.firstChild,tv=el.lastChild;
+  labels.forEach(function(t,k){var b=document.createElement('button');b.textContent=t;b.onclick=function(){[].forEach.call(bar.children,function(x){x.setAttribute('aria-pressed',String(x===b))});tv.innerHTML=fn(k)};b.setAttribute('aria-pressed',String(k===0));bar.appendChild(b)});tv.innerHTML=fn(0)}
+
+/* growth(id, ns, bruteFn, betterFn, header1, header2): log-scale comparison table */
+function growth(id,ns,bf,tp,h1,h2){$(id).innerHTML='<table><tr><th>n</th><th>'+h1+'</th><th>'+h2+'</th></tr>'+ns.map(function(n){var b=bf(n),t=tp(n);return '<tr><td>'+L(n)+'</td><td>'+L(b)+'<div class="bar r" style="width:'+Math.max(1,Math.log10(b)/12*100)+'%;margin-left:auto"></div></td><td>'+L(t)+'<div class="bar g" style="width:'+Math.max(1,Math.log10(t)/12*100)+'%;margin-left:auto"></div></td></tr>'}).join('')+'</table><p class="cap">Bars use a log scale, otherwise the second column would be invisible.</p>'}
+
+/* flow(['step','step',...]) -> vertical arrow flow */
+function flow(a){return '<div class="flow">'+a.map(function(x){return '<div class="cell">'+x+'</div>'}).join('<span>↓</span>')+'</div>'}
+
+/* grid(matrix, {c:function(r,c){return 'ok|now|dim|mv'}, rh:[row headers], ch:[col headers]}) -> 2D table of cells (DP tables, grids, matrices) */
+function grid(m,o){o=o||{};var w=m[0].length,ch=o.ch,rh=o.rh;
+  var h='<div class="mx" style="grid-template-columns:'+(rh?'auto ':'')+'repeat('+w+',minmax(0,1fr))">';
+  if(ch){h+=(rh?'<span></span>':'')+ch.map(function(x){return '<span class="mh">'+x+'</span>'}).join('')}
+  m.forEach(function(r,i){if(rh)h+='<span class="mh">'+rh[i]+'</span>';r.forEach(function(v,j){h+='<div class="cell '+((o.c&&o.c(i,j))||'')+'">'+v+'</div>'})});
+  return h+'</div>'}
+
+/* vbars(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label'}}) -> vertical bar chart of an array (sorting, partitioning, heights) */
+function vbars(a,o){o=o||{};var c=o.c||{},mx=Math.max.apply(null,a.map(Math.abs))||1;
+  return '<div class="vb">'+a.map(function(v,i){return '<div class="vc"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="vbar '+(c[i]||'')+'" style="height:'+Math.max(4,Math.round(Math.abs(v)/mx*110))+'px"></div><span class="ix">'+v+'</span></div>'}).join('')+'</div>'}
+
+/* driver(id, cfg): "you drive the algorithm". The reader picks the move; wrong moves get a teaching message.
+   cfg = {
+     presets:[[label,param],...],
+     init:function(param){return state},
+     view:function(state,done){return html},
+     done:function(state){return bool},
+     prompt:function(state,done){return 'What should we do?'},
+     choices:[['A','button text'],['B','button text'],...],
+     expected:function(state){return 'A'},               // the correct choice id
+     apply:function(state,choiceId){ return 'Right. why it worked'},   // mutate state here
+     hint:function(state){return 'general hint'},
+     wrong:function(state,choiceId){return 'specific message for a tempting wrong choice, or undefined'}
+   } */
+function driver(id,cfg){
+  var el=$(id),k=0,s,msg='';
+  function init(){s=cfg.init(cfg.presets[k][1]);msg='';draw()}
+  function draw(){var done=cfg.done(s);
+    el.innerHTML='<div class="row" style="align-items:center">'+cfg.presets.map(function(p,j){return '<button data-p="'+j+'" aria-pressed="'+(j===k)+'">'+p[0]+'</button>'}).join('')+'</div><div class="scroll">'+cfg.view(s,done)+'</div><p class="note" aria-live="polite"><strong>'+cfg.prompt(s,done)+'</strong></p><div class="ctl">'+cfg.choices.map(function(c){return '<button data-c="'+c[0]+'"'+(done?' disabled':'')+'>'+c[1]+'</button>'}).join('')+'</div><p class="note" aria-live="polite">'+msg+'</p>';
+    [].forEach.call(el.querySelectorAll('button[data-p]'),function(b){b.onclick=function(){k=+b.dataset.p;init()}});
+    [].forEach.call(el.querySelectorAll('button[data-c]'),function(b){b.onclick=function(){choose(b.dataset.c)}})}
+  function choose(c){if(c!==cfg.expected(s)){msg=(cfg.wrong&&cfg.wrong(s,c))||('Not quite. '+cfg.hint(s));draw();return}
+    msg=cfg.apply(s,c)||'Right.';draw()}
+  init()}
+
+/* slider(id, {min,max,value,label,render:function(v){return html}}) -> "drag to see how the cost grows" figure */
+function slider(id,o){var el=$(id);el.innerHTML='<label for="'+id+'S">'+o.label+' = <strong class="so"></strong></label><input id="'+id+'S" type="range" min="'+o.min+'" max="'+o.max+'" value="'+o.value+'"><div class="sv"></div>';
+  var inp=el.querySelector('input'),out=el.querySelector('.so'),sv=el.querySelector('.sv');
+  function u(){out.textContent=inp.value;sv.innerHTML=o.render(+inp.value)}inp.oninput=u;u()}
+
+/* ===== PAGE-SPECIFIC ===== */
+function sv(a,i,st,cur,best,bs,be,line){var c={},sub={};for(var j=0;j<=i;j++)c[j]=j<st?'dim':'ok';c[i]='now';sub[st]='start';
+ return cells(a,{c:c,sub:sub})+(line?'<p>'+line+'</p>':'')+'<p><code>current</code> = <strong>'+cur+'</strong> &nbsp; <code>best</code> = <strong>'+best+'</strong> from ['+a.slice(bs,be+1).join(', ')+']</p>'}
+function kdSteps(a){var s=[],cur=a[0],best=a[0],st=0,bs=0,be=0;
+ s.push({h:sv(a,0,st,cur,best,bs,be,''),n:'Start with the first gain.'});
+ for(var i=1;i<a.length;i++){var x=a[i],pv=cur,ext=cur+x,rs=x>ext;
+  var line='Extend: '+pv+' + '+x+' = '+ext+' &nbsp;|&nbsp; Restart: '+x+' &nbsp;→&nbsp; <strong>'+(rs?'restart':'extend')+' wins</strong>';
+  if(rs){cur=x;st=i}else cur=ext;if(cur>best){best=cur;bs=st;be=i}
+  s.push({h:sv(a,i,st,cur,best,bs,be,line),n:rs?'The history ('+pv+') hurts. Forget it.':'The history ('+pv+') helps or is neutral. Carry it forward.'})}
+ return s}
+function ksum(a){var c=0,b=0,bs=0,be=-1,st=0;for(var i=0;i<a.length;i++){if(c<=0){c=0;st=i}c+=a[i];if(c>b){b=c;bs=st;be=i}}return [b,bs,be]}
+/* K-concatenation (empty subarray allowed, as in LeetCode 1191) */
+var KP=[[1,-2,1],[1,2],[-1,-2]],kcA=KP[0],kcK=3;
+function kcDraw(){var A=kcA,k=kcK,n=A.length,el=$('kc'),i,sm=0,pre=0,lp=0,suf=0,ls=0,tot=0;
+ for(i=0;i<n;i++){sm+=A[i];if(sm>pre){pre=sm;lp=i+1}}tot=sm;sm=0;for(i=n-1;i>=0;i--){sm+=A[i];if(sm>suf){suf=sm;ls=n-i}}
+ var kd=ksum(A);function fm(kk){return kk===1?kd[0]:Math.max(kd[0],suf+pre,tot>0?suf+(kk-2)*tot+pre:0)}
+ var arr=[];for(i=0;i<k;i++)arr=arr.concat(A);var brute=ksum(arr)[0],c={},j;
+ var row;if(k===1){row=A.slice();for(j=kd[1];j<=kd[2];j++)c[j]='ok'}else{row=A.concat([''],A);for(j=n-ls;j<n;j++)c[j]='ok';for(j=0;j<lp;j++)c[n+1+j]='mv'}
+ el.innerHTML='<div class="row" style="align-items:center">'+KP.map(function(p,q){return '<button data-q="'+q+'" aria-pressed="'+(p===A)+'">['+p.join(', ')+']</button>'}).join('')+'</div><label for="kcS">Copies k = <strong>'+k+'</strong></label><input id="kcS" type="range" min="1" max="10" value="'+k+'"><div class="scroll">'+cells(row,{c:c,noix:true})+'</div>'
+ +'<p>'+(k===1?'One copy: the best subarray is highlighted.':k>=3?'Two copies shown, with '+(k-2)+' more full cop'+(k-2===1?'y':'ies')+' of total '+tot+' that could sit between them. Green is the best suffix, blue the best prefix.':'Green is the best suffix of the left copy, blue the best prefix of the right copy.')+'</p>'
+ +'<p>One copy: best subarray <strong>'+kd[0]+'</strong>, best prefix <strong>'+pre+'</strong>, best suffix <strong>'+suf+'</strong>, total <strong>'+tot+'</strong>.</p>'
+ +'<p>Built array ('+L(arr.length)+' elements): <strong>'+brute+'</strong> &nbsp; From the summary: <strong>'+fm(k)+'</strong></p>'
+ +'<p class="note">With k = 1,000,000,000 the same four numbers give <strong>'+L(fm(1e9))+'</strong> without building anything.</p>';
+ [].forEach.call(el.querySelectorAll('button[data-q]'),function(b){b.onclick=function(){kcA=KP[+b.dataset.q];kcDraw()}});
+ $('kcS').oninput=function(){kcK=+this.value;kcDraw();$('kcS').focus()}}
+kcDraw();
+/* Spliced array */
+var N1=[1,2,3,4],N2=[2,2,5,1],sl=1,sr=2;
+function spDraw(){var el=$('sp'),n=N1.length,g=N2.map(function(v,i){return v-N1[i]}),i,gs=0,c={},nw=N1.slice(),bl=0,br=0,bg=-1e9,t;
+ for(i=sl;i<=sr;i++){gs+=g[i];c[i]='mv';nw[i]=N2[i]}
+ for(var l=0;l<n;l++){t=0;for(var r=l;r<n;r++){t+=g[r];if(t>bg){bg=t;bl=l;br=r}}}
+ var o1=N1.reduce(function(p,q){return p+q},0),o2=nw.reduce(function(p,q){return p+q},0);
+ el.innerHTML='<label for="spL">Segment start = <strong>'+sl+'</strong></label><input id="spL" type="range" min="0" max="'+(n-1)+'" value="'+sl+'"><label for="spR">Segment end = <strong>'+sr+'</strong></label><input id="spR" type="range" min="0" max="'+(n-1)+'" value="'+sr+'">'
+ +cells(N1,{sub:{0:'nums1'},c:c})+cells(N2,{sub:{0:'nums2'},c:c,noix:true})+cells(g,{sub:{0:'gain = nums2 − nums1'},c:c,noix:true})+cells(nw,{sub:{0:'new nums1'},c:c,noix:true})
+ +'<p>Original sum <strong>'+o1+'</strong>, new sum <strong>'+o2+'</strong>, total gain <strong>'+gs+'</strong>. The score you’re maximizing is simply the sum of the selected gain values.</p><div class="ctl"><button id="spB">Show the best segment ('+bl+' to '+br+', gain '+bg+')</button></div>';
+ $('spL').oninput=function(){sl=+this.value;if(sr<sl)sr=sl;spDraw();$('spL').focus()};$('spR').oninput=function(){sr=+this.value;if(sl>sr)sl=sr;spDraw();$('spR').focus()};
+ $('spB').onclick=function(){sl=bl;sr=br;spDraw()}}
+spDraw();
+widget('spk',[['gain = nums2 − nums1',[1,0,2,-3]],['gain = nums1 − nums2',[-1,0,-2,3]]],kdSteps);
+/*VR*/
+function varRun(s,a,b){var ca=0,cb=0,ce=false,best=0,st=0,r=[];for(var i=0;i<s.length;i++){var ch=s[i];if(ch===a)ca++;else if(ch===b)cb++;
+ var cand=null;if(cb>0)cand=ca-cb;else if(ce)cand=ca-1;if(cand!==null&&cand>best)best=cand;var rs=cb>ca;
+ r.push({ca:ca,cb:cb,ce:ce,cand:cand,best:best,rs:rs,st:st});if(rs){ca=0;cb=0;ce=true;st=i+1}}return r}
+/*ENDVR*/
+widget('vr',[['"aababaa", a vs b',['aababaa','a','b']],['"baaa", a vs b',['baaa','a','b']],['"abaccc", c vs a',['abaccc','c','a']]],function(p){var s=p[0],a=p[1],b=p[2],ch=s.split(''),R=varRun(s,a,b),o=[];
+ o.push({h:cells(ch,{})+'<p>Fixed pair: major <code>'+a+'</code> (+1), minor <code>'+b+'</code> (−1). All other letters are ignored.</p>',n:'We scan once per pair, keeping count_a, count_b, can_extend and best.'});
+ R.forEach(function(q,i){var c={},sub={},j;for(j=0;j<=i;j++)c[j]=j<q.st?'dim':'ok';c[i]='now';for(j=0;j<=i;j++)sub[j]=ch[j]===a?'+1':ch[j]===b?'−1':'';
+  var n=q.cb>0?'Valid: the segment contains a '+b+'. Candidate = '+q.ca+' − '+q.cb+' = '+q.cand+'.':q.ce?'No '+b+' inside, but the '+b+' just before this segment can be borrowed. Candidate = '+q.ca+' − 1 = '+q.cand+'.':'Not valid yet: no '+b+' available.';
+  if(q.rs)n+=' count_b > count_a, so the segment hurts. Reset, but remember a '+b+' came just before (can_extend = true).';
+  o.push({h:cells(ch,{c:c,sub:sub})+'<p><code>count_a</code> = <strong>'+q.ca+'</strong> &nbsp; <code>count_b</code> = <strong>'+q.cb+'</strong> &nbsp; <code>can_extend</code> = <strong>'+q.ce+'</strong> &nbsp; <code>best</code> = <strong>'+q.best+'</strong></p>',n:n})});
+ return o});
+tabs('formW',['K-Concatenation','Spliced Array','Largest Variance'],function(k){return '<p class="note">'+[
+ '<strong>K-Concatenation.</strong> The input was an enormous repetition. We compressed one copy into best subarray, prefix, suffix and total, and reasoned about how copies connect.',
+ '<strong>Spliced Array.</strong> Replacement became <code>gain[i] = nums2[i] − nums1[i]</code>, and maximum gain became maximum subarray. We created a problem Kadane’s could solve.',
+ '<strong>Largest Variance.</strong> Letters became +1 and −1 and Kadane’s appeared, but a validity constraint (must contain a minor) meant ordinary Kadane’s was not enough. We extended the state.'][k]+'</p>'});
+$('fl').innerHTML=flow(['Contiguous problem','What is being optimized?','Can I express it incrementally?','Does the past help or hurt?','Maintain useful state','Is the state sufficient?','yes: continue · no: expand the state','or transform the problem. Does Kadane’s appear?']);
+
+/* ===== CODE TOGGLE AND THEME: do not change ===== */
+var cb=$('codeBtn'),hid=false;
+cb.onclick=function(){hid=!hid;[].forEach.call(document.querySelectorAll('details'),function(d){d.open=!hid});cb.textContent=hid?'Show code':'Hide code'};
+var root=document.documentElement,tb=$('theme');
+function setTheme(t){root.setAttribute('data-theme',t);tb.textContent=t==='dark'?'Light':'Dark'}
+try{var sv=localStorage.getItem('theme');if(sv==='dark'||sv==='light')setTheme(sv)}catch(e){}
+tb.onclick=function(){var t=root.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);try{localStorage.setItem('theme',t)}catch(e){}};
+</script>
+</body>
+</html>
