@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Substring with Concatenation of All Words</title>
+<style>
+:root{--bg:#fff;--ink:#111;--mut:#555;--line:#ccc;--acc:#1f4e8c;--hi:#fff3b0;--hib:#c9a227;--ok:#dcf0dc;--okb:#3a8a3a;--mv:#e6edf7;--dim:#eee;--card:#fafafa;--red:#b5342b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#121212;--ink:#eee;--mut:#aaa;--line:#3a3a3a;--acc:#8ab4f8;--hi:#4a4220;--hib:#c9a227;--ok:#1d3a22;--okb:#5cb85c;--mv:#1c2a40;--dim:#2a2a2a;--card:#1a1a1a;--red:#ff7b72;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Roman",Times,serif}
+main{max-width:720px;margin:0 auto;padding:40px 20px 80px}
+h1,h2,h3{font-family:inherit;line-height:1.25}
+h1{font-size:2.1rem;margin:.2em 0 .6em}
+h2{font-size:1.5rem;margin:2.6em 0 .6em;padding-top:1.2em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin:1.3em 0 .3em}
+blockquote{margin:1em 0;padding:.4em 1em;border-left:4px solid var(--acc);font-size:1.12rem}
+blockquote p{margin:.3em 0}
+code{font:inherit;background:var(--card);padding:1px 5px;border-radius:4px}
+a{color:var(--acc)}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:1.2em 0}
+.cap{font-size:.9rem;color:var(--mut);margin:.6em 0 0}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:flex-end}
+.cw{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ix{font-size:.8rem;color:var(--mut);min-height:1.1em;font-weight:600}
+.cell{min-width:40px;padding:7px 6px;text-align:center;border:2px solid var(--line);background:var(--bg);border-radius:6px;font-weight:600;transition:background .2s}
+.gap{border-style:dashed;background:transparent}
+.ok{background:var(--ok);border-color:var(--okb)}
+.now{background:var(--hi);border-color:var(--hib)}
+.dim{background:var(--dim);color:var(--mut);border-color:var(--dim)}
+.mv{background:var(--mv);border-color:var(--acc)}
+.mx{display:grid;gap:3px;margin:8px 0}
+.mh{font-size:.8rem;color:var(--mut);text-align:center;align-self:center}
+.mx .cell{min-width:0;padding:3px 0;font-size:.8rem}
+button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
+button:hover:not(:disabled){background:var(--mv)}
+button:disabled{opacity:.4;cursor:default}
+button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--hib);outline-offset:2px}
+.tools{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5;display:flex;gap:8px}
+.ctl{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.pos{color:var(--mut);font-size:.9rem}
+.note{min-height:3em;margin:.4em 0 0;font-weight:500}
+.lbl{font-size:.9rem;margin:8px 0 3px}
+.bar{height:14px;border-radius:4px;background:var(--acc);min-width:3px}
+.bar.g{background:var(--okb)}.bar.r{background:var(--red)}
+input[type=range]{width:100%}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--dim)}
+details{margin:.6em 0 .9em;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+summary{cursor:pointer;padding:8px 12px;font-size:.95rem;color:var(--acc)}
+pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,Menlo,Consolas,monospace}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.two{grid-template-columns:1fr}}
+.flow{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;font-size:.95rem}
+.flow .cell{min-width:140px}
+.zones{display:flex;border:2px solid var(--line);border-radius:6px;overflow:hidden;text-align:center;font-size:.85rem}
+.zones div{padding:10px 6px}
+.flag{font-size:.9rem;color:var(--mut)}
+.tt td:first-child{font-weight:600}
+.tt td{text-align:left}
+p{margin:.7em 0}
+ul,ol{margin:.7em 0}
+li{margin:.15em 0}
+.dg{margin:.4em 0 .9em;padding:.1em 0 .1em 14px;border-left:3px solid var(--line);overflow-x:auto}
+.dg pre{padding:0;font-size:.88rem;line-height:1.45}
+.st{display:flex;gap:5px;flex-wrap:wrap;align-items:flex-end;margin:.4em 0 .9em}
+.st .cell{min-width:38px;padding:3px 10px}
+.st .ix{min-height:0}
+.st-n{display:flex;flex-direction:column;gap:2px;margin:.4em 0 .9em;font-size:.9rem;color:var(--mut)}
+.vb{display:flex;gap:6px;align-items:flex-end;margin:6px 0}
+.vc{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:26px;max-width:60px;justify-content:flex-end}
+.vbar{width:100%;border:2px solid var(--line);background:var(--bg);border-radius:4px 4px 0 0;transition:height .2s,background .2s}
+</style>
+</head>
+<body>
+<div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
+<main>
+<h1>Substring with Concatenation of All Words: Why We Slide by a Whole Word</h1>
+<p>In the last post (Find All Anagrams) we kept a window of letters and moved it one step at a time, updating counts instead of recounting. Now the letters become <em>words</em>. Same window, same counts, one new trap: where does a word start?</p>
+<blockquote><p>Treat every word as one big letter, then slide a window of whole words.</p></blockquote>
+<p>Each section has a figure you can play with. Code can be hidden with the button at the top.</p>
+<ol>
+<li><a href="#s1">The problem and the slow way</a></li>
+<li><a href="#s2">Words are just big letters</a></li>
+<li><a href="#s3">Why slide by a whole word, not one character?</a></li>
+<li><a href="#s4">One window per offset: step it, then drive it</a></li>
+</ol>
+
+<h2 id="s1">1. The problem and the slow way</h2>
+<p>You get a string <code>s</code> and a list of words, all the <em>same length</em>. Find every index where <code>s</code> contains all the words glued together, each used exactly once, in any order. Example: <code>s = "barfoothefoobarman"</code>, <code>words = ["foo","bar"]</code>. The answer is <code>[0, 9]</code> because <code>barfoo</code> starts at 0 and <code>foobar</code> starts at 9.</p>
+<div class="fig" id="fig1a"></div>
+<h3>The naive way</h3>
+<p>Try every start index. At each one, cut the next <code>m*w</code> characters into <code>m</code> chunks of length <code>w</code>, count them, compare with the word counts. Why is this wasteful? Start 0 and start 3 cut out almost the same chunks, yet we cut and count everything again. Work is thrown away every step.</p>
+<blockquote><p>Cost: about n starts, times m chunks, times w letters per chunk = n·m·w.</p></blockquote>
+
+<h2 id="s2">2. Words are just big letters</h2>
+<p>Suppose every word had length 1. Then <code>words = ["a","b"]</code> asks: is there a window of 2 letters with the same counts? That is exactly the anagram problem. So a longer word is only a letter that takes <code>w</code> characters of space. Drag the slider: the string is cut into chunks of length <code>w</code>, and each chunk is one "big letter".</p>
+<div class="fig" id="slW"></div>
+<p>Good news: if we know where the chunks begin, we already know how to do this. The only open question is <em>where chunks begin</em>.</p>
+
+<h2 id="s3">3. Why slide by a whole word, not one character?</h2>
+<p>It feels natural: a new character arrives, so a new word appears, so slide by 1. Test that idea. Our window holds 2 words (6 characters). Slide it right by <code>d</code> characters and see how many chunks you can reuse. Blue = chunk was in the old window at the same place. Yellow = brand new, must be read again.</p>
+<div class="fig" id="slS"></div>
+<p>Try <code>d = 1</code>: every chunk is different (<code>arf</code>, <code>oot</code>). The old counts say nothing about them, so we must rebuild the whole window. That is the slow way again. Now try <code>d = 3</code>: one chunk is kept, only one is new. Why? Chunk borders only line up with the old ones when we move by exactly <code>w</code>.</p>
+<blockquote><p>Sliding by 1 character changes every chunk. Sliding by w changes one chunk. Only the second lets us update counts in O(1).</p></blockquote>
+<h3>But we skip start positions!</h3>
+<p>Sliding by <code>w</code> from index 0 only visits 0, 3, 6, ... What about start 1 or 2? The answer might begin there (<code>"xbarfoo"</code> answers at 1). Fix: run the whole thing <code>w</code> times, once per <b>offset</b> 0, 1, ..., w-1. Each offset is its own chain of aligned chunks. Together the chains cover every start index exactly once, so nothing is missed.</p>
+
+<h2 id="s4">4. One window per offset: step it, then drive it</h2>
+<p>For one offset, chunk the string and move a window over the chunks. For each new chunk there are only 3 cases:</p>
+<ol>
+<li><strong>Not one of our words.</strong> No window containing it can ever work, so empty the window and restart right after it.</li>
+<li><strong>A word we already have enough of.</strong> Adding it gives too many. Drop words from the left until there is room. Why left? The window must stay a contiguous run.</li>
+<li><strong>Fine.</strong> Add it. If the window now holds all m words, record its left index, then drop one word from the left so we keep sliding.</li>
+</ol>
+<p>Pick a preset and press Next. Green = in window, yellow = current chunk, grey = left behind. Numbers under chunks are real string indices. Notice offsets 1 and 2 of the first example find nothing: their chunks are never words.</p>
+<div class="fig" id="stepper1"></div>
+<h3>Now you drive</h3>
+<p>Same algorithm, you choose the move. Wrong moves explain themselves. The duplicates preset has <code>good</code> twice in the list, which forces the "too many" case.</p>
+<div class="fig" id="drv1"></div>
+<h3>The complete algorithm</h3>
+<details open><summary>Python code (click to hide or show)</summary><pre>def findSubstring(self, s, words):
+    w, k = len(words[0]), len(words)
+    if len(s) &lt; w * k:
+        return []
+    target = {}
+    for x in words:
+        target[x] = target.get(x, 0) + 1
+
+    res = []
+    for off in range(w):              # one chain per offset
+        left, count, window = off, 0, {}
+        for right in range(off, len(s) - w + 1, w):
+            sub = s[right:right + w]
+            if sub not in target:     # case 1: reset
+                window.clear(); count = 0; left = right + w
+                continue
+            while window.get(sub, 0) == target[sub]:   # case 2: shrink
+                old = s[left:left + w]
+                window[old] -= 1; count -= 1; left += w
+            window[sub] = window.get(sub, 0) + 1       # case 3: add
+            count += 1
+            if count == k:
+                res.append(left)
+                old = s[left:left + w]
+                window[old] -= 1; count -= 1; left += w
+    return res</pre></details>
+<h3>How much faster, really?</h3>
+<p>Drag the number of words <code>m</code>. Naive work grows with it. Sliding work does not, because each step touches one chunk. (Here n = 100,000 and w = 5.)</p>
+<div class="fig" id="slM"></div>
+<div class="fig scroll" id="gr"></div>
+<div class="fig scroll"><table class="tt"><tr><th></th><th>Naive</th><th>Sliding per offset</th></tr><tr><td>Time</td><td>O(n·m·w)</td><td>O(n·w)</td></tr><tr><td>Extra space</td><td>O(m·w)</td><td>O(m·w)</td></tr><tr><td>Reasoning</td><td>Recount every start</td><td>Change one chunk per step</td></tr></table></div>
+<p>Honest trade-off: for tiny inputs the naive version is simpler and fast enough. Sliding wins when m or n is big. Note the <code>w</code> factor stays: comparing and hashing a chunk costs <code>w</code> characters.</p>
+
+<h2 id="s5">5. What these problems taught us</h2>
+<p>Both problems are the same machine with a different "letter". Flip the tabs.</p>
+<div class="fig" id="formW"></div>
+
+<h2 id="s6">6. The bigger pattern</h2>
+<p>A sliding window works when the thing you track can be updated by adding one item and removing one item. The hard part is choosing the right <em>item</em> and the right <em>step size</em>.</p>
+<blockquote><p>What is one unit here, and how far must I move so exactly one unit leaves and one enters?</p></blockquote>
+
+<h2 id="s7">7. A useful way to recognize these problems</h2>
+<ol>
+<li><strong>Is the window length fixed?</strong> Here it is m·w.</li>
+<li><strong>Does order inside the window not matter?</strong> Then counts are enough.</li>
+<li><strong>Are items bigger than a character?</strong> Then check alignment, and loop over offsets.</li>
+</ol>
+
+<h2 id="s8">8. The evolution of the idea</h2>
+<div class="fig scroll"><table class="tt"><tr><th>Problem</th><th>What it teaches</th></tr><tr><td>Find All Anagrams</td><td>Fixed window, update counts per letter</td></tr><tr><td>Concatenated Words</td><td>Items are words, so slide by w and loop over w offsets</td></tr></table></div>
+<blockquote><p>When one step changes everything, change the step, not the algorithm.</p></blockquote>
+</main>
+
+<script>
+/* ===== SHARED HELPERS: do not change ===== */
+var $=function(i){return document.getElementById(i)};
+var L=function(v){return v.toLocaleString('en-US')};
+var num=function(x,y){return x-y};
+function isSorted(a){for(var i=1;i<a.length;i++)if(a[i-1]>a[i])return false;return true}
+
+/* cells(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label above'}, noix:true}) -> row of cells */
+function cells(a,o){o=o||{};var c=o.c||{};return '<div class="row">'+a.map(function(v,i){var g=v===''||v===null;return '<div class="cw"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="cell'+(g?' gap':'')+' '+(c[i]||'')+'">'+(g?'&nbsp;':v)+'</div><span class="ix">'+(o.noix?'':i)+'</span></div>'}).join('')+'</div>'}
+
+/* widget(id, presets, build): Previous/Next stepper.
+   presets = [[buttonLabel, params], ...]; build(params) returns [{h:htmlString, n:noteText}, ...] */
+function widget(id,opts,build){
+  var el=$(id),i=0,st=[];
+  el.innerHTML=(opts.length>1?'<div class="row" style="align-items:center">'+opts.map(function(o,k){return '<button data-k="'+k+'">'+o[0]+'</button>'}).join('')+'</div>':'')+'<div class="scroll v"></div><p class="note" aria-live="polite"></p><div class="ctl"><button class="pv">Previous</button><span class="pos"></span><button class="nx">Next</button><button class="pl">Play</button></div>';
+  var v=el.querySelector('.v'),n=el.querySelector('.note'),p=el.querySelector('.pos'),pv=el.querySelector('.pv'),nx=el.querySelector('.nx'),pl=el.querySelector('.pl'),tm=null;
+  function stop(){if(tm){clearInterval(tm);tm=null}pl.textContent='Play'}
+  function r(){v.innerHTML=st[i].h;n.textContent=st[i].n;p.textContent='Step '+(i+1)+' of '+st.length;pv.disabled=i===0;nx.disabled=i===st.length-1}
+  function pick(k){stop();st=build(opts[k][1]);i=0;[].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.k===k))});r()}
+  [].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.onclick=function(){pick(+b.dataset.k)}});
+  pv.onclick=function(){stop();if(i>0){i--;r()}};nx.onclick=function(){stop();if(i<st.length-1){i++;r()}};
+  pl.onclick=function(){if(tm){stop();return}if(i>=st.length-1){i=0;r()}pl.textContent='Pause';tm=setInterval(function(){if(i<st.length-1){i++;r()}else stop()},1100)};
+  pick(0);
+}
+
+/* tabs(id, labels, fn): tab buttons; fn(k) returns html for tab k */
+function tabs(id,labels,fn){var el=$(id);el.innerHTML='<div class="row" style="align-items:center"></div><div class="tv"></div>';var bar=el.firstChild,tv=el.lastChild;
+  labels.forEach(function(t,k){var b=document.createElement('button');b.textContent=t;b.onclick=function(){[].forEach.call(bar.children,function(x){x.setAttribute('aria-pressed',String(x===b))});tv.innerHTML=fn(k)};b.setAttribute('aria-pressed',String(k===0));bar.appendChild(b)});tv.innerHTML=fn(0)}
+
+/* growth(id, ns, bruteFn, betterFn, header1, header2): log-scale comparison table */
+function growth(id,ns,bf,tp,h1,h2){$(id).innerHTML='<table><tr><th>n</th><th>'+h1+'</th><th>'+h2+'</th></tr>'+ns.map(function(n){var b=bf(n),t=tp(n);return '<tr><td>'+L(n)+'</td><td>'+L(b)+'<div class="bar r" style="width:'+Math.max(1,Math.log10(b)/12*100)+'%;margin-left:auto"></div></td><td>'+L(t)+'<div class="bar g" style="width:'+Math.max(1,Math.log10(t)/12*100)+'%;margin-left:auto"></div></td></tr>'}).join('')+'</table><p class="cap">Bars use a log scale, otherwise the second column would be invisible.</p>'}
+
+/* flow(['step','step',...]) -> vertical arrow flow */
+function flow(a){return '<div class="flow">'+a.map(function(x){return '<div class="cell">'+x+'</div>'}).join('<span>↓</span>')+'</div>'}
+
+/* grid(matrix, {c:function(r,c){return 'ok|now|dim|mv'}, rh:[row headers], ch:[col headers]}) -> 2D table of cells (DP tables, grids, matrices) */
+function grid(m,o){o=o||{};var w=m[0].length,ch=o.ch,rh=o.rh;
+  var h='<div class="mx" style="grid-template-columns:'+(rh?'auto ':'')+'repeat('+w+',minmax(0,1fr))">';
+  if(ch){h+=(rh?'<span></span>':'')+ch.map(function(x){return '<span class="mh">'+x+'</span>'}).join('')}
+  m.forEach(function(r,i){if(rh)h+='<span class="mh">'+rh[i]+'</span>';r.forEach(function(v,j){h+='<div class="cell '+((o.c&&o.c(i,j))||'')+'">'+v+'</div>'})});
+  return h+'</div>'}
+
+/* vbars(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label'}}) -> vertical bar chart of an array (sorting, partitioning, heights) */
+function vbars(a,o){o=o||{};var c=o.c||{},mx=Math.max.apply(null,a.map(Math.abs))||1;
+  return '<div class="vb">'+a.map(function(v,i){return '<div class="vc"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="vbar '+(c[i]||'')+'" style="height:'+Math.max(4,Math.round(Math.abs(v)/mx*110))+'px"></div><span class="ix">'+v+'</span></div>'}).join('')+'</div>'}
+
+/* driver(id, cfg): "you drive the algorithm". The reader picks the move; wrong moves get a teaching message.
+   cfg = {
+     presets:[[label,param],...],
+     init:function(param){return state},
+     view:function(state,done){return html},
+     done:function(state){return bool},
+     prompt:function(state,done){return 'What should we do?'},
+     choices:[['A','button text'],['B','button text'],...],
+     expected:function(state){return 'A'},               // the correct choice id
+     apply:function(state,choiceId){ return 'Right. why it worked'},   // mutate state here
+     hint:function(state){return 'general hint'},
+     wrong:function(state,choiceId){return 'specific message for a tempting wrong choice, or undefined'}
+   } */
+function driver(id,cfg){
+  var el=$(id),k=0,s,msg='';
+  function init(){s=cfg.init(cfg.presets[k][1]);msg='';draw()}
+  function draw(){var done=cfg.done(s);
+    el.innerHTML='<div class="row" style="align-items:center">'+cfg.presets.map(function(p,j){return '<button data-p="'+j+'" aria-pressed="'+(j===k)+'">'+p[0]+'</button>'}).join('')+'</div><div class="scroll">'+cfg.view(s,done)+'</div><p class="note" aria-live="polite"><strong>'+cfg.prompt(s,done)+'</strong></p><div class="ctl">'+cfg.choices.map(function(c){return '<button data-c="'+c[0]+'"'+(done?' disabled':'')+'>'+c[1]+'</button>'}).join('')+'</div><p class="note" aria-live="polite">'+msg+'</p>';
+    [].forEach.call(el.querySelectorAll('button[data-p]'),function(b){b.onclick=function(){k=+b.dataset.p;init()}});
+    [].forEach.call(el.querySelectorAll('button[data-c]'),function(b){b.onclick=function(){choose(b.dataset.c)}})}
+  function choose(c){if(c!==cfg.expected(s)){msg=(cfg.wrong&&cfg.wrong(s,c))||('Not quite. '+cfg.hint(s));draw();return}
+    msg=cfg.apply(s,c)||'Right.';draw()}
+  init()}
+
+/* slider(id, {min,max,value,label,render:function(v){return html}}) -> "drag to see how the cost grows" figure */
+function slider(id,o){var el=$(id);el.innerHTML='<label for="'+id+'S">'+o.label+' = <strong class="so"></strong></label><input id="'+id+'S" type="range" min="'+o.min+'" max="'+o.max+'" value="'+o.value+'"><div class="sv"></div>';
+  var inp=el.querySelector('input'),out=el.querySelector('.so'),sv=el.querySelector('.sv');
+  function u(){out.textContent=inp.value;sv.innerHTML=o.render(+inp.value)}inp.oninput=u;u()}
+
+/* ===== PAGE-SPECIFIC ILLUSTRATIONS GO BELOW ===== */
+var S1='barfoothefoobarman';
+function chunks(s,w,off){var a=[];for(var i=off;i+w<=s.length;i+=w)a.push(s.substr(i,w));return a}
+function subs(n,w,off){var o={};for(var i=0;i<n;i++)o[i]=off+i*w;return o}
+(function(){var c=chunks(S1,3,0);$('fig1a').innerHTML=cells(c,{c:{0:'ok',1:'ok',3:'mv',4:'mv'},sub:subs(c.length,3,0),noix:true})+'<p class="cap">The string cut into 3-letter chunks. Green: answer at 0 (bar+foo). Blue: answer at 9 (foo+bar).</p>'})();
+
+slider('slW',{min:1,max:6,value:3,label:'word length w',render:function(w){var a=S1.split(''),c={};a.forEach(function(x,i){c[i]=Math.floor(i/w)%2?'mv':'ok'});var ch=chunks(S1,w,0);return cells(a,{c:c,noix:true})+'<p class="note">'+ch.join(' | ')+' &nbsp;<span class="flag">('+ch.length+' big letters)</span></p>'}});
+
+slider('slS',{min:0,max:6,value:1,label:'slide right by d characters',render:function(d){var w=3,o=[0,3],n=[d,d+3],oc=o.map(function(i){return S1.substr(i,w)}),nc=n.map(function(i){return S1.substr(i,w)}),re=0,c={};n.forEach(function(p,i){if(o.indexOf(p)>=0){c[i]='mv';re++}else c[i]='now'});
+return '<p class="lbl">Old window</p>'+cells(oc,{c:{0:'ok',1:'ok'},sub:{0:0,1:3},noix:true})+'<p class="lbl">New window</p>'+cells(nc,{c:c,sub:{0:n[0],1:n[1]},noix:true})+'<p class="note">Reused '+re+' of 2 chunks. '+(d%w===0?'Borders line up.':'Borders shifted, all chunks new.')+'</p>'}});
+
+function cnts(m){var k=Object.keys(m).filter(function(x){return m[x]>0});return k.length?k.map(function(x){return x+'×'+m[x]}).join(' '):'empty'}
+function tgt(ws){var t={};ws.forEach(function(x){t[x]=(t[x]||0)+1});return t}
+
+widget('stepper1',[['Ex 1, offset 0',[S1,['foo','bar'],0]],['Ex 1, offset 1',[S1,['foo','bar'],1]],['Duplicates',['wordgoodgoodgoodbestword',['word','good','best','good'],0]],['Shifted answer',['xbarfoo',['foo','bar'],1]]],function(p){
+var s=p[0],ws=p[1],off=p[2],w=ws[0].length,k=ws.length,t=tgt(ws),ch=chunks(s,w,off),L0=0,win={},cnt=0,res=[],st=[],r=0;
+function push(n){var c={};for(var i=0;i<ch.length;i++)c[i]=i<L0?'dim':(i<=r?'ok':'');c[r]='now';st.push({h:cells(ch,{c:c,sub:subs(ch.length,w,off),noix:true})+'<p class="cap">window: '+cnts(win)+' &nbsp;|&nbsp; need: '+cnts(t)+' &nbsp;|&nbsp; answers: ['+res.join(', ')+']</p>',n:n})}
+function drop(){win[ch[L0]]--;cnt--;L0++}
+st.push({h:cells(ch,{sub:subs(ch.length,w,off),noix:true})+'<p class="cap">Offset '+off+': '+ch.length+' chunks. Need '+k+' words.</p>',n:'Start: empty window.'});
+for(r=0;r<ch.length;r++){var x=ch[r];
+ if(!(x in t)){win={};cnt=0;L0=r+1;push('"'+x+'" is not a word. Reset, restart after it.');continue}
+ while((win[x]||0)>=t[x]){var o=ch[L0];drop();push('Too many "'+x+'". Dropped "'+o+'" from the left.')}
+ win[x]=(win[x]||0)+1;cnt++;push('Added "'+x+'". Window has '+cnt+' of '+k+'.');
+ if(cnt===k){res.push(off+L0*w);push('All words found. Record index '+(off+L0*w)+'.');var o2=ch[L0];drop();push('Dropped "'+o2+'" to keep sliding.')}}
+r=ch.length-1;push('Done with this offset. Answers: ['+res.join(', ')+'].');return st});
+
+function need(s){if(s.cnt===s.k)return 'RECORD';var x=s.ch[s.r];if(!(x in s.t))return 'RESET';return (s.w[x]||0)>=s.t[x]?'SHRINK':'ADD'}
+driver('drv1',{presets:[['Duplicates',['wordgoodgoodgoodbestword',['word','good','best','good'],0]],['Example 1',[S1,['foo','bar'],0]]],
+init:function(p){var ws=p[1],w=ws[0].length;return {ch:chunks(p[0],w,p[2]),t:tgt(ws),k:ws.length,w:{},cnt:0,left:0,r:0,res:[],wl:w,off:p[2]}},
+view:function(s){var c={},i;for(i=0;i<s.ch.length;i++)c[i]=i<s.left?'dim':(i<s.r?'ok':'');if(s.r<s.ch.length)c[s.r]='now';return cells(s.ch,{c:c,sub:subs(s.ch.length,s.wl,s.off),noix:true})+'<p class="cap">window: '+cnts(s.w)+' | need: '+cnts(s.t)+' | answers: ['+s.res.join(', ')+']</p>'},
+done:function(s){return s.r>=s.ch.length&&s.cnt<s.k},
+prompt:function(s,d){return d?'Finished. Answers: ['+s.res.join(', ')+']':(s.cnt===s.k?'Window holds all '+s.k+' words. What now?':'Next chunk: "'+s.ch[s.r]+'". What do you do?')},
+choices:[['ADD','Add it'],['SHRINK','Drop leftmost word'],['RESET','Reset window'],['RECORD','Record answer']],
+expected:need,
+apply:function(s,c){var x=s.ch[s.r],o;
+ if(c==='ADD'){s.w[x]=(s.w[x]||0)+1;s.cnt++;s.r++;return 'Right. "'+x+'" fits, we still need others.'}
+ if(c==='SHRINK'){o=s.ch[s.left];s.w[o]--;s.cnt--;s.left++;return 'Right. Dropped "'+o+'". Same chunk again, check room.'}
+ if(c==='RESET'){s.w={};s.cnt=0;s.left=s.r+1;s.r++;return 'Right. "'+x+'" is not a word, no window can hold it.'}
+ s.res.push(s.off+s.left*s.wl);o=s.ch[s.left];s.w[o]--;s.cnt--;s.left++;return 'Right. Recorded '+s.res[s.res.length-1]+', dropped "'+o+'" to keep sliding.'},
+hint:function(s){return 'Check: full window? a word we never need? a word we have enough of?'},
+wrong:function(s,c){var n=need(s);if(n==='RECORD')return 'Window already has all words. Record it first.';if(c==='RECORD')return 'Window is not full yet.';if(n==='SHRINK'&&c==='ADD')return 'Adding makes too many "'+s.ch[s.r]+'". Drop from the left first.';if(n==='RESET')return '"'+s.ch[s.r]+'" is not in the list. Nothing containing it can match.';if(n==='ADD')return 'No problem with this word. Just add it.'}});
+
+slider('slM',{min:1,max:200,value:50,label:'number of words m',render:function(m){var n=100000,w=5,a=n*m*w,b=n*w,mx=n*200*w;return '<p class="lbl">Naive: '+L(a)+' char comparisons</p><div class="bar r" style="width:'+Math.max(1,a/mx*100)+'%"></div><p class="lbl">Sliding: '+L(b)+'</p><div class="bar g" style="width:'+Math.max(1,b/mx*100)+'%"></div>'}});
+growth('gr',[1000,10000,100000,1000000],function(n){return n*500},function(n){return n*5},'Naive (m=100, w=5)','Sliding');
+
+tabs('formW',['Letters (Anagrams)','Words (this problem)'],function(k){return k?'<p class="note">Item: a chunk of w characters. Window: m chunks. Step: w characters. Repeat for w offsets.</p>'+cells(chunks(S1,3,0).slice(0,4),{c:{0:'ok',1:'ok'},noix:true}):'<p class="note">Item: 1 character. Window: len(p) letters. Step: 1 character. One pass.</p>'+cells('barf'.split(''),{c:{0:'ok',1:'ok',2:'ok'},noix:true})});
+
+/* ===== CODE TOGGLE AND THEME: do not change ===== */
+var cb=$('codeBtn'),hid=false;
+cb.onclick=function(){hid=!hid;[].forEach.call(document.querySelectorAll('details'),function(d){d.open=!hid});cb.textContent=hid?'Show code':'Hide code'};
+var root=document.documentElement,tb=$('theme');
+function setTheme(t){root.setAttribute('data-theme',t);tb.textContent=t==='dark'?'Light':'Dark'}
+try{var sv=localStorage.getItem('theme');if(sv==='dark'||sv==='light')setTheme(sv)}catch(e){}
+tb.onclick=function(){var t=root.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);try{localStorage.setItem('theme',t)}catch(e){}};
+</script>
+</body>
+</html>

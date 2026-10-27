@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>When Equality Is Not Enough</title>
+<style>
+:root{--bg:#fff;--ink:#111;--mut:#555;--line:#ccc;--acc:#1f4e8c;--hi:#fff3b0;--hib:#c9a227;--ok:#dcf0dc;--okb:#3a8a3a;--mv:#e6edf7;--dim:#eee;--card:#fafafa;--red:#b5342b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#121212;--ink:#eee;--mut:#aaa;--line:#3a3a3a;--acc:#8ab4f8;--hi:#4a4220;--hib:#c9a227;--ok:#1d3a22;--okb:#5cb85c;--mv:#1c2a40;--dim:#2a2a2a;--card:#1a1a1a;--red:#ff7b72;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Roman",Times,serif}
+main{max-width:720px;margin:0 auto;padding:40px 20px 80px}
+h1,h2,h3{font-family:inherit;line-height:1.25}
+h1{font-size:2.1rem;margin:.2em 0 .6em}
+h2{font-size:1.5rem;margin:2.6em 0 .6em;padding-top:1.2em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin:1.3em 0 .3em}
+blockquote{margin:1em 0;padding:.4em 1em;border-left:4px solid var(--acc);font-size:1.12rem}
+blockquote p{margin:.3em 0}
+code{font:inherit;background:var(--card);padding:1px 5px;border-radius:4px}
+a{color:var(--acc)}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:1.2em 0}
+.cap{font-size:.9rem;color:var(--mut);margin:.6em 0 0}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:flex-end}
+.cw{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ix{font-size:.8rem;color:var(--mut);min-height:1.1em;font-weight:600}
+.cell{min-width:40px;padding:7px 6px;text-align:center;border:2px solid var(--line);background:var(--bg);border-radius:6px;font-weight:600;transition:background .2s}
+.gap{border-style:dashed;background:transparent}
+.ok{background:var(--ok);border-color:var(--okb)}
+.now{background:var(--hi);border-color:var(--hib)}
+.dim{background:var(--dim);color:var(--mut);border-color:var(--dim)}
+.mv{background:var(--mv);border-color:var(--acc)}
+.mx{display:grid;gap:3px;margin:8px 0}
+.mh{font-size:.8rem;color:var(--mut);text-align:center;align-self:center}
+.mx .cell{min-width:0;padding:3px 0;font-size:.8rem}
+button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
+button:hover:not(:disabled){background:var(--mv)}
+button:disabled{opacity:.4;cursor:default}
+button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--hib);outline-offset:2px}
+.tools{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5;display:flex;gap:8px}
+.ctl{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.pos{color:var(--mut);font-size:.9rem}
+.note{min-height:3em;margin:.4em 0 0;font-weight:500}
+.lbl{font-size:.9rem;margin:8px 0 3px}
+.bar{height:14px;border-radius:4px;background:var(--acc);min-width:3px}
+.bar.g{background:var(--okb)}.bar.r{background:var(--red)}
+input[type=range]{width:100%}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--dim)}
+details{margin:.6em 0 .9em;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+summary{cursor:pointer;padding:8px 12px;font-size:.95rem;color:var(--acc)}
+pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,Menlo,Consolas,monospace}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.two{grid-template-columns:1fr}}
+.flow{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;font-size:.95rem}
+.flow .cell{min-width:140px}
+.zones{display:flex;border:2px solid var(--line);border-radius:6px;overflow:hidden;text-align:center;font-size:.85rem}
+.zones div{padding:10px 6px}
+.flag{font-size:.9rem;color:var(--mut)}
+.tt td:first-child{font-weight:600}
+.tt td{text-align:left}
+p{margin:.7em 0}
+ul,ol{margin:.7em 0}
+li{margin:.15em 0}
+.dg{margin:.4em 0 .9em;padding:.1em 0 .1em 14px;border-left:3px solid var(--line);overflow-x:auto}
+.dg pre{padding:0;font-size:.88rem;line-height:1.45}
+.st{display:flex;gap:5px;flex-wrap:wrap;align-items:flex-end;margin:.4em 0 .9em}
+.st .cell{min-width:38px;padding:3px 10px}
+.st .ix{min-height:0}
+.st-n{display:flex;flex-direction:column;gap:2px;margin:.4em 0 .9em;font-size:.9rem;color:var(--mut)}
+.vb{display:flex;gap:6px;align-items:flex-end;margin:6px 0}
+.vc{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:26px;max-width:60px;justify-content:flex-end}
+.vbar{width:100%;border:2px solid var(--line);background:var(--bg);border-radius:4px 4px 0 0;transition:height .2s,background .2s}
+</style>
+</head>
+<body>
+<div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
+<main>
+
+<h1>When Equality Is Not Enough</h1>
+<p>So far, our prefix-sum journey has been remarkably consistent. We started with repeated range calculations and fixed them with prefix sums. Then we saw that a subarray sum is the difference of two prefix sums. A target sum became "look for the required previous prefix", and divisibility became "compare prefix remainders". The hashmap appeared naturally, because we needed to remember useful information about the past.</p>
+<p>Now we meet a problem where that simple memory is not enough. We do not want to learn a new pattern because someone says "this is a monotonic deque problem". We want to understand <em>why the old approach stops working</em> and what new constraint forces us to evolve it.</p>
+<blockquote><p>Sometimes the old idea is correct, but the information we kept is no longer enough.</p></blockquote>
+<p>Each section below has a figure you can step through, and the code can be hidden with the button at the top.</p>
+<ol>
+<li><a href="#s1">A different question</a></li>
+<li><a href="#s2">Why the hashmap is not enough</a></li>
+<li><a href="#s3">Some old states are useless</a></li>
+<li><a href="#s4">Two ends, so a deque</a></li>
+<li><a href="#s5">The complete algorithm</a></li>
+<li><a href="#s6">Why negative numbers matter</a></li>
+<li><a href="#s7">Why this is O(n)</a></li>
+<li><a href="#s8">What these problems taught us</a></li>
+<li><a href="#s9">The bigger pattern</a></li>
+<li><a href="#s10">A useful way to recognize these problems</a></li>
+<li><a href="#s11">The evolution of the idea</a></li>
+</ol>
+
+<!-- ===== 1 ===== -->
+<h2 id="s1">1. A different question</h2>
+<p>Take the array <code>[2, -1, 2, 3, -2, 4]</code> and ask: what is the <strong>shortest</strong> contiguous subarray whose sum is at least <code>5</code>?</p>
+<p>Notice the difference from what we have seen. Before, the condition was <code>sum == K</code> or <code>sum % K == 0</code>. Now it is <code>sum &gt;= K</code>, and we want the shortest such subarray.</p>
+<p>Let's find one by hand. The subarray <code>[2, 3]</code> has sum <code>5</code>, so its length is <code>2</code>. Could a length-1 answer exist? The largest single element is <code>4</code>, so no. The answer is <code>2</code>.</p>
+<div class="fig scroll" id="fig1a"></div>
+
+<!-- ===== 2 ===== -->
+<h2 id="s2">2. Why the hashmap is not enough</h2>
+<p>As always, <code>sum(i ... j) = prefix[j + 1] - prefix[i]</code>. We need <code>prefix[j + 1] - prefix[i] &gt;= K</code>, which rearranges to:</p>
+<blockquote><p><code>prefix[i] &lt;= prefix[j + 1] - K</code></p></blockquote>
+<p>This looks promising. For the exact-sum problem the condition was <code>previous = current - K</code>: exactly <em>one value</em> to look for, which a hashmap handles beautifully. Now we need <code>previous &lt;= current - K</code>, and there may be <em>many</em> values that qualify.</p>
+<div class="fig" id="fig2a"></div>
+<p>We don't want one exact value. We want the <strong>best</strong> one, and "best" means the shortest subarray. If two valid previous prefixes sit at indices <code>2</code> and <code>7</code>, then <code>j - 7</code> beats <code>j - 2</code>.</p>
+<blockquote><p>Among all valid previous prefixes, we want the latest one.</p></blockquote>
+<h3>The naive way</h3>
+<p>Compute all prefix sums, and for every current prefix scan every earlier one asking "is <code>P[i] &lt;= P[j] - K</code>?". It is correct, but it can take <code>O(n²)</code>.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def shortest_naive(nums, k):
+    prefix = [0]
+    for num in nums:
+        prefix.append(prefix[-1] + num)
+
+    best = len(nums) + 1
+    for j in range(1, len(prefix)):
+        for i in range(j):
+            if prefix[j] - prefix[i] &gt;= k:
+                best = min(best, j - i)
+
+    return best if best &lt;= len(nums) else -1</pre></details>
+<p>We are back to the problem we were trying to escape: too much repeated searching through history.</p>
+<h3>What our history must support</h3>
+<p>For a current prefix we need to (1) find previous prefixes that are <em>small enough</em>, and (2) among them prefer the <em>most recent</em>. A hashmap answers "give me the information for exactly this key". We now need "give me the best previous state among all keys below a threshold". That is a different kind of question.</p>
+
+<!-- ===== 3 ===== -->
+<h2 id="s3">3. Some old states are useless</h2>
+<p>For <code>[2, -1, 2, 3, -2, 4]</code> the prefix sums are:</p>
+<div class="fig scroll" id="fig3a"></div>
+<p>Write each state as <code>(i, P[i])</code>: its index and its prefix value. Now compare <code>(1, 2)</code> and <code>(2, 1)</code>. The state at index <code>2</code> is <strong>later</strong>, and its prefix value <code>1</code> is <strong>smaller</strong>. Whenever the current prefix is large enough for both to be valid, we would rather use index <code>2</code>, because <code>current_index - 2</code> is shorter than <code>current_index - 1</code>.</p>
+<p>So <code>(1, 2)</code> has become useless. It is <em>dominated</em> by <code>(2, 1)</code>, and we can forget it.</p>
+<blockquote><p>A previous state is permanently useless when another state is both newer and better for every future query.</p></blockquote>
+<h3>What does "better" mean here?</h3>
+<ul>
+<li>A <strong>small</strong> prefix value is better, because it makes <code>P[i] &lt;= P[j] - K</code> easier to satisfy.</li>
+<li>A <strong>large</strong> index is better, because it produces a shorter subarray.</li>
+</ul>
+<p>A state with a larger prefix and a smaller index than another state is worse in both dimensions. It can never win. Step through the prefixes below and watch states get dominated.</p>
+<div class="fig scroll" id="stepDom"></div>
+<p class="cap">We are not throwing information away randomly. We remove only states that can never become optimal.</p>
+
+<!-- ===== 4 ===== -->
+<h2 id="s4">4. Two ends, so a deque</h2>
+<p>Suppose our useful history has prefix values <code>0, 1, 3, 6</code>, the current prefix is <code>8</code>, and <code>K = 5</code>. We need <code>previous &lt;= 3</code>, so <code>0</code>, <code>1</code> and <code>3</code> are all valid. We should use the latest valid one, <code>3</code>. We examine valid candidates from the <strong>front</strong> of our history and remove them as they get used. That looks like a queue.</p>
+<p>But we also need to remove dominated states from the <strong>back</strong>, as the new prefix arrives. So we need access to both ends.</p>
+<div class="fig" id="figNeed"></div>
+<p>The deque is not the idea. It is what the constraints force on us.</p>
+<h3>Why not a normal queue?</h3>
+<p>A FIFO queue only removes from the front. With prefix values <code>0, 5</code> in the queue and <code>2</code> arriving, the state with <code>5</code> is dominated and sits at the back. A queue cannot remove it.</p>
+<div class="fig" id="figQ"></div>
+<h3>Why does the deque end up increasing?</h3>
+<p>We drop an old state <code>(i, P[i])</code> whenever a later state satisfies <code>P[j] &lt;= P[i]</code>. So among the states we keep, prefix values must be strictly increasing from front to back, for example <code>0 &lt; 1 &lt; 3 &lt; 4</code>. That is the monotonic deque, and the monotonic property is what lets us discard states cheaply.</p>
+<h3>Two different reasons to remove a state</h3>
+<div class="fig scroll"><table class="tt"><tr><th></th><th>Remove from the front</th><th>Remove from the back</th></tr>
+<tr><td>Trigger</td><td><code>current - P[front] &gt;= K</code></td><td><code>P[back] &gt;= current</code></td></tr>
+<tr><td>Meaning</td><td>The front gives a valid subarray. Record its length.</td><td>The back is older and no smaller than the new prefix.</td></tr>
+<tr><td>Why it is safe</td><td>As <code>j</code> grows, <code>j - i</code> only grows, so this <code>i</code> can never give a shorter answer.</td><td>The new state is later and no larger, so the old one can never be better.</td></tr></table></div>
+<p>After both cleanups, we append the current state.</p>
+
+<!-- ===== 5 ===== -->
+<h2 id="s5">5. The complete algorithm</h2>
+<p>The problem: given an integer array <code>nums</code> and an integer <code>K</code>, return the length of the shortest non-empty subarray whose sum is at least <code>K</code>, or <code>-1</code> if none exists. For example, <code>nums = [2, -1, 2]</code> with <code>K = 3</code> has prefix sums <code>0, 2, 1, 3</code>, and <code>3 - 0 = 3</code> gives the whole array, length <code>3</code>.</p>
+<h3>Watch the deque evolve</h3>
+<p>Each step is one action. A <strong>POP FRONT</strong> means a valid candidate was found. A <strong>POP BACK</strong> means a dominated state was removed. The first example is our running one.</p>
+<div class="fig scroll" id="stepMain"></div>
+<h3>Now you drive it</h3>
+<p>At each prefix, choose the next move. The front is always checked before the back.</p>
+<div class="fig scroll" id="drv1"></div>
+<h3>The code</h3>
+<details open><summary>Python code (click to hide or show)</summary><pre>from collections import deque
+
+
+def shortest_subarray(nums, k):
+    prefix = [0]
+
+    for num in nums:
+        prefix.append(prefix[-1] + num)
+
+    dq = deque()
+    answer = len(nums) + 1
+
+    for i, current in enumerate(prefix):
+
+        # Find valid subarrays ending here.
+        while dq and current - prefix[dq[0]] &gt;= k:
+            answer = min(answer, i - dq.popleft())
+
+        # Remove states dominated by the current prefix.
+        while dq and prefix[dq[-1]] &gt;= current:
+            dq.pop()
+
+        dq.append(i)
+
+    return answer if answer &lt;= len(nums) else -1</pre></details>
+<p>The code should now feel like the result of several constraints rather than a memorized recipe:</p>
+<ul>
+<li><code>while dq and current - prefix[dq[0]] &gt;= k</code>: the oldest useful prefix is small enough that the current prefix forms a large enough sum.</li>
+<li><code>answer = min(answer, i - dq.popleft())</code>: record the length, and discard this starting point because waiting only makes it longer.</li>
+<li><code>while dq and prefix[dq[-1]] &gt;= current</code>: the back state is older and no smaller, so it is dominated.</li>
+<li><code>dq.append(i)</code>: keep the current prefix as useful future history.</li>
+</ul>
+<h3>Why not the simpler approach?</h3>
+<div class="fig scroll"><table class="tt"><tr><th></th><th>Brute force</th><th>Sliding window</th><th>Monotonic deque</th></tr>
+<tr><td>Handles negatives</td><td>Yes</td><td>No</td><td>Yes</td></tr>
+<tr><td>Time</td><td>O(n²)</td><td>O(n)</td><td>O(n)</td></tr>
+<tr><td>Extra space</td><td>O(n) for prefixes</td><td>O(1)</td><td>O(n)</td></tr>
+<tr><td>Reasoning</td><td>Check every pair of prefixes.</td><td>Needs the sum to grow as the window grows.</td><td>Keep only the states that can still win.</td></tr></table></div>
+<p>The deque is not "better" in every way. If all numbers are positive, a sliding window is simpler and uses less memory. The deque earns its place exactly when negatives break the window's assumption, and it pays with O(n) memory and an invariant you have to get right.</p>
+
+<!-- ===== 6 ===== -->
+<h2 id="s6">6. Why negative numbers matter</h2>
+<p>If all numbers were positive, expanding a window would always increase the sum and shrinking it would always decrease it. That monotonic behavior lets a sliding window control the sum. With negatives, the sum can move in either direction, so the link between window size and window sum is gone.</p>
+<p>A natural second thought: "we have prefix sums, so binary search for a suitable previous prefix!" That works only if the prefix sums are sorted. Compare the two cases:</p>
+<div class="fig scroll" id="negT"></div>
+<blockquote><p>The negative numbers removed a property we might otherwise have relied on, and the algorithm has to compensate.</p></blockquote>
+
+<!-- ===== 7 ===== -->
+<h2 id="s7">7. Why this is O(n)</h2>
+<p>The code has a <code>while</code> loop inside a <code>for</code> loop, which looks like <code>O(n²)</code>. It is not. Every prefix index is:</p>
+<ul>
+<li>appended <strong>once</strong>,</li>
+<li>removed from the front <strong>at most once</strong>,</li>
+<li>removed from the back <strong>at most once</strong> (and never both, since it is gone after the first removal).</li>
+</ul>
+<p>So across the whole run, appends, front pops and back pops are each <code>O(n)</code>. Total time is <code>O(n)</code> and space is <code>O(n)</code>. Drag the slider to count the real operations on a pseudo-random array.</p>
+<div class="fig scroll" id="slOps"></div>
+<div class="fig scroll" id="grow1"></div>
+<blockquote><p>The important question is not how many loops are nested. It is how many times each piece of information can move through the data structure.</p></blockquote>
+<p>We pay <code>O(n)</code> extra memory for this. That is the same philosophy as before: spend memory to remember useful history, and avoid repeatedly searching old states. The difference is that our memory is no longer a plain array or hashmap. It is a maintained set of <em>only the states that can still matter</em>.</p>
+
+<!-- ===== 8 ===== -->
+<h2 id="s8">8. What these problems taught us</h2>
+<p>The prefix-sum foundation never changed across the three variants. The <em>constraint</em> changed the data structure.</p>
+<div class="fig scroll" id="formW"></div>
+
+<!-- ===== 9 ===== -->
+<h2 id="s9">9. The bigger pattern</h2>
+<p>Normally we think more information is safer. But more information can also make searching expensive. So a powerful strategy is to keep only the information that could still produce a better answer.</p>
+<p>For this problem, a state is useless if a later state has a smaller-or-equal prefix and a larger index. That is called <strong>dominance</strong>, and the monotonic deque is a structure for maintaining the non-dominated history. The idea reaches far beyond this one problem.</p>
+<h3>A mental model</h3>
+<p>Imagine every prefix sum is a person standing in a line, with two properties: when they arrived, and their prefix value. For a future prefix, we want someone who arrived as recently as possible and whose value is small enough. If a newer person has an even smaller value, the older one has no advantage left, so they leave. If someone has already helped form a valid shortest subarray, they cannot help form a shorter one later, so they leave too. The deque holds the candidates from the past that can still win.</p>
+<blockquote><p>Which parts of the past can I safely forget?</p></blockquote>
+
+<!-- ===== 10 ===== -->
+<h2 id="s10">10. A useful way to recognize these problems</h2>
+<p>Don't ask "which pattern is this?". Ask these questions in order, with the answers for this problem:</p>
+<ol>
+<li><strong>What is my state?</strong> The prefix sum.</li>
+<li><strong>What does a valid subarray mean in terms of two states?</strong> <code>P[j] - P[i] &gt;= K</code>.</li>
+<li><strong>What am I optimizing?</strong> The minimum <code>j - i</code>.</li>
+<li><strong>What information from the past do I need?</strong> A small enough prefix, preferably with the largest possible <code>i</code>.</li>
+<li><strong>Which old states can never be useful again?</strong> Those dominated by a later, smaller prefix, and those that already produced a candidate.</li>
+<li><strong>What data structure supports exactly those operations?</strong> A deque.</li>
+</ol>
+<p>This is problem solving from constraints rather than pattern recognition.</p>
+
+<!-- ===== 11 ===== -->
+<h2 id="s11">11. The evolution of the idea</h2>
+<div class="fig scroll"><table class="tt"><tr><th>Problem</th><th>What it teaches</th></tr>
+<tr><td>Repeated range sums</td><td>Precompute prefix sums instead of re-adding.</td></tr>
+<tr><td>Subarray sum</td><td>A subarray is the difference of two prefix states.</td></tr>
+<tr><td>Exact target</td><td>The needed past state is one exact value, so use a hashmap.</td></tr>
+<tr><td>Divisible by K</td><td>Compare prefix remainders with a remainder hashmap.</td></tr>
+<tr><td>At least K, shortest</td><td>An inequality plus optimization makes some states dominated, so keep only useful history with a monotonic deque.</td></tr></table></div>
+<p>We did not jump from "prefix sum" to "monotonic deque". We followed the constraints until the data structure became necessary.</p>
+<blockquote><p>Good algorithms often become fast not because they process more information, but because they learn which information can safely be forgotten.</p></blockquote>
+
+<h2 id="next">Coming next</h2>
+<p>We have now seen three uses of prefix information: prefix sums for range queries, prefix sums with a hashmap to find or count matching past states, and prefix sums with a monotonic deque to optimize over a range of possible past states.</p>
+<p>So far we have used prefix sums to reason about one-dimensional subarrays. What if we want to perform <em>many range updates</em> efficiently? Instead of asking "what is the sum of this range?", the question becomes "how can I change an entire range without touching every element?". That leads to <strong>difference arrays</strong>, another idea that comes from asking what work we can avoid.</p>
+</main>
+
+<script>
+/* ===== SHARED HELPERS: do not change ===== */
+var $=function(i){return document.getElementById(i)};
+var L=function(v){return v.toLocaleString('en-US')};
+var num=function(x,y){return x-y};
+function isSorted(a){for(var i=1;i<a.length;i++)if(a[i-1]>a[i])return false;return true}
+
+/* cells(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label above'}, noix:true}) -> row of cells */
+function cells(a,o){o=o||{};var c=o.c||{};return '<div class="row">'+a.map(function(v,i){var g=v===''||v===null;return '<div class="cw"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="cell'+(g?' gap':'')+' '+(c[i]||'')+'">'+(g?'&nbsp;':v)+'</div><span class="ix">'+(o.noix?'':i)+'</span></div>'}).join('')+'</div>'}
+
+/* widget(id, presets, build): Previous/Next stepper.
+   presets = [[buttonLabel, params], ...]; build(params) returns [{h:htmlString, n:noteText}, ...] */
+function widget(id,opts,build){
+  var el=$(id),i=0,st=[];
+  el.innerHTML=(opts.length>1?'<div class="row" style="align-items:center">'+opts.map(function(o,k){return '<button data-k="'+k+'">'+o[0]+'</button>'}).join('')+'</div>':'')+'<div class="scroll v"></div><p class="note" aria-live="polite"></p><div class="ctl"><button class="pv">Previous</button><span class="pos"></span><button class="nx">Next</button><button class="pl">Play</button></div>';
+  var v=el.querySelector('.v'),n=el.querySelector('.note'),p=el.querySelector('.pos'),pv=el.querySelector('.pv'),nx=el.querySelector('.nx'),pl=el.querySelector('.pl'),tm=null;
+  function stop(){if(tm){clearInterval(tm);tm=null}pl.textContent='Play'}
+  function r(){v.innerHTML=st[i].h;n.textContent=st[i].n;p.textContent='Step '+(i+1)+' of '+st.length;pv.disabled=i===0;nx.disabled=i===st.length-1}
+  function pick(k){stop();st=build(opts[k][1]);i=0;[].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.k===k))});r()}
+  [].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.onclick=function(){pick(+b.dataset.k)}});
+  pv.onclick=function(){stop();if(i>0){i--;r()}};nx.onclick=function(){stop();if(i<st.length-1){i++;r()}};
+  pl.onclick=function(){if(tm){stop();return}if(i>=st.length-1){i=0;r()}pl.textContent='Pause';tm=setInterval(function(){if(i<st.length-1){i++;r()}else stop()},1100)};
+  pick(0);
+}
+
+/* tabs(id, labels, fn): tab buttons; fn(k) returns html for tab k */
+function tabs(id,labels,fn){var el=$(id);el.innerHTML='<div class="row" style="align-items:center"></div><div class="tv"></div>';var bar=el.firstChild,tv=el.lastChild;
+  labels.forEach(function(t,k){var b=document.createElement('button');b.textContent=t;b.onclick=function(){[].forEach.call(bar.children,function(x){x.setAttribute('aria-pressed',String(x===b))});tv.innerHTML=fn(k)};b.setAttribute('aria-pressed',String(k===0));bar.appendChild(b)});tv.innerHTML=fn(0)}
+
+/* growth(id, ns, bruteFn, betterFn, header1, header2): log-scale comparison table */
+function growth(id,ns,bf,tp,h1,h2){$(id).innerHTML='<table><tr><th>n</th><th>'+h1+'</th><th>'+h2+'</th></tr>'+ns.map(function(n){var b=bf(n),t=tp(n);return '<tr><td>'+L(n)+'</td><td>'+L(b)+'<div class="bar r" style="width:'+Math.max(1,Math.log10(b)/12*100)+'%;margin-left:auto"></div></td><td>'+L(t)+'<div class="bar g" style="width:'+Math.max(1,Math.log10(t)/12*100)+'%;margin-left:auto"></div></td></tr>'}).join('')+'</table><p class="cap">Bars use a log scale, otherwise the second column would be invisible.</p>'}
+
+/* flow(['step','step',...]) -> vertical arrow flow */
+function flow(a){return '<div class="flow">'+a.map(function(x){return '<div class="cell">'+x+'</div>'}).join('<span>↓</span>')+'</div>'}
+
+/* grid(matrix, {c:function(r,c){return 'ok|now|dim|mv'}, rh:[row headers], ch:[col headers]}) -> 2D table of cells (DP tables, grids, matrices) */
+function grid(m,o){o=o||{};var w=m[0].length,ch=o.ch,rh=o.rh;
+  var h='<div class="mx" style="grid-template-columns:'+(rh?'auto ':'')+'repeat('+w+',minmax(0,1fr))">';
+  if(ch){h+=(rh?'<span></span>':'')+ch.map(function(x){return '<span class="mh">'+x+'</span>'}).join('')}
+  m.forEach(function(r,i){if(rh)h+='<span class="mh">'+rh[i]+'</span>';r.forEach(function(v,j){h+='<div class="cell '+((o.c&&o.c(i,j))||'')+'">'+v+'</div>'})});
+  return h+'</div>'}
+
+/* vbars(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label'}}) -> vertical bar chart of an array (sorting, partitioning, heights) */
+function vbars(a,o){o=o||{};var c=o.c||{},mx=Math.max.apply(null,a.map(Math.abs))||1;
+  return '<div class="vb">'+a.map(function(v,i){return '<div class="vc"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="vbar '+(c[i]||'')+'" style="height:'+Math.max(4,Math.round(Math.abs(v)/mx*110))+'px"></div><span class="ix">'+v+'</span></div>'}).join('')+'</div>'}
+
+/* driver(id, cfg): "you drive the algorithm". The reader picks the move; wrong moves get a teaching message.
+   cfg = {
+     presets:[[label,param],...],
+     init:function(param){return state},
+     view:function(state,done){return html},
+     done:function(state){return bool},
+     prompt:function(state,done){return 'What should we do?'},
+     choices:[['A','button text'],['B','button text'],...],
+     expected:function(state){return 'A'},               // the correct choice id
+     apply:function(state,choiceId){ return 'Right. why it worked'},   // mutate state here
+     hint:function(state){return 'general hint'},
+     wrong:function(state,choiceId){return 'specific message for a tempting wrong choice, or undefined'}
+   } */
+function driver(id,cfg){
+  var el=$(id),k=0,s,msg='';
+  function init(){s=cfg.init(cfg.presets[k][1]);msg='';draw()}
+  function draw(){var done=cfg.done(s);
+    el.innerHTML='<div class="row" style="align-items:center">'+cfg.presets.map(function(p,j){return '<button data-p="'+j+'" aria-pressed="'+(j===k)+'">'+p[0]+'</button>'}).join('')+'</div><div class="scroll">'+cfg.view(s,done)+'</div><p class="note" aria-live="polite"><strong>'+cfg.prompt(s,done)+'</strong></p><div class="ctl">'+cfg.choices.map(function(c){return '<button data-c="'+c[0]+'"'+(done?' disabled':'')+'>'+c[1]+'</button>'}).join('')+'</div><p class="note" aria-live="polite">'+msg+'</p>';
+    [].forEach.call(el.querySelectorAll('button[data-p]'),function(b){b.onclick=function(){k=+b.dataset.p;init()}});
+    [].forEach.call(el.querySelectorAll('button[data-c]'),function(b){b.onclick=function(){choose(b.dataset.c)}})}
+  function choose(c){if(c!==cfg.expected(s)){msg=(cfg.wrong&&cfg.wrong(s,c))||('Not quite. '+cfg.hint(s));draw();return}
+    msg=cfg.apply(s,c)||'Right.';draw()}
+  init()}
+
+/* slider(id, {min,max,value,label,render:function(v){return html}}) -> "drag to see how the cost grows" figure */
+function slider(id,o){var el=$(id);el.innerHTML='<label for="'+id+'S">'+o.label+' = <strong class="so"></strong></label><input id="'+id+'S" type="range" min="'+o.min+'" max="'+o.max+'" value="'+o.value+'"><div class="sv"></div>';
+  var inp=el.querySelector('input'),out=el.querySelector('.so'),sv=el.querySelector('.sv');
+  function u(){out.textContent=inp.value;sv.innerHTML=o.render(+inp.value)}inp.oninput=u;u()}
+
+/* ===== PAGE-SPECIFIC ILLUSTRATIONS GO BELOW ===== */
+
+/* ---------- common helpers for this post ---------- */
+var NUMS=[2,-1,2,3,-2,4], KK=5;
+function mkP(a){var P=[0];a.forEach(function(x){P.push(P[P.length-1]+x)});return P}
+var PP=mkP(NUMS);
+
+function dqHtml(P,dq){
+  if(!dq.length)return '<p class="flag">(empty)</p>';
+  var sub={};
+  dq.forEach(function(j,t){var parts=['i='+j];if(t===0)parts.unshift('front');else if(t===dq.length-1)parts.unshift('back');sub[t]=parts.join(' ')});
+  return cells(dq.map(function(j){return P[j]}),{sub:sub,noix:true});
+}
+function stateHtml(P,dq,ans,c,sub){
+  return '<p class="lbl">Prefix sums (index below each cell)</p>'+cells(P,{c:c,sub:sub})+
+    '<p class="lbl">Deque, front to back (value of P, with its index)</p>'+dqHtml(P,dq)+
+    '<p class="lbl">Best length so far: <strong>'+(ans===Infinity?'none yet':ans)+'</strong></p>';
+}
+
+/* ---------- 1. figure: array and prefix sums ---------- */
+$('fig1a').innerHTML=
+  '<p class="lbl">The array. The subarray [2, 3] sums to 5.</p>'+
+  cells(NUMS,{c:{2:'ok',3:'ok'}})+
+  '<p class="lbl">Prefix sums. P[4] - P[2] = 6 - 1 = 5.</p>'+
+  cells(PP,{c:{2:'mv',4:'mv'},sub:{2:'start',4:'end'}})+
+  '<p class="cap">The subarray covers nums[2..3], so its length is 4 - 2 = 2.</p>';
+
+/* ---------- 2. figure: one value vs many values ---------- */
+$('fig2a').innerHTML=
+  '<p class="lbl">Exact sum (current = 10, K = 5): only the value 5 qualifies. A hashmap finds it directly.</p>'+
+  cells([5,3,1,-4],{c:{0:'ok'},sub:{0:'= 5',1:'no',2:'no',3:'no'},noix:true})+
+  '<p class="lbl">At least K (current = 10, K = 5): every previous prefix &lt;= 5 qualifies. Which one do we want?</p>'+
+  cells([5,3,1,-4],{c:{0:'ok',1:'ok',2:'ok',3:'ok'},sub:{0:'valid',1:'valid',2:'valid',3:'valid'},noix:true})+
+  '<p class="cap">One exact key versus a whole range of keys, where we need the best one.</p>';
+
+/* ---------- 3. figure and dominance stepper ---------- */
+$('fig3a').innerHTML='<p class="lbl">nums</p>'+cells(NUMS,{})+'<p class="lbl">prefix sums, P[0..6]</p>'+cells(PP,{})+'<p class="cap">Note that the prefix sums are not sorted: they go 0, 2, 1, 3, 6, 4, 8.</p>';
+
+function domSteps(P){
+  var kept=[],out=[];
+  P.forEach(function(v,j){
+    var rem=[];
+    while(kept.length&&P[kept[kept.length-1]]>=v)rem.push(kept.pop());
+    kept.push(j);
+    var c={},sub={},t;
+    for(t=0;t<P.length;t++){sub[t]='i'+t;if(t>j)continue;c[t]=kept.indexOf(t)>=0?'mv':'dim'}
+    c[j]='now';
+    var n;
+    if(j===0)n='State i=0 (prefix 0) is the first one. Nothing to compare with yet.';
+    else if(rem.length)n='P['+j+'] = '+v+' arrives. '+rem.map(function(r){return 'State i='+r+' (P='+P[r]+')'}).join(' and ')+' is older and no smaller, so it is dominated and dropped.';
+    else n='P['+j+'] = '+v+' arrives. Every kept state has a smaller prefix, so none is dominated.';
+    if(j===P.length-1)n+=' Kept values, front to back: '+kept.map(function(x){return P[x]}).join(' < ')+'. Always increasing.';
+    out.push({h:vbars(P,{c:c,sub:sub})+'<p class="cap">Blue = still useful. Grey = dominated. Yellow = just arrived. Outline only = not seen yet.</p>',n:n});
+  });
+  return out;
+}
+widget('stepDom',[['prefix sums',PP]],domSteps);
+
+/* ---------- 4. why a deque ---------- */
+$('figNeed').innerHTML=flow([
+  'Need the most recent valid state (take from the front once used)',
+  'Need to remove dominated states (from the back)',
+  'Need access to both ends',
+  'Deque'
+]);
+$('figQ').innerHTML=
+  '<p class="lbl">Deque holds prefix values 0, 5. The prefix 2 arrives.</p>'+
+  cells([0,5,2],{c:{0:'mv',1:'dim',2:'now'},sub:{0:'front',1:'dominated (back)',2:'arriving'},noix:true})+
+  '<p class="cap">The 5 is older and larger than 2, so it must go. It is at the back, which a plain queue cannot reach.</p>';
+
+/* ---------- 5. main stepper ---------- */
+function trace(a,k){
+  var P=mkP(a),dq=[],ans=Infinity,out=[];
+  function show(i,pop,kind,added){
+    var c={},sub={},t;
+    for(t=0;t<i;t++)c[t]=dq.indexOf(t)>=0?'mv':'dim';
+    c[i]=added?'mv':'now';
+    sub[i]=added?'APPENDED':'current';
+    if(pop!==null&&pop!==undefined){c[pop]=kind==='front'?'ok':'dim';sub[pop]=kind==='front'?'POP FRONT':'POP BACK'}
+    return stateHtml(P,dq,ans,c,sub);
+  }
+  for(var i=0;i<P.length;i++){
+    var cur=P[i];
+    out.push({h:show(i),n:'Prefix P['+i+'] = '+cur+' arrives. First check the front for a valid subarray, then the back for dominated states.'});
+    while(dq.length&&cur-P[dq[0]]>=k){
+      var f=dq.shift(),len=i-f;
+      ans=Math.min(ans,len);
+      out.push({h:show(i,f,'front'),n:'POP FRONT: P['+i+'] - P['+f+'] = '+(cur-P[f])+' >= '+k+', a valid subarray of length '+i+' - '+f+' = '+len+'. Best so far: '+ans+'. Index '+f+' can never give a shorter one, so it leaves.'});
+    }
+    var fm='',bm='';
+    if(dq.length)fm='Front check: '+cur+' - '+P[dq[0]]+' = '+(cur-P[dq[0]])+' < '+k+', nothing more to pop there. ';
+    while(dq.length&&P[dq[dq.length-1]]>=cur){
+      var b=dq.pop();
+      out.push({h:show(i,b,'back'),n:'POP BACK: P['+b+'] = '+P[b]+' >= '+cur+' and index '+b+' is older, so it is dominated.'});
+    }
+    if(dq.length)bm='Back check: P['+dq[dq.length-1]+'] = '+P[dq[dq.length-1]]+' < '+cur+', so it stays. ';
+    dq.push(i);
+    out.push({h:show(i,null,null,true),n:fm+bm+'Append index '+i+'.'+(i===P.length-1?(ans===Infinity?' Done: no subarray works, so the answer is -1.':' Done: the shortest subarray has length '+ans+'.'):'')});
+  }
+  return out;
+}
+widget('stepMain',[
+  ['nums=[2,-1,2,3,-2,4], K=5',{a:[2,-1,2,3,-2,4],k:5}],
+  ['nums=[2,-1,2], K=3',{a:[2,-1,2],k:3}],
+  ['nums=[1,2], K=4 (no answer)',{a:[1,2],k:4}]
+],function(p){return trace(p.a,p.k)});
+
+/* ---------- 5. you drive it ---------- */
+function nextMove(s){
+  var cur=s.P[s.i];
+  if(s.dq.length&&cur-s.P[s.dq[0]]>=s.k)return 'A';
+  if(s.dq.length&&s.P[s.dq[s.dq.length-1]]>=cur)return 'B';
+  return 'C';
+}
+driver('drv1',{
+  presets:[
+    ['nums=[2,-1,2,3,-2,4], K=5',{a:[2,-1,2,3,-2,4],k:5}],
+    ['nums=[84,-37,32,40,95], K=167',{a:[84,-37,32,40,95],k:167}]
+  ],
+  init:function(p){return {P:mkP(p.a),k:p.k,i:0,dq:[],ans:Infinity}},
+  view:function(s,done){
+    var c={},sub={},t;
+    for(t=0;t<s.P.length;t++){if(t<s.i)c[t]=s.dq.indexOf(t)>=0?'mv':'dim'}
+    if(!done){c[s.i]='now';sub[s.i]='current'}
+    return '<p class="lbl">Prefix sums (index below each cell)</p>'+cells(s.P,{c:c,sub:sub})+
+      '<p class="lbl">Deque, front to back</p>'+dqHtml(s.P,s.dq)+
+      '<p class="lbl">Best length so far: <strong>'+(s.ans===Infinity?'none yet':s.ans)+'</strong></p>';
+  },
+  done:function(s){return s.i>=s.P.length},
+  prompt:function(s,done){
+    if(done)return 'Finished. The shortest length is '+(s.ans===Infinity?'-1 (no valid subarray).':s.ans+'.');
+    return 'P['+s.i+'] = '+s.P[s.i]+' has arrived. What do we do?';
+  },
+  choices:[['A','Pop front (valid candidate)'],['B','Pop back (dominated)'],['C','Append current']],
+  expected:function(s){return nextMove(s)},
+  apply:function(s,c){
+    var cur=s.P[s.i];
+    if(c==='A'){var f=s.dq.shift(),len=s.i-f;s.ans=Math.min(s.ans,len);return 'Right. P['+s.i+'] - P['+f+'] = '+(cur-s.P[f])+' &gt;= '+s.k+', so we found a subarray of length '+len+'. Waiting only makes it longer, so index '+f+' leaves the front.'}
+    if(c==='B'){var b=s.dq.pop();return 'Right. P['+b+'] = '+s.P[b]+' is older and no smaller than '+cur+', so it is dominated.'}
+    s.dq.push(s.i);s.i++;
+    return 'Right. Nothing is left to remove, so the current state joins the back and the deque stays increasing.';
+  },
+  hint:function(s){return 'Check the front first: is current - P[front] &gt;= K? If not, check the back: is P[back] &gt;= current? If neither, append.'},
+  wrong:function(s,c){
+    var cur=s.P[s.i],e=nextMove(s),front=s.dq.length?s.P[s.dq[0]]:null,back=s.dq.length?s.P[s.dq[s.dq.length-1]]:null;
+    if(c==='A'){
+      if(!s.dq.length)return 'The deque is empty, so there is no front to check.';
+      return 'The front gives '+cur+' - '+front+' = '+(cur-front)+', which is below '+s.k+'. No valid subarray yet.';
+    }
+    if(c==='B'){
+      if(!s.dq.length)return 'The deque is empty, so there is nothing to pop.';
+      if(e==='A')return 'Check the front first: '+cur+' - '+front+' = '+(cur-front)+' &gt;= '+s.k+' already gives a valid subarray. Record it and pop the front.';
+      return 'The back value is '+back+', which is smaller than '+cur+'. It is not dominated, so it stays.';
+    }
+    if(e==='A')return 'Not yet. The front still gives a valid subarray: '+cur+' - '+front+' = '+(cur-front)+' &gt;= '+s.k+'. Record it and drop it first.';
+    return 'Not yet. The back value '+back+' is older and no smaller than '+cur+', so it is dominated. Remove it first, or the deque stops being increasing.';
+  }
+});
+
+/* ---------- 6. negatives ---------- */
+tabs('negT',['All positive: [1, 2, 3, 4]','With negatives: [2, -1, 2, -5, 10]'],function(k){
+  var a=k===0?[1,2,3,4]:[2,-1,2,-5,10],P=mkP(a),c={},i;
+  for(i=1;i<P.length;i++)if(P[i]<P[i-1])c[i]='now';
+  return '<p class="lbl">Array</p>'+cells(a,{})+'<p class="lbl">Prefix sums'+(k===1?' (yellow = the sum went down)':'')+'</p>'+cells(P,{c:c})+
+    '<p class="note">'+(k===0
+      ?'The prefix sums only go up, so they are sorted. A window sum behaves predictably, and binary search would be possible.'
+      :'The prefix sums go 0, 2, 1, 3, -2, 8: up and down. They are not sorted, so ordinary binary search fails, and a window sum no longer tracks window size.')+'</p>';
+});
+
+/* ---------- 7. amortized cost ---------- */
+function opsRun(n){
+  var x=12345,a=[],i;
+  for(i=0;i<n;i++){x=(x*1664525+1013904223)%4294967296;a.push(x%11-4)}
+  var P=mkP(a),dq=[],k=15,ap=0,fp=0,bp=0;
+  for(i=0;i<P.length;i++){
+    while(dq.length&&P[i]-P[dq[0]]>=k){fp++;dq.shift()}
+    while(dq.length&&P[dq[dq.length-1]]>=P[i]){bp++;dq.pop()}
+    dq.push(i);ap++;
+  }
+  return {ap:ap,fp:fp,bp:bp};
+}
+slider('slOps',{min:5,max:200,value:30,label:'n',render:function(n){
+  var r=opsRun(n);
+  return '<table><tr><th>What we count</th><th>Value</th></tr>'+
+    '<tr><td>Prefix states (n + 1)</td><td>'+L(n+1)+'</td></tr>'+
+    '<tr><td>Appends</td><td>'+L(r.ap)+'</td></tr>'+
+    '<tr><td>Front pops</td><td>'+L(r.fp)+'</td></tr>'+
+    '<tr><td>Back pops</td><td>'+L(r.bp)+'</td></tr>'+
+    '<tr><td>Total deque operations (at most 3(n + 1))</td><td>'+L(r.ap+r.fp+r.bp)+'</td></tr>'+
+    '<tr><td>Pairs a brute force may check, n(n + 1) / 2</td><td>'+L(n*(n+1)/2)+'</td></tr></table>'+
+    '<p class="cap">Run on a pseudo-random array of length n with values from -4 to 6 and K = 15. Front pops plus back pops never exceed the appends.</p>';
+}});
+growth('grow1',[10,1000,100000,1000000],function(n){return n*n},function(n){return 3*(n+1)},'Nested-loop bound n²','Deque, at most 3(n + 1)');
+
+/* ---------- 8. variants ---------- */
+tabs('formW',['Exact target','Divisible by K','At least K, shortest'],function(k){
+  if(k===0)return flow(['P[j] - P[i] = K','need P[i] = P[j] - K','one exact value to find','hashmap'])+'<p class="note">One exact value, so we can look it up by key.</p>';
+  if(k===1)return flow(['(P[j] - P[i]) % K = 0','need P[j] % K = P[i] % K','one exact remainder to find','remainder hashmap'])+'<p class="note">Still one exact key, just a remainder instead of a sum.</p>';
+  return flow(['P[j] - P[i] &gt;= K, minimize j - i','need P[i] &lt;= P[j] - K, prefer the largest i','many valid states, some dominated','monotonic deque'])+'<p class="note">A range of valid keys plus an optimization. The prefix-sum foundation did not change; the constraint changed the data structure.</p>';
+});
+
+/* ===== CODE TOGGLE AND THEME: do not change ===== */
+var cb=$('codeBtn'),hid=false;
+cb.onclick=function(){hid=!hid;[].forEach.call(document.querySelectorAll('details'),function(d){d.open=!hid});cb.textContent=hid?'Show code':'Hide code'};
+var root=document.documentElement,tb=$('theme');
+function setTheme(t){root.setAttribute('data-theme',t);tb.textContent=t==='dark'?'Light':'Dark'}
+try{var sv=localStorage.getItem('theme');if(sv==='dark'||sv==='light')setTheme(sv)}catch(e){}
+tb.onclick=function(){var t=root.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);try{localStorage.setItem('theme',t)}catch(e){}};
+</script>
+</body>
+</html>

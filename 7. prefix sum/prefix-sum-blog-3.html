@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>When Equality Becomes a Remainder</title>
+<style>
+:root{--bg:#fff;--ink:#111;--mut:#555;--line:#ccc;--acc:#1f4e8c;--hi:#fff3b0;--hib:#c9a227;--ok:#dcf0dc;--okb:#3a8a3a;--mv:#e6edf7;--dim:#eee;--card:#fafafa;--red:#b5342b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#121212;--ink:#eee;--mut:#aaa;--line:#3a3a3a;--acc:#8ab4f8;--hi:#4a4220;--hib:#c9a227;--ok:#1d3a22;--okb:#5cb85c;--mv:#1c2a40;--dim:#2a2a2a;--card:#1a1a1a;--red:#ff7b72;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Roman",Times,serif}
+main{max-width:720px;margin:0 auto;padding:40px 20px 80px}
+h1,h2,h3{font-family:inherit;line-height:1.25}
+h1{font-size:2.1rem;margin:.2em 0 .6em}
+h2{font-size:1.5rem;margin:2.6em 0 .6em;padding-top:1.2em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin:1.3em 0 .3em}
+blockquote{margin:1em 0;padding:.4em 1em;border-left:4px solid var(--acc);font-size:1.12rem}
+blockquote p{margin:.3em 0}
+code{font:inherit;background:var(--card);padding:1px 5px;border-radius:4px}
+a{color:var(--acc)}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:1.2em 0}
+.cap{font-size:.9rem;color:var(--mut);margin:.6em 0 0}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:flex-end}
+.cw{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ix{font-size:.8rem;color:var(--mut);min-height:1.1em;font-weight:600}
+.cell{min-width:40px;padding:7px 6px;text-align:center;border:2px solid var(--line);background:var(--bg);border-radius:6px;font-weight:600;transition:background .2s}
+.gap{border-style:dashed;background:transparent}
+.ok{background:var(--ok);border-color:var(--okb)}
+.now{background:var(--hi);border-color:var(--hib)}
+.dim{background:var(--dim);color:var(--mut);border-color:var(--dim)}
+.mv{background:var(--mv);border-color:var(--acc)}
+.mx{display:grid;gap:3px;margin:8px 0}
+.mh{font-size:.8rem;color:var(--mut);text-align:center;align-self:center}
+.mx .cell{min-width:0;padding:3px 0;font-size:.8rem}
+button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
+button:hover:not(:disabled){background:var(--mv)}
+button:disabled{opacity:.4;cursor:default}
+button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--hib);outline-offset:2px}
+.tools{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5;display:flex;gap:8px}
+.ctl{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.pos{color:var(--mut);font-size:.9rem}
+.note{min-height:3em;margin:.4em 0 0;font-weight:500}
+.lbl{font-size:.9rem;margin:8px 0 3px}
+.bar{height:14px;border-radius:4px;background:var(--acc);min-width:3px}
+.bar.g{background:var(--okb)}.bar.r{background:var(--red)}
+input[type=range]{width:100%}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--dim)}
+details{margin:.6em 0 .9em;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+summary{cursor:pointer;padding:8px 12px;font-size:.95rem;color:var(--acc)}
+pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,Menlo,Consolas,monospace}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.two{grid-template-columns:1fr}}
+.flow{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;font-size:.95rem}
+.flow .cell{min-width:140px}
+.zones{display:flex;border:2px solid var(--line);border-radius:6px;overflow:hidden;text-align:center;font-size:.85rem}
+.zones div{padding:10px 6px}
+.flag{font-size:.9rem;color:var(--mut)}
+.tt td:first-child{font-weight:600}
+.tt td{text-align:left}
+p{margin:.7em 0}
+ul,ol{margin:.7em 0}
+li{margin:.15em 0}
+.dg{margin:.4em 0 .9em;padding:.1em 0 .1em 14px;border-left:3px solid var(--line);overflow-x:auto}
+.dg pre{padding:0;font-size:.88rem;line-height:1.45}
+.st{display:flex;gap:5px;flex-wrap:wrap;align-items:flex-end;margin:.4em 0 .9em}
+.st .cell{min-width:38px;padding:3px 10px}
+.st .ix{min-height:0}
+.st-n{display:flex;flex-direction:column;gap:2px;margin:.4em 0 .9em;font-size:.9rem;color:var(--mut)}
+.vb{display:flex;gap:6px;align-items:flex-end;margin:6px 0}
+.vc{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:26px;max-width:60px;justify-content:flex-end}
+.vbar{width:100%;border:2px solid var(--line);background:var(--bg);border-radius:4px 4px 0 0;transition:height .2s,background .2s}
+</style>
+</head>
+<body>
+<div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
+<main>
+<h1>When Equality Becomes a Remainder</h1>
+<blockquote><p>We don’t need a new pattern every time the question changes. Sometimes the old idea is already correct. We only need to change what it means for two states to “match.”</p></blockquote>
+<p>In the previous article we reached an important idea. For a subarray from <code>i</code> to <code>j</code>, <code>sum(i … j) = prefix[j + 1] − prefix[i]</code>. If we want the sum to be exactly <code>K</code>, then <code>prefix[i] = prefix[j + 1] − K</code>, so we walk through the array, remember the prefix states from the past, and ask what previous prefix would make this subarray valid. Each idea below has something to step through or drag, and the code can be hidden with the button at the top.</p>
+<ol>
+<li><a href="#s1">What if we don’t care about the exact sum?</a></li>
+<li><a href="#s2">The old idea is still alive</a></li>
+<li><a href="#s3">Subarray Sums Divisible by K</a></li>
+<li><a href="#s4">Compressing information, and negative numbers</a></li>
+<li><a href="#s5">Continuous Subarray Sum</a></li>
+<li><a href="#s6">Odd and even: modulo 2</a></li>
+<li><a href="#s7">Equivalence classes</a></li>
+<li><a href="#s8">Information design, and when to use this</a></li>
+<li><a href="#s9">But there is a boundary</a></li>
+<li><a href="#s10">The evolution so far</a></li>
+</ol>
+
+<h2 id="s1">1. What if we don’t care about the exact sum?</h2>
+<p>Suppose the problem says: find a subarray whose sum is <strong>divisible by <code>K</code></strong>. For <code>nums = [2, 4, 3, 5]</code> and <code>K = 3</code>, the subarray <code>[4, 3, 5]</code> has sum <code>12</code>, and <code>12 % 3 = 0</code>. At first glance this looks like a completely different problem, so let’s start with the definition. Divisible means <code>sum % K = 0</code>, and for a subarray <code>sum = prefix[j] − prefix[i]</code>, so we want <code>(prefix[j] − prefix[i]) % K = 0</code>.</p>
+<h3>The naive way</h3>
+<p>Try every subarray with a running sum and test <code>sum % K</code>. That is <code>O(n²)</code>.</p>
+<h3>When is a difference divisible by K?</h3>
+<p>When the two numbers leave the <strong>same remainder</strong>. With <code>K = 5</code>, <code>17 % 5 = 2</code> and <code>12 % 5 = 2</code>, and <code>17 − 12 = 5</code>. Likewise <code>27</code> and <code>42</code> both leave remainder 2, and <code>42 − 27 = 15</code>. So <code>A % K == B % K</code> implies <code>(A − B) % K == 0</code>, and the subarray problem becomes:</p>
+<blockquote><p>Find two prefix sums that have the same remainder modulo K.</p></blockquote>
+<p>Drag <code>K</code>. The highlighted numbers all leave the same remainder as <code>12</code>, and neighbours differ by exactly a multiple of <code>K</code>.</p>
+<div class="fig scroll" id="rem"></div>
+
+<h2 id="s2">2. The old idea is still alive</h2>
+<p>For an exact sum we asked <code>previous_prefix = current_prefix − K</code>. Now we want <code>current_prefix % K = previous_prefix % K</code>. So instead of remembering <code>prefix → information</code> we remember <code>remainder → information</code>. That is the entire conceptual transition. We haven’t invented a new algorithm. We’ve changed what information about the prefix matters.</p>
+<h3>Look at a real example</h3>
+<p>Take <code>nums = [4, 5, 0, -2, -3, 1]</code> and <code>K = 5</code>, with positives, zero and negatives. The prefix sums are <code>0, 4, 9, 9, 7, 4, 5</code> and their remainders are <code>0, 4, 4, 4, 2, 4, 0</code>. The remainder <code>4</code> appears four times. Choose any two prefix positions and see whether they bound a subarray divisible by 5. Equal remainders share a colour.</p>
+<div class="fig" id="grp"></div>
+<blockquote><p>The actual prefix values don’t matter anymore. Only their remainders matter. We’re not searching for subarrays anymore. We’re grouping prefix states.</p></blockquote>
+
+<h2 id="s3">3. Subarray Sums Divisible by K</h2>
+<p>Count the subarrays whose sum is divisible by <code>K</code>. In the previous article the map was <code>prefix → frequency</code>. Now it is <code>remainder → frequency</code>, because we want to count pairs of prefixes with the same remainder. Whenever we meet remainder <code>r</code> again, every earlier occurrence of <code>r</code> forms a valid subarray with the current position. Step through the example, then the second preset.</p>
+<div class="fig" id="dv"></div>
+<p class="cap">Yellow is the current element, green the most recent subarray counted at this step. The map shows how many earlier prefixes had each remainder.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def subarrays_div_by_k(nums, k):
+    remainder_count = {0: 1}
+    prefix = 0
+    answer = 0
+
+    for num in nums:
+        prefix += num
+
+        remainder = prefix % k
+
+        answer += remainder_count.get(remainder, 0)
+
+        remainder_count[remainder] = (
+            remainder_count.get(remainder, 0) + 1
+        )
+
+    return answer</pre></details>
+<p>Why <code>{0: 1}</code>? Before processing anything the prefix is <code>0</code>, and <code>0 % K = 0</code>. There is one empty prefix with remainder <code>0</code>, the same leading-zero idea as before. The key line reads: <em>how many earlier prefixes had the same remainder as me?</em> Each one gives a subarray whose sum is divisible by <code>K</code>.</p>
+<h3>Why does counting equal remainders count subarrays?</h3>
+<p>If <code>P[i] % K == P[j] % K</code> then <code>P[j] − P[i]</code> is divisible by <code>K</code>, and <code>P[j] − P[i]</code> is exactly the sum of the subarray between them. Same remainder, so the difference is divisible, so the subarray sum is divisible. That is the entire algorithm.</p>
+<h3>Side by side with “Subarray Sum Equals K”</h3>
+<div class="fig scroll"><table class="tt"><tr><th></th><th>Exact sum</th><th>Divisible by K</th></tr><tr><td>We want</td><td><code>P[j] − P[i] = K</code></td><td><code>(P[j] − P[i]) % K = 0</code></td></tr><tr><td>So the past must be</td><td><code>P[i] = P[j] − K</code></td><td><code>P[i] % K = P[j] % K</code></td></tr><tr><td>We remember</td><td>Exact prefix value</td><td>Prefix remainder</td></tr></table></div>
+<h3>Why not the simpler approach?</h3>
+<div class="fig scroll"><table class="tt"><tr><th></th><th>Try every subarray</th><th>Remainder map</th></tr><tr><td>Time</td><td><code>O(n²)</code></td><td><code>O(n)</code></td></tr><tr><td>Extra space</td><td><code>O(1)</code></td><td><code>O(min(n, K))</code>, since there are at most <code>K</code> remainders</td></tr><tr><td>Reasoning</td><td>Checks every pair directly</td><td>Groups prefix states by what the constraint cares about</td></tr></table></div>
+
+<h2 id="s4">4. Compressing information, and negative numbers</h2>
+<p>Suppose the prefix sums are <code>102</code>, <code>57</code>, <code>302</code> and <code>1000002</code>, and <code>K = 5</code>. If we only care whether differences are divisible by 5, storing the whole numbers is unnecessary. All four leave remainder <code>2</code>, so they belong to one group, and we remember just <code>remainder 2</code>.</p>
+<blockquote><p>If a problem only cares about some property of a value, we may not need to remember the entire value. Keep only the information the constraint actually cares about.</p></blockquote>
+<p>Python’s modulo conveniently normalizes negatives: <code>-2 % 5</code> is <code>3</code>, so remainders always land in <code>0 … K−1</code>. What matters conceptually is that two numbers share a remainder class exactly when their difference is divisible by <code>K</code>. For example <code>-2 % 5 = 3 = 3 % 5</code>, and <code>3 − (−2) = 5</code>. In languages where <code>%</code> can return a negative value (Java, C++, JavaScript), normalize with <code>((x % k) + k) % k</code>.</p>
+
+<h2 id="s5">5. Continuous Subarray Sum</h2>
+<p>Now ask: does there exist a subarray whose sum is a multiple of <code>K</code> (<code>K, 2K, 3K, …</code>, or zero)? We already know the core idea: have we seen this remainder before? But there is an extra constraint, <strong>the subarray must contain at least two elements</strong>. If we only check that a remainder has appeared before, we might accept a one-element subarray. So we need to remember <em>where</em> we first saw each remainder: <code>remainder → earliest index</code>. The prefix mathematics hasn’t changed. The question has changed what we need to store.</p>
+<h3>Why the earliest index?</h3>
+<p>If the same remainder was seen at index <code>2</code> and later at <code>5</code>, the subarray ending at <code>j</code> has length <code>j − 2</code> or <code>j − 5</code>. For a length constraint the earliest occurrence is most useful because later ones can’t give a longer subarray. Try the third preset, <code>[6]</code> with <code>K = 6</code>, where the remainder matches but the subarray is too short.</p>
+<div class="fig" id="cs"></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>def check_subarray_sum(nums, k):
+    first = {0: -1}
+    prefix = 0
+
+    for i, num in enumerate(nums):
+        prefix += num
+        remainder = prefix % k
+
+        if remainder in first:
+            if i - first[remainder] &gt;= 2:
+                return True
+        else:
+            first[remainder] = i
+
+    return False</pre></details>
+<p>The assignment <code>first[remainder] = i</code> only happens when the remainder hasn’t been seen. We deliberately keep the earliest index.</p>
+
+<h2 id="s6">6. Odd and even: modulo 2</h2>
+<p>Modulo isn’t only for arbitrary <code>K</code>. Ask: how many subarrays have an <strong>odd</strong> sum? Every prefix has remainder <code>0</code> (even) or <code>1</code> (odd) modulo 2. If two prefixes have the <em>same</em> parity, their difference is even. If they <em>differ</em>, it is odd. So a subarray has an odd sum exactly when its starting and ending prefix parities differ.</p>
+<p>For <code>nums = [1, 3, 5]</code> the prefix sums are <code>1, 4, 9</code>, with parities odd, even, odd. We keep counts of even and odd prefixes, starting with <code>even = 1, odd = 0</code> for the empty prefix. When the current prefix is odd we need a previous <em>even</em> one, and vice versa.</p>
+<div class="fig" id="od"></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>def num_of_subarrays(nums):
+    MOD = 10**9 + 7
+    even, odd = 1, 0
+    prefix = 0
+    answer = 0
+
+    for num in nums:
+        prefix += num
+
+        if prefix % 2 == 1:
+            answer += even
+            odd += 1
+        else:
+            answer += odd
+            even += 1
+
+    return answer % MOD</pre></details>
+<p>A subarray property can often be expressed as a relationship between two prefix states.</p>
+
+<h2 id="s7">7. Equivalence classes</h2>
+<p>This sounds more abstract than it needs to be. With <code>K = 4</code> every number falls into one of four groups: remainder 0 (<code>0, 4, 8, …</code>), remainder 1 (<code>1, 5, 9, …</code>) and so on. Two numbers in the same group differ by a multiple of 4. Drag <code>K</code> and see the groups.</p>
+<div class="fig scroll" id="eqc"></div>
+<div class="fig" id="fl2"></div>
+<p>So instead of the exact prefix sum we ask which remainder group a prefix belongs to, and the subarray problem becomes a grouping problem.</p>
+
+<h2 id="s8">8. Information design, and when to use this</h2>
+<div class="fig scroll"><table class="tt"><tr><th>Question</th><th>What we remember</th></tr>
+<tr><td>Does a prefix exist?</td><td>Set of prefixes</td></tr>
+<tr><td>How many subarrays?</td><td>Prefix → frequency</td></tr>
+<tr><td>Longest subarray?</td><td>Prefix → earliest index</td></tr>
+<tr><td>Divisible by K?</td><td>Remainder → frequency</td></tr>
+<tr><td>Multiple of K with a length constraint?</td><td>Remainder → earliest index</td></tr>
+<tr><td>Odd sum?</td><td>Parity → frequency</td></tr></table></div>
+<p>The prefix sum is not the final algorithm. It is the <strong>state</strong>. The hashmap stores whatever property of that state is useful for the question. When you see contiguous subarrays with sums, divisibility, multiples, parity, or equal counts after a transformation, ask whether the condition can be written as a relationship between two prefix states. If it becomes <code>difference % K == 0</code>, think <em>same prefix remainder</em>. Then ask what you need from the past: existence, frequency or earliest index.</p>
+
+<h2 id="s9">9. But there is a boundary</h2>
+<p>It’s tempting to think “prefix sum + hashmap solves every subarray problem.” It doesn’t. It works when the relationship is <code>current state ↔ previous state</code> and the previous state can be efficiently remembered. Now consider: find the <strong>shortest</strong> subarray whose sum is <strong>at least</strong> <code>K</code>. The condition isn’t <code>difference = K</code> or <code>difference % K = 0</code>. It is <code>difference ≥ K</code>, and we also want the smallest distance. Any earlier prefix that is small enough qualifies, so an exact lookup in a hashmap can’t find the <em>closest</em> one. That introduces ordering and comparison between prefix states.</p>
+<blockquote><p>When the constraint changes, don’t force the old tool to fit. Let the constraint tell you what information must be preserved.</p></blockquote>
+
+<h2 id="s10">10. The evolution so far</h2>
+<div class="fig" id="fl"></div>
+<p>The progression isn’t Pattern 1, Pattern 2, Pattern 3. It is <strong>same state + new constraint + different information needed = new solution</strong>.</p>
+<h3>Problems covered</h3>
+<div class="fig scroll"><table class="tt"><tr><th>Problem</th><th>New idea</th></tr>
+<tr><td>Subarray Sums Divisible by K</td><td>Equal prefix remainders imply a difference divisible by <code>K</code>.</td></tr>
+<tr><td>Continuous Subarray Sum</td><td>Store the earliest index per remainder when there is a length constraint.</td></tr>
+<tr><td>Number of Sub-arrays With Odd Sum</td><td>Parity is simply modulo 2.</td></tr>
+<tr><td>Contiguous Array (recalled)</td><td>Transform a balance condition into a zero-sum problem, then reuse prefix-state reasoning.</td></tr></table></div>
+<h3>The deeper lesson</h3>
+<p>We began with “can I avoid recomputing sums?”, which gave prefix sums. Then “can I discover a subarray by comparing the current prefix with something from the past?”, which gave the hashmap. Now we learned that if a problem only cares about divisibility, the exact prefix value contains more information than we need, so we compress <code>prefix sum</code> into <code>prefix sum % K</code> and compare the compressed states. The important idea isn’t <code>remainder = prefix % k</code>. It is to keep only the information that the constraint actually cares about.</p>
+<h3>Coming next</h3>
+<p>So far our questions were: does a previous state exist, how many, how far back was the first one? Now we ask for the <strong>shortest subarray whose sum is at least K</strong>. That is an inequality while minimizing distance, and it breaks the simple hashmap. When the old representation is no longer enough, we ask the same question as always: what information do we actually need to keep? That leads us to <strong>prefix sums + a monotonic deque</strong>.</p>
+</main>
+
+<script>
+/* ===== SHARED HELPERS: do not change ===== */
+var $=function(i){return document.getElementById(i)};
+var L=function(v){return v.toLocaleString('en-US')};
+var num=function(x,y){return x-y};
+function isSorted(a){for(var i=1;i<a.length;i++)if(a[i-1]>a[i])return false;return true}
+
+/* cells(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label above'}, noix:true}) -> row of cells */
+function cells(a,o){o=o||{};var c=o.c||{};return '<div class="row">'+a.map(function(v,i){var g=v===''||v===null;return '<div class="cw"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="cell'+(g?' gap':'')+' '+(c[i]||'')+'">'+(g?'&nbsp;':v)+'</div><span class="ix">'+(o.noix?'':i)+'</span></div>'}).join('')+'</div>'}
+
+/* widget(id, presets, build): Previous/Next stepper.
+   presets = [[buttonLabel, params], ...]; build(params) returns [{h:htmlString, n:noteText}, ...] */
+function widget(id,opts,build){
+  var el=$(id),i=0,st=[];
+  el.innerHTML=(opts.length>1?'<div class="row" style="align-items:center">'+opts.map(function(o,k){return '<button data-k="'+k+'">'+o[0]+'</button>'}).join('')+'</div>':'')+'<div class="scroll v"></div><p class="note" aria-live="polite"></p><div class="ctl"><button class="pv">Previous</button><span class="pos"></span><button class="nx">Next</button><button class="pl">Play</button></div>';
+  var v=el.querySelector('.v'),n=el.querySelector('.note'),p=el.querySelector('.pos'),pv=el.querySelector('.pv'),nx=el.querySelector('.nx'),pl=el.querySelector('.pl'),tm=null;
+  function stop(){if(tm){clearInterval(tm);tm=null}pl.textContent='Play'}
+  function r(){v.innerHTML=st[i].h;n.textContent=st[i].n;p.textContent='Step '+(i+1)+' of '+st.length;pv.disabled=i===0;nx.disabled=i===st.length-1}
+  function pick(k){stop();st=build(opts[k][1]);i=0;[].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.k===k))});r()}
+  [].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.onclick=function(){pick(+b.dataset.k)}});
+  pv.onclick=function(){stop();if(i>0){i--;r()}};nx.onclick=function(){stop();if(i<st.length-1){i++;r()}};
+  pl.onclick=function(){if(tm){stop();return}if(i>=st.length-1){i=0;r()}pl.textContent='Pause';tm=setInterval(function(){if(i<st.length-1){i++;r()}else stop()},1100)};
+  pick(0);
+}
+
+/* tabs(id, labels, fn): tab buttons; fn(k) returns html for tab k */
+function tabs(id,labels,fn){var el=$(id);el.innerHTML='<div class="row" style="align-items:center"></div><div class="tv"></div>';var bar=el.firstChild,tv=el.lastChild;
+  labels.forEach(function(t,k){var b=document.createElement('button');b.textContent=t;b.onclick=function(){[].forEach.call(bar.children,function(x){x.setAttribute('aria-pressed',String(x===b))});tv.innerHTML=fn(k)};b.setAttribute('aria-pressed',String(k===0));bar.appendChild(b)});tv.innerHTML=fn(0)}
+
+/* growth(id, ns, bruteFn, betterFn, header1, header2): log-scale comparison table */
+function growth(id,ns,bf,tp,h1,h2){$(id).innerHTML='<table><tr><th>n</th><th>'+h1+'</th><th>'+h2+'</th></tr>'+ns.map(function(n){var b=bf(n),t=tp(n);return '<tr><td>'+L(n)+'</td><td>'+L(b)+'<div class="bar r" style="width:'+Math.max(1,Math.log10(b)/12*100)+'%;margin-left:auto"></div></td><td>'+L(t)+'<div class="bar g" style="width:'+Math.max(1,Math.log10(t)/12*100)+'%;margin-left:auto"></div></td></tr>'}).join('')+'</table><p class="cap">Bars use a log scale, otherwise the second column would be invisible.</p>'}
+
+/* flow(['step','step',...]) -> vertical arrow flow */
+function flow(a){return '<div class="flow">'+a.map(function(x){return '<div class="cell">'+x+'</div>'}).join('<span>↓</span>')+'</div>'}
+
+/* grid(matrix, {c:function(r,c){return 'ok|now|dim|mv'}, rh:[row headers], ch:[col headers]}) -> 2D table of cells (DP tables, grids, matrices) */
+function grid(m,o){o=o||{};var w=m[0].length,ch=o.ch,rh=o.rh;
+  var h='<div class="mx" style="grid-template-columns:'+(rh?'auto ':'')+'repeat('+w+',minmax(0,1fr))">';
+  if(ch){h+=(rh?'<span></span>':'')+ch.map(function(x){return '<span class="mh">'+x+'</span>'}).join('')}
+  m.forEach(function(r,i){if(rh)h+='<span class="mh">'+rh[i]+'</span>';r.forEach(function(v,j){h+='<div class="cell '+((o.c&&o.c(i,j))||'')+'">'+v+'</div>'})});
+  return h+'</div>'}
+
+/* vbars(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label'}}) -> vertical bar chart of an array (sorting, partitioning, heights) */
+function vbars(a,o){o=o||{};var c=o.c||{},mx=Math.max.apply(null,a.map(Math.abs))||1;
+  return '<div class="vb">'+a.map(function(v,i){return '<div class="vc"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="vbar '+(c[i]||'')+'" style="height:'+Math.max(4,Math.round(Math.abs(v)/mx*110))+'px"></div><span class="ix">'+v+'</span></div>'}).join('')+'</div>'}
+
+/* driver(id, cfg): "you drive the algorithm". The reader picks the move; wrong moves get a teaching message.
+   cfg = {
+     presets:[[label,param],...],
+     init:function(param){return state},
+     view:function(state,done){return html},
+     done:function(state){return bool},
+     prompt:function(state,done){return 'What should we do?'},
+     choices:[['A','button text'],['B','button text'],...],
+     expected:function(state){return 'A'},               // the correct choice id
+     apply:function(state,choiceId){ return 'Right. why it worked'},   // mutate state here
+     hint:function(state){return 'general hint'},
+     wrong:function(state,choiceId){return 'specific message for a tempting wrong choice, or undefined'}
+   } */
+function driver(id,cfg){
+  var el=$(id),k=0,s,msg='';
+  function init(){s=cfg.init(cfg.presets[k][1]);msg='';draw()}
+  function draw(){var done=cfg.done(s);
+    el.innerHTML='<div class="row" style="align-items:center">'+cfg.presets.map(function(p,j){return '<button data-p="'+j+'" aria-pressed="'+(j===k)+'">'+p[0]+'</button>'}).join('')+'</div><div class="scroll">'+cfg.view(s,done)+'</div><p class="note" aria-live="polite"><strong>'+cfg.prompt(s,done)+'</strong></p><div class="ctl">'+cfg.choices.map(function(c){return '<button data-c="'+c[0]+'"'+(done?' disabled':'')+'>'+c[1]+'</button>'}).join('')+'</div><p class="note" aria-live="polite">'+msg+'</p>';
+    [].forEach.call(el.querySelectorAll('button[data-p]'),function(b){b.onclick=function(){k=+b.dataset.p;init()}});
+    [].forEach.call(el.querySelectorAll('button[data-c]'),function(b){b.onclick=function(){choose(b.dataset.c)}})}
+  function choose(c){if(c!==cfg.expected(s)){msg=(cfg.wrong&&cfg.wrong(s,c))||('Not quite. '+cfg.hint(s));draw();return}
+    msg=cfg.apply(s,c)||'Right.';draw()}
+  init()}
+
+/* slider(id, {min,max,value,label,render:function(v){return html}}) -> "drag to see how the cost grows" figure */
+function slider(id,o){var el=$(id);el.innerHTML='<label for="'+id+'S">'+o.label+' = <strong class="so"></strong></label><input id="'+id+'S" type="range" min="'+o.min+'" max="'+o.max+'" value="'+o.value+'"><div class="sv"></div>';
+  var inp=el.querySelector('input'),out=el.querySelector('.so'),sv=el.querySelector('.sv');
+  function u(){out.textContent=inp.value;sv.innerHTML=o.render(+inp.value)}inp.oninput=u;u()}
+
+/* ===== PAGE-SPECIFIC ===== */
+slider('rem',{min:2,max:9,value:5,label:'K',render:function(K){var r=12%K,v=[],c={},i;for(i=0;i<=29;i++){v.push(i);if(i%K===r)c[i]='ok'}c[12]='now';
+ var h=[];for(i=12;i<=29;i++)if(i%K===r)h.push(i);
+ return cells(v,{c:c,noix:true})+'<p class="note">12 % '+K+' = '+r+'. Highlighted numbers all leave remainder '+r+': '+h.join(', ')+'. Each differs from the next by '+K+', a multiple of '+K+'.</p>'}});
+var GN=[4,5,0,-2,-3,1],GK=5,GP=[0,4,9,9,7,4,5],gi=1,gj=5;
+function grDraw(){var el=$('grp'),rem=GP.map(function(x){return ((x%GK)+GK)%GK}),cls=['ok','mv','dim',''],seen=[],c={},c2={},j,i;
+ rem.forEach(function(r){if(seen.indexOf(r)<0)seen.push(r)});
+ for(i=0;i<GP.length;i++)c[i]=cls[seen.indexOf(rem[i])]||'';var cp={};for(i in c)cp[i]=c[i];c[gi]='now';c[gj]='now';
+ for(i=gi;i<gj;i++)c2[i]='ok';
+ var d=GP[gj]-GP[gi],same=rem[gi]===rem[gj];
+ el.innerHTML='<label for="gI">first prefix position = <strong>'+gi+'</strong></label><input id="gI" type="range" min="0" max="5" value="'+gi+'"><label for="gJ">second prefix position = <strong>'+gj+'</strong></label><input id="gJ" type="range" min="1" max="6" value="'+gj+'">'
+ +cells(GN,{c:c2,sub:{0:'nums, K = 5'}})+cells(GP,{c:c,sub:{0:'prefix'},noix:true})+cells(rem,{c:cp,sub:{0:'prefix % 5'},noix:true})
+ +'<p>prefix['+gj+'] − prefix['+gi+'] = '+GP[gj]+' − '+GP[gi]+' = <strong>'+d+'</strong>, and '+d+' % 5 = <strong>'+(((d%GK)+GK)%GK)+'</strong>. The subarray [ '+GN.slice(gi,gj).join(', ')+' ] has sum '+d+'.</p><p class="note">'+(same?'Same remainder ('+rem[gi]+'), so the difference is divisible by 5.':'Different remainders ('+rem[gi]+' and '+rem[gj]+'), so the sum is not divisible by 5.')+'</p>';
+ $('gI').oninput=function(){gi=+this.value;if(gj<=gi)gj=gi+1;grDraw();$('gI').focus()};$('gJ').oninput=function(){gj=+this.value;if(gi>=gj)gi=gj-1;grDraw();$('gJ').focus()}}
+grDraw();
+/*MD*/
+function mdSteps(p){var a=p.a,k=p.k,m=p.m,s=[],pre=0,ans=0,idx={0:[0]},ord=[0],first={0:0},fo=[0],ev=1,od=0,found=false;
+ function ms(){if(m==='count')return 'remainder_count = {'+ord.map(function(q){return q+': '+idx[q].length}).join(', ')+'}';if(m==='exist2')return 'first = {'+fo.map(function(q){return q+': '+(first[q]-1)}).join(', ')+'}';return 'even = '+ev+', odd = '+od}
+ function tail(){return '<p><code>'+ms()+'</code>'+(m!=='exist2'?' &nbsp; <code>answer</code> = <strong>'+ans+'</strong>':'')+'</p>'}
+ function cs(i,rg){var c={},j;if(rg)for(j=rg[0];j<=rg[1];j++)c[j]='ok';if(i>=0&&i<a.length)c[i]='now';return cells(a,{c:c})}
+ s.push({h:cs(-1)+'<p>K = <strong>'+k+'</strong></p>'+tail(),n:'Before any element: prefix 0, remainder 0, seen once.'});
+ for(var i=0;i<a.length;i++){pre+=a[i];var r=((pre%k)+k)%k,rg=null,note,line='<p>Prefix = <strong>'+pre+'</strong>, remainder = '+pre+' % '+k+' = <strong>'+r+'</strong></p>';
+  if(m==='count'){var occ=idx[r]||[];ans+=occ.length;if(occ.length){rg=[occ[occ.length-1],i];note='Remainder '+r+' was seen '+occ.length+' time'+(occ.length>1?'s':'')+' before, so '+occ.length+' subarray'+(occ.length>1?'s end':' ends')+' here with sum divisible by '+k+'.'}else note='Remainder '+r+' is new. No earlier prefix matches.';
+   if(!idx[r]){idx[r]=[];ord.push(r)}idx[r].push(i+1)}
+  else if(m==='exist2'){if(r in first){var len=i+1-first[r];if(len>=2){rg=[first[r],i];s.push({h:cs(i,rg)+line+tail(),n:'Remainder '+r+' was seen at element index '+(first[r]-1)+'. The subarray has length '+len+', so it counts. Found it.'});s.ans=true;return s}note='Remainder '+r+' matches, but the subarray would have only 1 element. Not allowed, so keep going.'}else{first[r]=i+1;fo.push(r);note='First time we see remainder '+r+'. Remember where (earliest index only).'}}
+  else{var cur=r%2,need=cur?ev:od;ans+=need;note='Prefix is '+(cur?'odd':'even')+'. Every earlier '+(cur?'even':'odd')+' prefix ('+need+') gives an odd-sum subarray ending here.';if(cur)od++;else ev++;line='<p>Prefix = <strong>'+pre+'</strong> ('+(cur?'odd':'even')+')</p>'}
+  s.push({h:cs(i,rg)+line+tail(),n:note})}
+ if(m==='exist2'){s.push({h:cs(-1)+'<p>No valid pair found.</p>',n:'No qualifying subarray exists.'});s.ans=false}
+ else{s.push({h:cs(-1)+tail(),n:'Answer: '+ans+'.'});s.ans=ans}
+ return s}
+/*ENDMD*/
+widget('dv',[['[4, 5, 0, -2, -3, 1], K = 5',{a:[4,5,0,-2,-3,1],k:5,m:'count'}],['[2, 4, 3, 5], K = 3',{a:[2,4,3,5],k:3,m:'count'}]],mdSteps);
+widget('cs',[['[23, 2, 4, 6, 7], K = 6',{a:[23,2,4,6,7],k:6,m:'exist2'}],['[23, 2, 6, 4, 7], K = 13',{a:[23,2,6,4,7],k:13,m:'exist2'}],['[6], K = 6 (too short)',{a:[6],k:6,m:'exist2'}]],mdSteps);
+widget('od',[['[1, 3, 5]',{a:[1,3,5],k:2,m:'odd'}],['[2, 4, 6]',{a:[2,4,6],k:2,m:'odd'}]],mdSteps);
+slider('eqc',{min:2,max:6,value:4,label:'K',render:function(K){var o='',r,v,i;for(r=0;r<K;r++){v=[];for(i=r;i<=19;i+=K)v.push(i);o+=cells(v,{noix:true,sub:{0:'remainder '+r},c:{0:r%2?'mv':'ok'}})}return o+'<p class="note">Any two numbers in the same row differ by a multiple of '+K+'.</p>'}});
+$('fl2').innerHTML=flow(['Prefix sums','Take modulo K','Group by remainder','Equal groups','Differences divisible by K']);
+$('fl').innerHTML=flow(['Repeated range sums','Prefix sums','A subarray = difference of two prefix states','Hashmap: exact target','Prefix → frequency / earliest index','Divisibility: only the remainder matters','Remainder → frequency / earliest index']);
+
+/* ===== CODE TOGGLE AND THEME: do not change ===== */
+var cb=$('codeBtn'),hid=false;
+cb.onclick=function(){hid=!hid;[].forEach.call(document.querySelectorAll('details'),function(d){d.open=!hid});cb.textContent=hid?'Show code':'Hide code'};
+var root=document.documentElement,tb=$('theme');
+function setTheme(t){root.setAttribute('data-theme',t);tb.textContent=t==='dark'?'Light':'Dark'}
+try{var sv=localStorage.getItem('theme');if(sv==='dark'||sv==='light')setTheme(sv)}catch(e){}
+tb.onclick=function(){var t=root.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);try{localStorage.setItem('theme',t)}catch(e){}};
+</script>
+</body>
+</html>

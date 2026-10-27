@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>When Prefix Sums Grow Into Two Dimensions</title>
+<style>
+:root{--bg:#fff;--ink:#111;--mut:#555;--line:#ccc;--acc:#1f4e8c;--hi:#fff3b0;--hib:#c9a227;--ok:#dcf0dc;--okb:#3a8a3a;--mv:#e6edf7;--dim:#eee;--card:#fafafa;--red:#b5342b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#121212;--ink:#eee;--mut:#aaa;--line:#3a3a3a;--acc:#8ab4f8;--hi:#4a4220;--hib:#c9a227;--ok:#1d3a22;--okb:#5cb85c;--mv:#1c2a40;--dim:#2a2a2a;--card:#1a1a1a;--red:#ff7b72;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Roman",Times,serif}
+main{max-width:720px;margin:0 auto;padding:40px 20px 80px}
+h1,h2,h3{font-family:inherit;line-height:1.25}
+h1{font-size:2.1rem;margin:.2em 0 .6em}
+h2{font-size:1.5rem;margin:2.6em 0 .6em;padding-top:1.2em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin:1.3em 0 .3em}
+blockquote{margin:1em 0;padding:.4em 1em;border-left:4px solid var(--acc);font-size:1.12rem}
+blockquote p{margin:.3em 0}
+code{font:inherit;background:var(--card);padding:1px 5px;border-radius:4px}
+a{color:var(--acc)}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:1.2em 0}
+.cap{font-size:.9rem;color:var(--mut);margin:.6em 0 0}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:flex-end}
+.cw{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ix{font-size:.8rem;color:var(--mut);min-height:1.1em;font-weight:600}
+.cell{min-width:40px;padding:7px 6px;text-align:center;border:2px solid var(--line);background:var(--bg);border-radius:6px;font-weight:600;transition:background .2s}
+.gap{border-style:dashed;background:transparent}
+.ok{background:var(--ok);border-color:var(--okb)}
+.now{background:var(--hi);border-color:var(--hib)}
+.dim{background:var(--dim);color:var(--mut);border-color:var(--dim)}
+.mv{background:var(--mv);border-color:var(--acc)}
+.mx{display:grid;gap:3px;margin:8px 0}
+.mh{font-size:.8rem;color:var(--mut);text-align:center;align-self:center}
+.mx .cell{min-width:0;padding:3px 0;font-size:.8rem}
+button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
+button:hover:not(:disabled){background:var(--mv)}
+button:disabled{opacity:.4;cursor:default}
+button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--hib);outline-offset:2px}
+.tools{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5;display:flex;gap:8px}
+.ctl{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.pos{color:var(--mut);font-size:.9rem}
+.note{min-height:3em;margin:.4em 0 0;font-weight:500}
+.lbl{font-size:.9rem;margin:8px 0 3px}
+.bar{height:14px;border-radius:4px;background:var(--acc);min-width:3px}
+.bar.g{background:var(--okb)}.bar.r{background:var(--red)}
+input[type=range]{width:100%}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--dim)}
+details{margin:.6em 0 .9em;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+summary{cursor:pointer;padding:8px 12px;font-size:.95rem;color:var(--acc)}
+pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,Menlo,Consolas,monospace}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.two{grid-template-columns:1fr}}
+.flow{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;font-size:.95rem}
+.flow .cell{min-width:140px}
+.zones{display:flex;border:2px solid var(--line);border-radius:6px;overflow:hidden;text-align:center;font-size:.85rem}
+.zones div{padding:10px 6px}
+.flag{font-size:.9rem;color:var(--mut)}
+.tt td:first-child{font-weight:600}
+.tt td{text-align:left}
+p{margin:.7em 0}
+ul,ol{margin:.7em 0}
+li{margin:.15em 0}
+.dg{margin:.4em 0 .9em;padding:.1em 0 .1em 14px;border-left:3px solid var(--line);overflow-x:auto}
+.dg pre{padding:0;font-size:.88rem;line-height:1.45}
+.st{display:flex;gap:5px;flex-wrap:wrap;align-items:flex-end;margin:.4em 0 .9em}
+.st .cell{min-width:38px;padding:3px 10px}
+.st .ix{min-height:0}
+.st-n{display:flex;flex-direction:column;gap:2px;margin:.4em 0 .9em;font-size:.9rem;color:var(--mut)}
+.vb{display:flex;gap:6px;align-items:flex-end;margin:6px 0}
+.vc{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:26px;max-width:60px;justify-content:flex-end}
+.vbar{width:100%;border:2px solid var(--line);background:var(--bg);border-radius:4px 4px 0 0;transition:height .2s,background .2s}
+</style>
+</head>
+<body>
+<div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
+<main>
+<h1>When Prefix Sums Grow Into Two Dimensions</h1>
+<blockquote><p>The problem hasn’t changed. Only the shape of the data has.</p></blockquote>
+<p>We’ve spent a long time with one-dimensional arrays, and prefix sums taught us to remember everything accumulated up to a point. That helped us answer range queries, discover unknown subarrays, reason about divisibility, optimize inequalities and process repeated range updates. But now imagine the data isn’t arranged in a line. Imagine it’s a <strong>grid</strong>, and a query asks for the sum of a rectangle. The first instinct is to walk through every cell in the rectangle and add them, which works until we have many queries. Then the same question appears: can we remember cumulative work so we don’t repeatedly add the same cells? That leads to the <strong>2D prefix sum</strong>. Each idea below has something to step through or drag, and the code can be hidden with the button at the top.</p>
+<ol>
+<li><a href="#s1">The problem becomes two-dimensional</a></li>
+<li><a href="#s2">First attempt: row prefix sums</a></li>
+<li><a href="#s3">The idea of a 2D prefix</a></li>
+<li><a href="#s4">Building it: inclusion and exclusion</a></li>
+<li><a href="#s5">Rectangle sums are just cancellation</a></li>
+<li><a href="#s6">Inclusion-exclusion is the real idea</a></li>
+<li><a href="#s7">Range Sum Query 2D, Immutable</a></li>
+<li><a href="#s8">Matrix Block Sum</a></li>
+<li><a href="#s9">Number of Submatrices That Sum to Target</a></li>
+<li><a href="#s10">The unifying principle of the series</a></li>
+</ol>
+
+<h2 id="s1">1. The problem becomes two-dimensional</h2>
+<p>Take the matrix <code>[[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]]</code>. What is the sum of the rectangle from row <code>1</code> to <code>2</code> and column <code>1</code> to <code>3</code>? That rectangle is <code>6 7 8 / 10 11 12</code>, with sum <code>6 + 7 + 8 + 10 + 11 + 12 = 54</code>.</p>
+<h3>The naive way</h3>
+<p>Scan every cell in the rectangle. For one query that’s fine. With thousands of queries, each one can inspect a large part of the matrix, and we’re back where 1D range sums started: repeated work, so can we remember previous work?</p>
+
+<h2 id="s2">2. First attempt: row prefix sums</h2>
+<p>A natural idea is to reuse what we know and build a prefix sum for every row. The rows <code>1 2 3 4 / 5 6 7 8 / 9 10 11 12</code> become <code>1 3 6 10 / 5 11 18 26 / 9 19 30 42</code>. A horizontal range is now cheap: row 2, columns 1 to 3 is <code>42 − 9 = 33</code>. But a rectangle spanning many rows still needs one subtraction <em>per row</em>. We’ve improved one dimension, but not both.</p>
+<div class="fig" id="rows"></div>
+<p>So we ask: can we accumulate vertically as well?</p>
+
+<h2 id="s3">3. The idea of a 2D prefix</h2>
+<p>In one dimension <code>prefix[i]</code> meant everything from the beginning up to <code>i</code>. In two dimensions let <code>prefix[r][c]</code> mean <strong>the sum of every cell in the rectangle from the top-left corner to <code>(r, c)</code></strong>. For our matrix the table of these values is</p>
+<div class="fig" id="t3"></div>
+<p>For example the value at row 1, column 2 is <code>1 + 2 + 3 + 5 + 6 + 7 = 24</code>, and the bottom-right value <code>78</code> is the sum of the whole matrix. That is the same idea as before, remember everything accumulated up to this point, except “up to this point” now means <em>up and left</em>.</p>
+
+<h2 id="s4">4. Building it: inclusion and exclusion</h2>
+<p>To compute the prefix value at a cell, combine <strong>everything above</strong> (that prefix rectangle), <strong>everything to the left</strong> (that prefix rectangle) and the <strong>current cell</strong>. But the top-left region is inside both of those rectangles, so it has been counted twice. Remove it once:</p>
+<blockquote><p>prefix[r][c] = cell + above + left − overlap. Count the useful areas, then remove the area we counted twice.</p></blockquote>
+<p>That isn’t a strange rule. It’s geometry. Watch it happen. In the prefix table, green is “above,” blue is “left,” grey is the overlap, and yellow is the cell being computed.</p>
+<div class="fig" id="bld"></div>
+<h3>The easiest way to avoid boundary problems</h3>
+<p>What about the very first cell? There is no <code>prefix[-1][0]</code>. We could write special cases, but we’ve seen a better idea, the <strong>leading zero</strong>. Make the prefix table <code>(rows + 1) × (columns + 1)</code> with a zero row on top and a zero column on the left. The border says <em>there is no area beyond the edge</em>, just as the 1D leading zero said the empty prefix sums to zero. The padded table for our matrix is</p>
+<div class="fig" id="t4"></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>def build_prefix(matrix):
+    rows = len(matrix)
+    cols = len(matrix[0])
+
+    prefix = [[0] * (cols + 1) for _ in range(rows + 1)]
+
+    for r in range(rows):
+        for c in range(cols):
+            prefix[r + 1][c + 1] = (
+                matrix[r][c]
+                + prefix[r][c + 1]
+                + prefix[r + 1][c]
+                - prefix[r][c]
+            )
+
+    return prefix</pre></details>
+<p>No <code>if r == 0</code>, no <code>if c == 0</code>, no special corners. The zero border absorbed all those cases, just as dummy nodes eliminated special cases in linked lists: a carefully chosen artificial boundary removes special cases. A good sanity check is that the bottom-right cell must equal the sum of the whole matrix, here <code>1 + … + 12 = 78</code>.</p>
+
+<h2 id="s5">5. Rectangle sums are just cancellation</h2>
+<p>Now the payoff. Suppose we want a target rectangle. We have a large prefix rectangle from the top-left corner that contains the target but also an unwanted <strong>top strip</strong> and an unwanted <strong>left strip</strong>. So take the large prefix, remove the top, remove the left, and notice that the top-left corner got removed twice, so add it back once. This is the 1D cancellation idea, with two unwanted directions.</p>
+<p>For a zero-based rectangle from <code>(r1, c1)</code> to <code>(r2, c2)</code> in the padded table:</p>
+<blockquote><p>prefix[r2 + 1][c2 + 1] − prefix[r1][c2 + 1] − prefix[r2 + 1][c1] + prefix[r1][c1]</p></blockquote>
+<p>Don’t memorize it. Pick any rectangle below and watch the four corners. Green is added, blue is subtracted, grey is added back. The default is our example, rows 1 to 2 and columns 1 to 3: <code>78 − 10 − 15 + 1 = 54</code>.</p>
+<div class="fig" id="rq"></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>def range_sum(prefix, r1, c1, r2, c2):
+    return (
+        prefix[r2 + 1][c2 + 1]
+        - prefix[r1][c2 + 1]
+        - prefix[r2 + 1][c1]
+        + prefix[r1][c1]
+    )
+
+# range_sum(prefix, 1, 1, 2, 3) == 54</pre></details>
+<p>The size of the rectangle no longer matters. A rectangle of 2 cells and a rectangle of 2,000,000 cells both take <code>O(1)</code>. The expensive work happened during preprocessing.</p>
+<h3>Complexity, and why not just scan?</h3>
+<p>Building the table costs <code>O(R × C)</code> time and space. Each query is <code>O(1)</code>, so <code>Q</code> queries cost <code>O(RC + Q)</code> in total. In a <code>1,000 × 1,000</code> matrix with <code>100,000</code> queries, one query might touch hundreds of thousands of cells, which is billions of additions. The table says: I’ve already accumulated this, don’t make me walk through those cells again. Slide the numbers.</p>
+<div class="fig" id="cmp"></div>
+<div class="fig scroll"><table class="tt"><tr><th></th><th>Scan every rectangle</th><th>Row prefix sums</th><th>2D prefix sum</th></tr><tr><td>Preprocessing</td><td>None</td><td><code>O(RC)</code></td><td><code>O(RC)</code></td></tr><tr><td>Per query</td><td><code>O(area)</code></td><td><code>O(rows in rectangle)</code></td><td><code>O(1)</code></td></tr><tr><td>Extra space</td><td><code>O(1)</code></td><td><code>O(RC)</code></td><td><code>O(RC)</code></td></tr></table></div>
+
+<h2 id="s6">6. Inclusion-exclusion is the real idea</h2>
+<p>Remember the 1D formula. For <code>[3, 1, 4, 2, 5]</code> we built <code>[0, 3, 4, 8, 10, 15]</code>, and <code>sum(1..3) = prefix[4] − prefix[1]</code> because <em>everything up to 3 minus everything before 1 is what remains</em>. In two dimensions it is <em>large rectangle − top strip − left strip + overlap</em>. So 2D prefix sums aren’t a new concept. They are the same cancellation principle extended to another dimension, and the formula is an instance of <strong>inclusion-exclusion</strong>: we counted the target along with unwanted areas, removed the unwanted areas, and added back what was removed twice. The same reasoning appears in sets, geometry, probability and grids. The geometric intuition is more valuable than four memorized indices.</p>
+
+<h2 id="s7">7. Range Sum Query 2D, Immutable</h2>
+<p>We receive a matrix and then many <code>sumRegion(row1, col1, row2, col2)</code> queries. The word <strong>immutable</strong> matters: the matrix doesn’t change, which makes preprocessing especially attractive. Build the prefix once, answer every query in <code>O(1)</code>.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>class NumMatrix:
+
+    def __init__(self, matrix):
+        rows = len(matrix)
+        cols = len(matrix[0])
+
+        self.prefix = [[0] * (cols + 1) for _ in range(rows + 1)]
+
+        for r in range(rows):
+            for c in range(cols):
+                self.prefix[r + 1][c + 1] = (
+                    matrix[r][c]
+                    + self.prefix[r][c + 1]
+                    + self.prefix[r + 1][c]
+                    - self.prefix[r][c]
+                )
+
+    def sumRegion(self, row1, col1, row2, col2):
+        return (
+            self.prefix[row2 + 1][col2 + 1]
+            - self.prefix[row1][col2 + 1]
+            - self.prefix[row2 + 1][col1]
+            + self.prefix[row1][col1]
+        )</pre></details>
+
+<h2 id="s8">8. Matrix Block Sum</h2>
+<p>For every cell, compute the sum of all cells within distance <code>K</code>. With <code>K = 1</code> that is the 3×3 block around the cell, clipped at the edges. Scanning every neighbourhood directly repeats work on heavily overlapping regions. With a 2D prefix matrix each cell becomes: find the rectangle, read four prefix values, done in <code>O(1)</code>. Choose a cell and a <code>K</code>.</p>
+<div class="fig" id="blk"></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>def matrix_block_sum(mat, k):
+    m, n = len(mat), len(mat[0])
+    prefix = [[0] * (n + 1) for _ in range(m + 1)]
+    for r in range(m):
+        for c in range(n):
+            prefix[r + 1][c + 1] = (mat[r][c] + prefix[r][c + 1]
+                                    + prefix[r + 1][c] - prefix[r][c])
+
+    answer = [[0] * n for _ in range(m)]
+    for i in range(m):
+        for j in range(n):
+            r1, c1 = max(0, i - k), max(0, j - k)
+            r2, c2 = min(m - 1, i + k), min(n - 1, j + k)
+            answer[i][j] = (prefix[r2 + 1][c2 + 1] - prefix[r1][c2 + 1]
+                            - prefix[r2 + 1][c1] + prefix[r1][c1])
+    return answer</pre></details>
+<p>The same expensive operation was being repeated for many overlapping regions, which is exactly when preprocessing wins.</p>
+
+<h2 id="s9">9. Number of Submatrices That Sum to Target</h2>
+<p>Now we can combine ideas. Count how many submatrices have sum exactly <code>target</code>. It looks completely two-dimensional, but we can compress one dimension.</p>
+<h3>The naive way</h3>
+<p>Try every pair of corners, which is <code>O(R²C²)</code> rectangles, each answered in <code>O(1)</code> with the 2D prefix. Better, but we can do better still.</p>
+<h3>Compress a rectangle into a 1D problem</h3>
+<p>Fix a <code>top</code> row and a <code>bottom</code> row. For every column, add up the cells between them. With <code>top = 1</code> and <code>bottom = 2</code> in our matrix each column becomes <code>5 + 9 = 14</code>, <code>6 + 10 = 16</code>, <code>7 + 11 = 18</code>, <code>8 + 12 = 20</code>, giving <code>[14, 16, 18, 20]</code>. A subarray of this compressed array is exactly a rectangle in the original matrix. Drag the boundaries. Columns 1 to 2 give <code>16 + 18 = 34</code>, which is the rectangle <code>6 7 / 10 11</code>.</p>
+<div class="fig" id="cp"></div>
+<blockquote><p>A rectangle becomes a subarray once its vertical boundaries are fixed. Fix some dimensions, compress the rest, and solve the simpler problem.</p></blockquote>
+<h3>Combine it with the hashmap idea</h3>
+<p>Now we want the number of subarrays of the compressed array with sum <code>target</code>, which we already solved with <strong>prefix sum + hashmap</strong>. So the problem evolves: 2D matrix, choose top and bottom rows, compress between them, 1D subarray-sum problem, prefix sum + hashmap. No new “submatrix pattern” is needed. Step through every pair of rows.</p>
+<div class="fig" id="sub"></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>def num_submatrix_sum_target(matrix, target):
+    rows, cols = len(matrix), len(matrix[0])
+    total = 0
+
+    for top in range(rows):
+        col_sum = [0] * cols
+
+        for bottom in range(top, rows):
+            for c in range(cols):
+                col_sum[c] += matrix[bottom][c]
+
+            # count subarrays of col_sum with sum == target
+            seen = {0: 1}
+            prefix = 0
+            for x in col_sum:
+                prefix += x
+                total += seen.get(prefix - target, 0)
+                seen[prefix] = seen.get(prefix, 0) + 1
+
+    return total</pre></details>
+<div class="fig scroll"><table class="tt"><tr><th></th><th>All rectangles with 2D prefix</th><th>Compress + hashmap</th></tr><tr><td>Time</td><td><code>O(R²C²)</code></td><td><code>O(R²C)</code></td></tr><tr><td>Extra space</td><td><code>O(RC)</code></td><td><code>O(C)</code></td></tr><tr><td>Reasoning</td><td>Checks each rectangle directly</td><td>Reduces to a problem we’ve already solved</td></tr></table></div>
+<p>Notice how many ideas interact: prefix sum is cumulative information, 2D prefix is cumulative information in two dimensions, the hashmap remembers useful previous states, and compression turns a higher-dimensional problem into a lower-dimensional one. Algorithms feel hard when learned as isolated patterns, but when each idea is understood independently, they compose.</p>
+<h3>The tradeoff in 2D</h3>
+<p>The 2D prefix matrix costs <code>O(RC)</code> extra memory. We could avoid it, but arbitrary rectangle queries would become more expensive. It is the same tradeoff as always: more memory to store cumulative information, in exchange for much faster queries.</p>
+
+<h2 id="s10">10. The unifying principle of the series</h2>
+<p>We began with something almost trivial, “I don’t want to repeatedly add the same numbers,” and that observation grew into several ideas. Here is the whole journey.</p>
+<div class="fig" id="fl"></div>
+<div class="fig scroll"><table class="tt"><tr><th>When you see…</th><th>Ask…</th></tr>
+<tr><td>Repeated calculation</td><td>Can I preprocess it?</td></tr>
+<tr><td>Overlapping ranges</td><td>Can cumulative information make the overlaps cancel?</td></tr>
+<tr><td>An unknown range</td><td>Can I express it as a difference between two cumulative states?</td></tr>
+<tr><td>An equality condition</td><td>Would a hashmap of previous states help?</td></tr>
+<tr><td>An inequality plus optimization</td><td>Can useful states be ordered or dominated?</td></tr>
+<tr><td>Many range updates</td><td>Can each update be represented by its boundaries?</td></tr>
+<tr><td>Two-dimensional data</td><td>Can cumulative information be extended along both axes?</td></tr></table></div>
+<p>Prefix sums were never really about sums. They were about <strong>precomputation and accumulated state</strong>. The representation changes with the question (prefix sum, prefix sum + hashmap, prefix remainder, monotonic deque, difference array, 2D prefix matrix), but the reasoning doesn’t. A prefix sum turns a long history into a single piece of information, “everything that has happened before here,” and once we have that, two prefixes can be compared to discover what happened <strong>between</strong> them.</p>
+<div class="fig" id="formW"></div>
+<blockquote><p>Store the past in a form that makes the future cheap to calculate. And when the problem changes, ask what summary of the past would make the new question cheap.</p></blockquote>
+<h3>Where we go next</h3>
+<p>We’ve reached the end of the planned Prefix Sum progression. The next topic is <strong>Binary Search</strong>, and as always we won’t begin with the template. We’ll begin with the problem that makes it necessary: what happens when the search space is too large to inspect one possibility at a time, but the answers have some structure we can exploit?</p>
+</main>
+
+<script>
+/* ===== SHARED HELPERS: do not change ===== */
+var $=function(i){return document.getElementById(i)};
+var L=function(v){return v.toLocaleString('en-US')};
+var num=function(x,y){return x-y};
+function isSorted(a){for(var i=1;i<a.length;i++)if(a[i-1]>a[i])return false;return true}
+
+/* cells(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label above'}, noix:true}) -> row of cells */
+function cells(a,o){o=o||{};var c=o.c||{};return '<div class="row">'+a.map(function(v,i){var g=v===''||v===null;return '<div class="cw"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="cell'+(g?' gap':'')+' '+(c[i]||'')+'">'+(g?'&nbsp;':v)+'</div><span class="ix">'+(o.noix?'':i)+'</span></div>'}).join('')+'</div>'}
+
+/* widget(id, presets, build): Previous/Next stepper.
+   presets = [[buttonLabel, params], ...]; build(params) returns [{h:htmlString, n:noteText}, ...] */
+function widget(id,opts,build){
+  var el=$(id),i=0,st=[];
+  el.innerHTML=(opts.length>1?'<div class="row" style="align-items:center">'+opts.map(function(o,k){return '<button data-k="'+k+'">'+o[0]+'</button>'}).join('')+'</div>':'')+'<div class="scroll v"></div><p class="note" aria-live="polite"></p><div class="ctl"><button class="pv">Previous</button><span class="pos"></span><button class="nx">Next</button><button class="pl">Play</button></div>';
+  var v=el.querySelector('.v'),n=el.querySelector('.note'),p=el.querySelector('.pos'),pv=el.querySelector('.pv'),nx=el.querySelector('.nx'),pl=el.querySelector('.pl'),tm=null;
+  function stop(){if(tm){clearInterval(tm);tm=null}pl.textContent='Play'}
+  function r(){v.innerHTML=st[i].h;n.textContent=st[i].n;p.textContent='Step '+(i+1)+' of '+st.length;pv.disabled=i===0;nx.disabled=i===st.length-1}
+  function pick(k){stop();st=build(opts[k][1]);i=0;[].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.k===k))});r()}
+  [].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.onclick=function(){pick(+b.dataset.k)}});
+  pv.onclick=function(){stop();if(i>0){i--;r()}};nx.onclick=function(){stop();if(i<st.length-1){i++;r()}};
+  pl.onclick=function(){if(tm){stop();return}if(i>=st.length-1){i=0;r()}pl.textContent='Pause';tm=setInterval(function(){if(i<st.length-1){i++;r()}else stop()},1100)};
+  pick(0);
+}
+
+/* tabs(id, labels, fn): tab buttons; fn(k) returns html for tab k */
+function tabs(id,labels,fn){var el=$(id);el.innerHTML='<div class="row" style="align-items:center"></div><div class="tv"></div>';var bar=el.firstChild,tv=el.lastChild;
+  labels.forEach(function(t,k){var b=document.createElement('button');b.textContent=t;b.onclick=function(){[].forEach.call(bar.children,function(x){x.setAttribute('aria-pressed',String(x===b))});tv.innerHTML=fn(k)};b.setAttribute('aria-pressed',String(k===0));bar.appendChild(b)});tv.innerHTML=fn(0)}
+
+/* growth(id, ns, bruteFn, betterFn, header1, header2): log-scale comparison table */
+function growth(id,ns,bf,tp,h1,h2){$(id).innerHTML='<table><tr><th>n</th><th>'+h1+'</th><th>'+h2+'</th></tr>'+ns.map(function(n){var b=bf(n),t=tp(n);return '<tr><td>'+L(n)+'</td><td>'+L(b)+'<div class="bar r" style="width:'+Math.max(1,Math.log10(b)/12*100)+'%;margin-left:auto"></div></td><td>'+L(t)+'<div class="bar g" style="width:'+Math.max(1,Math.log10(t)/12*100)+'%;margin-left:auto"></div></td></tr>'}).join('')+'</table><p class="cap">Bars use a log scale, otherwise the second column would be invisible.</p>'}
+
+/* flow(['step','step',...]) -> vertical arrow flow */
+function flow(a){return '<div class="flow">'+a.map(function(x){return '<div class="cell">'+x+'</div>'}).join('<span>↓</span>')+'</div>'}
+
+/* grid(matrix, {c:function(r,c){return 'ok|now|dim|mv'}, rh:[row headers], ch:[col headers]}) -> 2D table of cells (DP tables, grids, matrices) */
+function grid(m,o){o=o||{};var w=m[0].length,ch=o.ch,rh=o.rh;
+  var h='<div class="mx" style="grid-template-columns:'+(rh?'auto ':'')+'repeat('+w+',minmax(0,1fr))">';
+  if(ch){h+=(rh?'<span></span>':'')+ch.map(function(x){return '<span class="mh">'+x+'</span>'}).join('')}
+  m.forEach(function(r,i){if(rh)h+='<span class="mh">'+rh[i]+'</span>';r.forEach(function(v,j){h+='<div class="cell '+((o.c&&o.c(i,j))||'')+'">'+v+'</div>'})});
+  return h+'</div>'}
+
+/* vbars(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label'}}) -> vertical bar chart of an array (sorting, partitioning, heights) */
+function vbars(a,o){o=o||{};var c=o.c||{},mx=Math.max.apply(null,a.map(Math.abs))||1;
+  return '<div class="vb">'+a.map(function(v,i){return '<div class="vc"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="vbar '+(c[i]||'')+'" style="height:'+Math.max(4,Math.round(Math.abs(v)/mx*110))+'px"></div><span class="ix">'+v+'</span></div>'}).join('')+'</div>'}
+
+/* driver(id, cfg): "you drive the algorithm". The reader picks the move; wrong moves get a teaching message.
+   cfg = {
+     presets:[[label,param],...],
+     init:function(param){return state},
+     view:function(state,done){return html},
+     done:function(state){return bool},
+     prompt:function(state,done){return 'What should we do?'},
+     choices:[['A','button text'],['B','button text'],...],
+     expected:function(state){return 'A'},               // the correct choice id
+     apply:function(state,choiceId){ return 'Right. why it worked'},   // mutate state here
+     hint:function(state){return 'general hint'},
+     wrong:function(state,choiceId){return 'specific message for a tempting wrong choice, or undefined'}
+   } */
+function driver(id,cfg){
+  var el=$(id),k=0,s,msg='';
+  function init(){s=cfg.init(cfg.presets[k][1]);msg='';draw()}
+  function draw(){var done=cfg.done(s);
+    el.innerHTML='<div class="row" style="align-items:center">'+cfg.presets.map(function(p,j){return '<button data-p="'+j+'" aria-pressed="'+(j===k)+'">'+p[0]+'</button>'}).join('')+'</div><div class="scroll">'+cfg.view(s,done)+'</div><p class="note" aria-live="polite"><strong>'+cfg.prompt(s,done)+'</strong></p><div class="ctl">'+cfg.choices.map(function(c){return '<button data-c="'+c[0]+'"'+(done?' disabled':'')+'>'+c[1]+'</button>'}).join('')+'</div><p class="note" aria-live="polite">'+msg+'</p>';
+    [].forEach.call(el.querySelectorAll('button[data-p]'),function(b){b.onclick=function(){k=+b.dataset.p;init()}});
+    [].forEach.call(el.querySelectorAll('button[data-c]'),function(b){b.onclick=function(){choose(b.dataset.c)}})}
+  function choose(c){if(c!==cfg.expected(s)){msg=(cfg.wrong&&cfg.wrong(s,c))||('Not quite. '+cfg.hint(s));draw();return}
+    msg=cfg.apply(s,c)||'Right.';draw()}
+  init()}
+
+/* slider(id, {min,max,value,label,render:function(v){return html}}) -> "drag to see how the cost grows" figure */
+function slider(id,o){var el=$(id);el.innerHTML='<label for="'+id+'S">'+o.label+' = <strong class="so"></strong></label><input id="'+id+'S" type="range" min="'+o.min+'" max="'+o.max+'" value="'+o.value+'"><div class="sv"></div>';
+  var inp=el.querySelector('input'),out=el.querySelector('.so'),sv=el.querySelector('.sv');
+  function u(){out.textContent=inp.value;sv.innerHTML=o.render(+inp.value)}inp.oninput=u;u()}
+
+/* ===== PAGE-SPECIFIC ===== */
+/*P2*/
+var M0=[[1,2,3,4],[5,6,7,8],[9,10,11,12]];
+function pad(M){var R=M.length,C=M[0].length,P=[],r,c;for(r=0;r<=R;r++){P.push([]);for(c=0;c<=C;c++)P[r].push(0)}for(r=0;r<R;r++)for(c=0;c<C;c++)P[r+1][c+1]=M[r][c]+P[r][c+1]+P[r+1][c]-P[r][c];return P}
+function subSteps(p){var M=p.M,t=p.t,R=M.length,C=M[0].length,s=[],total=0,top,bot,c,l,r;
+ for(top=0;top<R;top++){var cs=[];for(c=0;c<C;c++)cs.push(0);
+  for(bot=top;bot<R;bot++){for(c=0;c<C;c++)cs[c]+=M[bot][c];
+   var seen={0:1},pre=0,cnt=0;cs.forEach(function(x){pre+=x;cnt+=seen[pre-t]||0;seen[pre]=(seen[pre]||0)+1});
+   var lst=[];for(l=0;l<C;l++){var sm=0;for(r=l;r<C;r++){sm+=cs[r];if(sm===t)lst.push(l===r?'column '+l:'columns '+l+'–'+r)}}
+   total+=cnt;
+   s.push({h:grid(M,function(a,b){return a>=top&&a<=bot?'ok':''})+'<p class="cap">compressed (rows '+top+' to '+bot+')</p>'+cells(cs.slice(),{noix:true})+'<p>Subarrays with sum '+t+': <strong>'+cnt+'</strong>'+(lst.length?' ('+lst.join(', ')+')':'')+'. Running total = <strong>'+total+'</strong>.</p>',n:'Rows '+top+' to '+bot+' compressed into a 1D array, then prefix sum + hashmap counts the subarrays with sum '+t+'.'})}}
+ s.push({h:grid(M,function(){return ''})+'<p>Total submatrices with sum '+t+': <strong>'+total+'</strong>.</p>',n:'Done. Every rectangle was counted exactly once.'});s.total=total;return s}
+function grid(M,fn){return M.map(function(row,r){var c={};row.forEach(function(_,j){var k=fn?fn(r,j):'';if(k)c[j]=k});return cells(row,{c:c,noix:true})}).join('')}
+/*ENDP2*/
+$('t3').innerHTML=grid([[1,3,6,10],[6,14,24,36],[15,33,54,78]],function(r,c){return r===1&&c===2?'now':''})+'<p class="cap">The highlighted cell is the sum of the 2 × 3 rectangle from the top-left corner: 1 + 2 + 3 + 5 + 6 + 7 = 24.</p>';
+$('t4').innerHTML=grid(pad(M0),function(r,c){return r===0||c===0?'dim':''})+'<p class="cap">The grey zero border means “no area beyond the edge.”</p>';
+slider('rows',{min:1,max:100,value:3,label:'Rectangle height (rows)',render:function(h){return '<div class="lbl">Row prefix sums: <strong>'+h+'</strong> subtractions (one per row)</div><div class="bar r" style="width:'+h+'%"></div><div class="lbl">2D prefix sum: <strong>4</strong> lookups, always</div><div class="bar g" style="width:4%"></div>'}});
+widget('bld',[['3 × 4 matrix',M0],['3 × 3 matrix',[[1,2,3],[4,5,6],[7,8,9]]]],function(M){var R=M.length,C=M[0].length,P=pad(M),s=[],r,c;
+ function Q(done){var o=[],i,j;for(i=0;i<=R;i++){o.push([]);for(j=0;j<=C;j++)o[i].push(i===0||j===0||(i-1)*C+(j-1)<done?P[i][j]:'_')}return o}
+ s.push({h:'<p class="cap">matrix</p>'+grid(M,null)+'<p class="cap">padded prefix table</p>'+grid(Q(0),function(i,j){return i===0||j===0?'dim':''}),n:'Start with a zero border. Now every real cell has something above it and something to its left.'});
+ for(r=0;r<R;r++)for(c=0;c<C;c++){var k=r*C+c,cl=function(i,j){if(i===r+1&&j===c+1)return 'now';if(i===r&&j===c+1)return 'ok';if(i===r+1&&j===c)return 'mv';if(i===r&&j===c)return 'dim';return ''};
+  s.push({h:'<p class="cap">matrix</p>'+grid(M,function(i,j){return i===r&&j===c?'now':((i*C+j<k)?'ok':'')})+'<p class="cap">padded prefix table</p>'+grid(Q(k+1),cl)+'<p>prefix['+(r+1)+']['+(c+1)+'] = cell '+M[r][c]+' + above '+P[r][c+1]+' + left '+P[r+1][c]+' − overlap '+P[r][c]+' = <strong>'+P[r+1][c+1]+'</strong></p>',n:'Green + blue count the overlap twice, so subtract the grey overlap once.'})}
+ return s});
+var q1=1,q2=1,q3=2,q4=3;
+function rqDraw(){var el=$('rq'),P=pad(M0),inside=function(r,c){return r>=q1&&r<=q3&&c>=q2&&c<=q4?'ok':''},cl=function(i,j){if(i===q3+1&&j===q4+1)return 'ok';if((i===q1&&j===q4+1)||(i===q3+1&&j===q2))return 'mv';if(i===q1&&j===q2)return 'dim';return ''},d=0,r,c;
+ for(r=q1;r<=q3;r++)for(c=q2;c<=q4;c++)d+=M0[r][c];
+ var A=P[q3+1][q4+1],B=P[q1][q4+1],C2=P[q3+1][q2],D=P[q1][q2];
+ el.innerHTML='<label for="rA">row1 = <strong>'+q1+'</strong></label><input id="rA" type="range" min="0" max="2" value="'+q1+'"><label for="rB">col1 = <strong>'+q2+'</strong></label><input id="rB" type="range" min="0" max="3" value="'+q2+'"><label for="rC">row2 = <strong>'+q3+'</strong></label><input id="rC" type="range" min="0" max="2" value="'+q3+'"><label for="rD">col2 = <strong>'+q4+'</strong></label><input id="rD" type="range" min="0" max="3" value="'+q4+'">'
+ +'<p class="cap">matrix</p>'+grid(M0,inside)+'<p class="cap">padded prefix table</p>'+grid(P,cl)
+ +'<p>prefix['+(q3+1)+']['+(q4+1)+'] − prefix['+q1+']['+(q4+1)+'] − prefix['+(q3+1)+']['+q2+'] + prefix['+q1+']['+q2+'] = '+A+' − '+B+' − '+C2+' + '+D+' = <strong>'+(A-B-C2+D)+'</strong></p><p class="note">Adding the cells one by one gives '+d+'. Same answer, but the prefix table used only four lookups.</p>';
+ $('rA').oninput=function(){q1=+this.value;if(q3<q1)q3=q1;rqDraw();$('rA').focus()};$('rC').oninput=function(){q3=+this.value;if(q1>q3)q1=q3;rqDraw();$('rC').focus()};$('rB').oninput=function(){q2=+this.value;if(q4<q2)q4=q2;rqDraw();$('rB').focus()};$('rD').oninput=function(){q4=+this.value;if(q2>q4)q2=q4;rqDraw();$('rD').focus()}}
+rqDraw();
+var ce=2,cq=4,cpct=10;
+function cmpDraw(){var n=Math.pow(10,ce),q=Math.pow(10,cq),sd=Math.max(1,Math.round(n*cpct/100)),area=sd*sd,dr=q*area,pf=n*n+4*q,mx=Math.max(dr,pf),el=$('cmp');
+ el.innerHTML='<label for="cE">Matrix size = <strong>'+L(n)+' × '+L(n)+'</strong></label><input id="cE" type="range" min="1" max="3" value="'+ce+'"><label for="cQ">Number of rectangle queries = <strong>'+L(q)+'</strong></label><input id="cQ" type="range" min="0" max="6" value="'+cq+'"><label for="cP">Rectangle side = <strong>'+cpct+'%</strong> of the matrix ('+L(area)+' cells)</label><input id="cP" type="range" min="1" max="100" value="'+cpct+'">'
+ +'<div class="lbl">Scanning: cells added <strong>'+L(dr)+'</strong></div><div class="bar r" style="width:'+Math.max(1,dr/mx*100)+'%"></div><div class="lbl">2D prefix: '+L(n*n)+' build steps + 4 × '+L(q)+' lookups = <strong>'+L(pf)+'</strong></div><div class="bar g" style="width:'+Math.max(1,pf/mx*100)+'%"></div>'
+ +'<p class="note">'+(pf<dr?'The 2D prefix does about '+L(Math.round(dr/pf))+'× less work. We paid once so we don’t pay repeatedly.':'Scanning is cheaper here. Too few queries to repay building the table.')+'</p>';
+ $('cE').oninput=function(){ce=+this.value;cmpDraw();$('cE').focus()};$('cQ').oninput=function(){cq=+this.value;cmpDraw();$('cQ').focus()};$('cP').oninput=function(){cpct=+this.value;cmpDraw();$('cP').focus()}}
+cmpDraw();
+var BM=[[1,2,3],[4,5,6],[7,8,9]],bi=1,bj=1,bk=1;
+function blkDraw(){var el=$('blk'),P=pad(BM),m=3,n=3,r1=Math.max(0,bi-bk),c1=Math.max(0,bj-bk),r2=Math.min(m-1,bi+bk),c2=Math.min(n-1,bj+bk),val=P[r2+1][c2+1]-P[r1][c2+1]-P[r2+1][c1]+P[r1][c1],i,j,out=[];
+ for(i=0;i<m;i++){out.push([]);for(j=0;j<n;j++){var a=Math.max(0,i-bk),b=Math.max(0,j-bk),c=Math.min(m-1,i+bk),d=Math.min(n-1,j+bk);out[i].push(P[c+1][d+1]-P[a][d+1]-P[c+1][b]+P[a][b])}}
+ el.innerHTML='<label for="bI">cell row = <strong>'+bi+'</strong></label><input id="bI" type="range" min="0" max="2" value="'+bi+'"><label for="bJ">cell column = <strong>'+bj+'</strong></label><input id="bJ" type="range" min="0" max="2" value="'+bj+'"><label for="bK">K = <strong>'+bk+'</strong></label><input id="bK" type="range" min="0" max="2" value="'+bk+'">'
+ +'<p class="cap">matrix: block around the chosen cell (clipped at the edges)</p>'+grid(BM,function(r,c){return r===bi&&c===bj?'now':(r>=r1&&r<=r2&&c>=c1&&c<=c2?'ok':'')})
+ +'<p>Rectangle rows '+r1+'–'+r2+', columns '+c1+'–'+c2+' → four prefix values → <strong>'+val+'</strong></p><p class="cap">block sum for every cell with this K</p>'+grid(out,function(r,c){return r===bi&&c===bj?'now':''});
+ $('bI').oninput=function(){bi=+this.value;blkDraw();$('bI').focus()};$('bJ').oninput=function(){bj=+this.value;blkDraw();$('bJ').focus()};$('bK').oninput=function(){bk=+this.value;blkDraw();$('bK').focus()}}
+blkDraw();
+var pt=1,pb=2,pl=1,pr=2;
+function cpDraw(){var el=$('cp'),cs=[],c,r,sm=0;for(c=0;c<4;c++){var x=0;for(r=pt;r<=pb;r++)x+=M0[r][c];cs.push(x)}for(c=pl;c<=pr;c++)sm+=cs[c];var cc={};for(c=pl;c<=pr;c++)cc[c]='ok';
+ el.innerHTML='<label for="pT">top row = <strong>'+pt+'</strong></label><input id="pT" type="range" min="0" max="2" value="'+pt+'"><label for="pB">bottom row = <strong>'+pb+'</strong></label><input id="pB" type="range" min="0" max="2" value="'+pb+'"><label for="pL">left column = <strong>'+pl+'</strong></label><input id="pL" type="range" min="0" max="3" value="'+pl+'"><label for="pR">right column = <strong>'+pr+'</strong></label><input id="pR" type="range" min="0" max="3" value="'+pr+'">'
+ +'<p class="cap">matrix (blue rows are fixed, green is the chosen rectangle)</p>'+grid(M0,function(r,c){return r>=pt&&r<=pb?(c>=pl&&c<=pr?'ok':'mv'):''})+'<p class="cap">compressed 1D array</p>'+cells(cs,{c:cc,noix:true})
+ +'<p>The subarray from column '+pl+' to '+pr+' of the compressed array sums to <strong>'+sm+'</strong>, which is exactly the sum of the highlighted rectangle.</p>';
+ $('pT').oninput=function(){pt=+this.value;if(pb<pt)pb=pt;cpDraw();$('pT').focus()};$('pB').oninput=function(){pb=+this.value;if(pt>pb)pt=pb;cpDraw();$('pB').focus()};$('pL').oninput=function(){pl=+this.value;if(pr<pl)pr=pl;cpDraw();$('pL').focus()};$('pR').oninput=function(){pr=+this.value;if(pl>pr)pl=pr;cpDraw();$('pR').focus()}}
+cpDraw();
+widget('sub',[['[[0,1,0],[1,1,1],[0,1,0]], target 0',{M:[[0,1,0],[1,1,1],[0,1,0]],t:0}],['[[1,-1],[-1,1]], target 0',{M:[[1,-1],[-1,1]],t:0}]],subSteps);
+$('fl').innerHTML=flow(['Repeated work','Prefix sum: remember cumulative work','Known ranges: O(1) queries. Unknown ranges: compare prefix states','Equality: hashmap. Divisibility: remainder map','Inequality + minimum: monotonic deque','Many range updates: boundaries and a difference array','Grid: 2D prefix and inclusion-exclusion','Compress dimensions: 2D to 1D to familiar techniques']);
+tabs('formW',['Repeated work','Compact summary','Compare','Reuse'],function(k){return '<p class="note">'+[
+ '<strong>Identify what is being recomputed.</strong> Every technique in the series started from repeated work.',
+ '<strong>Store a compact representation of it.</strong> A prefix sum, a prefix remainder, a deque, a difference array, a 2D prefix matrix.',
+ '<strong>Compare two summaries.</strong> What happened between two prefixes is their difference, or in 2D their inclusion-exclusion.',
+ '<strong>Reuse it.</strong> The data structure changes because the question changes. The reasoning does not.'][k]+'</p>'});
+
+/* ===== CODE TOGGLE AND THEME: do not change ===== */
+var cb=$('codeBtn'),hid=false;
+cb.onclick=function(){hid=!hid;[].forEach.call(document.querySelectorAll('details'),function(d){d.open=!hid});cb.textContent=hid?'Show code':'Hide code'};
+var root=document.documentElement,tb=$('theme');
+function setTheme(t){root.setAttribute('data-theme',t);tb.textContent=t==='dark'?'Light':'Dark'}
+try{var sv=localStorage.getItem('theme');if(sv==='dark'||sv==='light')setTheme(sv)}catch(e){}
+tb.onclick=function(){var t=root.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);try{localStorage.setItem('theme',t)}catch(e){}};
+</script>
+</body>
+</html>

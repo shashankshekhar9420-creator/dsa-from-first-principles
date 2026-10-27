@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Why Do We Need Prefix Sums?</title>
+<style>
+:root{--bg:#fff;--ink:#111;--mut:#555;--line:#ccc;--acc:#1f4e8c;--hi:#fff3b0;--hib:#c9a227;--ok:#dcf0dc;--okb:#3a8a3a;--mv:#e6edf7;--dim:#eee;--card:#fafafa;--red:#b5342b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#121212;--ink:#eee;--mut:#aaa;--line:#3a3a3a;--acc:#8ab4f8;--hi:#4a4220;--hib:#c9a227;--ok:#1d3a22;--okb:#5cb85c;--mv:#1c2a40;--dim:#2a2a2a;--card:#1a1a1a;--red:#ff7b72;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Roman",Times,serif}
+main{max-width:720px;margin:0 auto;padding:40px 20px 80px}
+h1,h2,h3{font-family:inherit;line-height:1.25}
+h1{font-size:2.1rem;margin:.2em 0 .6em}
+h2{font-size:1.5rem;margin:2.6em 0 .6em;padding-top:1.2em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin:1.3em 0 .3em}
+blockquote{margin:1em 0;padding:.4em 1em;border-left:4px solid var(--acc);font-size:1.12rem}
+blockquote p{margin:.3em 0}
+code{font:inherit;background:var(--card);padding:1px 5px;border-radius:4px}
+a{color:var(--acc)}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:1.2em 0}
+.cap{font-size:.9rem;color:var(--mut);margin:.6em 0 0}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:flex-end}
+.cw{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ix{font-size:.8rem;color:var(--mut);min-height:1.1em;font-weight:600}
+.cell{min-width:40px;padding:7px 6px;text-align:center;border:2px solid var(--line);background:var(--bg);border-radius:6px;font-weight:600;transition:background .2s}
+.gap{border-style:dashed;background:transparent}
+.ok{background:var(--ok);border-color:var(--okb)}
+.now{background:var(--hi);border-color:var(--hib)}
+.dim{background:var(--dim);color:var(--mut);border-color:var(--dim)}
+.mv{background:var(--mv);border-color:var(--acc)}
+.mx{display:grid;gap:3px;margin:8px 0}
+.mh{font-size:.8rem;color:var(--mut);text-align:center;align-self:center}
+.mx .cell{min-width:0;padding:3px 0;font-size:.8rem}
+button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
+button:hover:not(:disabled){background:var(--mv)}
+button:disabled{opacity:.4;cursor:default}
+button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--hib);outline-offset:2px}
+.tools{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5;display:flex;gap:8px}
+.ctl{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.pos{color:var(--mut);font-size:.9rem}
+.note{min-height:3em;margin:.4em 0 0;font-weight:500}
+.lbl{font-size:.9rem;margin:8px 0 3px}
+.bar{height:14px;border-radius:4px;background:var(--acc);min-width:3px}
+.bar.g{background:var(--okb)}.bar.r{background:var(--red)}
+input[type=range]{width:100%}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--dim)}
+details{margin:.6em 0 .9em;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+summary{cursor:pointer;padding:8px 12px;font-size:.95rem;color:var(--acc)}
+pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,Menlo,Consolas,monospace}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.two{grid-template-columns:1fr}}
+.flow{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;font-size:.95rem}
+.flow .cell{min-width:140px}
+.zones{display:flex;border:2px solid var(--line);border-radius:6px;overflow:hidden;text-align:center;font-size:.85rem}
+.zones div{padding:10px 6px}
+.flag{font-size:.9rem;color:var(--mut)}
+.tt td:first-child{font-weight:600}
+.tt td{text-align:left}
+p{margin:.7em 0}
+ul,ol{margin:.7em 0}
+li{margin:.15em 0}
+.dg{margin:.4em 0 .9em;padding:.1em 0 .1em 14px;border-left:3px solid var(--line);overflow-x:auto}
+.dg pre{padding:0;font-size:.88rem;line-height:1.45}
+.st{display:flex;gap:5px;flex-wrap:wrap;align-items:flex-end;margin:.4em 0 .9em}
+.st .cell{min-width:38px;padding:3px 10px}
+.st .ix{min-height:0}
+.st-n{display:flex;flex-direction:column;gap:2px;margin:.4em 0 .9em;font-size:.9rem;color:var(--mut)}
+.vb{display:flex;gap:6px;align-items:flex-end;margin:6px 0}
+.vc{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:26px;max-width:60px;justify-content:flex-end}
+.vbar{width:100%;border:2px solid var(--line);background:var(--bg);border-radius:4px 4px 0 0;transition:height .2s,background .2s}
+</style>
+</head>
+<body>
+<div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
+<main>
+<h1>Why Do We Need Prefix Sums?</h1>
+<blockquote><p>A prefix sum is not a trick to memorize. It is what naturally appears when we get tired of doing the same work again and again.</p></blockquote>
+<p>Each idea below has something to click, drag or step through, and the code can be hidden with the button at the top.</p>
+<ol>
+<li><a href="#s1">We have seen this problem before</a></li>
+<li><a href="#s2">How does remembering help?</a></li>
+<li><a href="#s3">The annoying edge case, and the leading zero</a></li>
+<li><a href="#s4">What did we actually trade?</a></li>
+<li><a href="#s5">Four problems, one idea</a></li>
+<li><a href="#s6">Prefix sum is not always an array</a></li>
+<li><a href="#s7">The deeper pattern</a></li>
+<li><a href="#s8">A useful way to recognize these problems</a></li>
+<li><a href="#s9">What we learned, and where this goes next</a></li>
+</ol>
+
+<h2 id="s1">1. We have seen this problem before</h2>
+<p>Take <code>[3, 1, 4, 2, 5, 6]</code>. What is the sum from index <code>1</code> to index <code>4</code>? Easy: <code>1 + 4 + 2 + 5 = 12</code>.</p>
+<h3>The naive way</h3>
+<details open><summary>Python code (click to hide or show)</summary><pre>def range_sum(arr, left, right):
+    total = 0
+
+    for i in range(left, right + 1):
+        total += arr[i]
+
+    return total</pre></details>
+<p>For one query there is nothing wrong with this. But suppose the problem asks <code>sum(1, 4)</code>, <code>sum(0, 3)</code>, <code>sum(2, 5)</code>, <code>sum(1, 5)</code>, <code>sum(0, 4)</code> and so on. Something feels suspicious. <code>sum(1, 4)</code> adds <code>1 + 4 + 2 + 5</code> and <code>sum(2, 5)</code> adds <code>4 + 2 + 5 + 6</code>. We calculated <code>4 + 2 + 5</code> once, then calculated it again. The problem isn’t addition. The problem is <strong>repeated work</strong>.</p>
+<h3>Can we remember our work?</h3>
+<p>This is one of the most useful questions in algorithm design: if I have already calculated something, can I store it so I don’t calculate it again? Let’s keep the cumulative sum as we move from left to right. Step through it.</p>
+<div class="fig" id="build"></div>
+<p class="cap">Yellow is the element being added, green the elements already absorbed. Each prefix value contains all the work done before it.</p>
+<p>That is our first prefix sum array. Nothing magical happened. We simply remembered the cumulative work we had already done.</p>
+
+<h2 id="s2">2. How does remembering help?</h2>
+<p>Say we want <code>sum(1, 4)</code> with <code>prefix = [3, 4, 8, 10, 15, 21]</code>. <code>prefix[4] = 15</code> contains <code>3 + 1 + 4 + 2 + 5</code>. We don’t want the <code>3</code>, and <code>prefix[0] = 3</code>. So <code>15 − 3 = 12</code>, which is exactly <code>1 + 4 + 2 + 5</code>. A potentially repeated calculation became a subtraction.</p>
+<blockquote><p>The real idea isn’t the formula. It is: store large overlapping sums once, then remove the part you don’t need.</p></blockquote>
+<p>Choose any range. The big prefix is green and the unwanted prefix is blue. Every range is <strong>big prefix − unwanted prefix</strong>.</p>
+<div class="fig" id="rm"></div>
+<h3>The formula emerges naturally</h3>
+<p>Define <code>P[i]</code> as the sum of elements <code>0..i</code>. Then <code>P[right]</code> is <code>arr[0] + … + arr[left−1] + arr[left] + … + arr[right]</code>, and <code>P[left−1]</code> is the first part. Subtract and what survives is <code>arr[left] + … + arr[right]</code>. So <code>sum(left, right) = P[right] − P[left−1]</code>. We didn’t memorize it. It is simply <strong>cancellation</strong>.</p>
+
+<h2 id="s3">3. The annoying edge case, and the leading zero</h2>
+<p>If <code>left = 0</code> we’d need <code>P[-1]</code>, which doesn’t represent what we want (drag the start to 0 above to see it). We could special-case it, but there is a cleaner idea: start the prefix array with <code>0</code>. Now <code>P[i]</code> means <strong>the sum of the first <code>i</code> elements</strong>, and the formula becomes uniform: <code>sum(left, right) = P[right + 1] − P[left]</code>.</p>
+<div class="fig" id="zero"></div>
+<blockquote><p>The extra zero isn’t mathematical magic. It represents the sum of zero elements. This indexing idea will return throughout DSA.</p></blockquote>
+<h3>Let’s build it</h3>
+<details open><summary>Python code (click to hide or show)</summary><pre>def build_prefix_sum(arr):
+    prefix = [0]
+
+    for num in arr:
+        prefix.append(prefix[-1] + num)
+
+    return prefix
+
+def range_sum(prefix, left, right):
+    return prefix[right + 1] - prefix[left]
+
+prefix = build_prefix_sum([3, 1, 4, 2, 5, 6])
+print(range_sum(prefix, 1, 4))   # 12</pre></details>
+<p>The result is <code>[0, 3, 4, 8, 10, 15, 21]</code>. The implementation is almost boring, and that’s a good sign.</p>
+
+<h2 id="s4">4. What did we actually trade?</h2>
+<p>We didn’t make computation disappear, we moved it. Without prefix sums every query walks its range again. With prefix sums we walk the array once to store cumulative information, then each query is two array accesses and a subtraction. We spend extra memory and preprocessing time to make repeated queries cheap.</p>
+<h3>When is it worth it?</h3>
+<p>With one million elements and a single query, building a million-element prefix array may not be useful. With a million queries, the same information is recomputed again and again and preprocessing wins. Play with the sliders and find where the trade flips.</p>
+<div class="fig" id="cmp"></div>
+<h3>Why not the simpler approach?</h3>
+<div class="fig scroll"><table class="tt"><tr><th></th><th>Naive</th><th>Prefix sum</th></tr><tr><td>Preprocessing</td><td>None</td><td><code>O(n)</code> time</td></tr><tr><td>Per query</td><td><code>O(range length)</code></td><td><code>O(1)</code></td></tr><tr><td>Extra space</td><td><code>O(1)</code></td><td><code>O(n)</code></td></tr><tr><td>Best when</td><td>Few queries</td><td>Many queries on the same array</td></tr></table></div>
+<blockquote><p>We paid once so we don’t have to pay repeatedly. If the same expensive computation appears repeatedly, perhaps we should preprocess and remember something.</p></blockquote>
+
+<h2 id="s5">5. Four problems, one idea</h2>
+<h3>Problem 1: Running Sum of 1D Array</h3>
+<p>Given <code>[1, 2, 3, 4]</code>, return <code>[1, 3, 6, 10]</code>. At every position the question is “what is the sum of everything I’ve seen so far?”, which is the definition of a prefix sum.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def running_sum(nums):
+    result = []
+    total = 0
+
+    for num in nums:
+        total += num
+        result.append(total)
+
+    return result</pre></details>
+<p>We don’t need a separate prefix array here because the problem asks us to return those values. The <em>concept</em> and the <em>implementation structure</em> are different things. How we store the accumulated information depends on what the problem asks us to do with it. (The stepper in section 1 is exactly this problem.)</p>
+<h3>Problem 2: Range Sum Query</h3>
+<p>With <code>nums = [-2, 0, 3, -5, 2, -1]</code> and many queries like <code>[0, 2]</code>, <code>[2, 5]</code>, <code>[0, 5]</code>, calculating each independently re-walks the same elements. The reasoning is: many overlapping range sums, repeated addition, remember cumulative sums, subtract the unwanted prefix, <code>O(1)</code> query.</p>
+<div class="fig" id="fl"></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>class NumArray:
+
+    def __init__(self, nums):
+        self.prefix = [0]
+
+        for num in nums:
+            self.prefix.append(self.prefix[-1] + num)
+
+    def sumRange(self, left, right):
+        return self.prefix[right + 1] - self.prefix[left]</pre></details>
+<p>For those queries the answers are <code>1</code>, <code>-1</code> and <code>-3</code>.</p>
+<h3>Problem 3: Find Pivot Index</h3>
+<p>Find the index where the sum to the left equals the sum to the right. In <code>[1, 7, 3, 6, 5, 6]</code> the answer is index <code>3</code>, since <code>1 + 7 + 3 = 11</code> and <code>5 + 6 = 11</code>.</p>
+<p>The naive thought is to compute both sums for every index, which repeatedly re-walks the array. A nicer observation: with <code>total</code> known and a running <code>left_sum</code>, the right side is <code>right_sum = total − left_sum − nums[i]</code>. Slide the pivot across the array.</p>
+<div class="fig" id="piv"></div>
+<p class="cap">Green is the left side, yellow the current element, blue the right side.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def pivot_index(nums):
+    total = sum(nums)
+    left_sum = 0
+
+    for i, num in enumerate(nums):
+        right_sum = total - left_sum - num
+
+        if left_sum == right_sum:
+            return i
+
+        left_sum += num
+
+    return -1</pre></details>
+<p>Prefix information doesn’t always need a visible array. Sometimes a single running variable is enough.</p>
+<h3>Problem 4: Left and Right Sum Differences</h3>
+<p>For <code>[10, 4, 8, 3]</code>, compute <code>|left_sum − right_sum|</code> at every index. At index <code>2</code> the left is <code>10 + 4 = 14</code>, the right is <code>3</code>, and the difference is <code>11</code>. We already have what we need: <code>total = 25</code> and a running <code>left_sum</code>.</p>
+<div class="fig" id="lr"></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>def left_right_difference(nums):
+    total = sum(nums)
+    left_sum = 0
+    result = []
+
+    for num in nums:
+        right_sum = total - left_sum - num
+        result.append(abs(left_sum - right_sum))
+        left_sum += num
+
+    return result</pre></details>
+<p>Same idea, different question.</p>
+
+<h2 id="s6">6. Prefix sum is not always an array</h2>
+<p>When people hear “use prefix sum” they think of <code>prefix = [0] * (n + 1)</code>. That isn’t the important part. The important part is that <strong>we have cumulative information about everything before the current position</strong>. That information can live in different places depending on what the problem needs us to remember.</p>
+<div class="fig scroll"><table class="tt"><tr><th>Where it lives</th><th>When</th><th>Example here</th></tr><tr><td>An array</td><td>We need to query arbitrary ranges later</td><td>Range Sum Query</td></tr><tr><td>One variable</td><td>We only need the running total as we scan</td><td>Pivot Index, Left/Right Differences</td></tr><tr><td>A hashmap</td><td>We need to look up earlier prefix values</td><td>Coming next</td></tr><tr><td>A deque</td><td>We need prefix values in a sliding window</td><td>Later</td></tr></table></div>
+<p>This distinction will matter a lot in the next articles.</p>
+
+<h2 id="s7">7. The deeper pattern</h2>
+<p>We started with “I need the sum of this range” and the naive answer of walking the range and adding. Then we noticed that different ranges overlap, and asked why we calculate the same partial sums again. We stored cumulative sums, then noticed that a large prefix contains smaller prefixes, so <em>large prefix − smaller prefix</em> gives exactly the range we want. That is preprocess, remember cumulative information, query, subtract what we don’t need. This is the first form of prefix sum.</p>
+
+<h2 id="s8">8. A useful way to recognize these problems</h2>
+<ol>
+<li><strong>Am I adding the same numbers again and again?</strong> Overlapping ranges are the sign.</li>
+<li><strong>Are there many queries on a fixed array?</strong> That is when preprocessing pays off.</li>
+<li><strong>Do I need “everything before” and “everything after” a position?</strong> A running total plus the grand total often suffices.</li>
+<li><strong>Can the answer be written as one accumulation minus another?</strong> That is cancellation.</li>
+<li><strong>What is the smallest form of memory I need?</strong> An array, a variable, or something later.</li>
+</ol>
+
+<h2 id="s9">9. What we learned, and where this goes next</h2>
+<div class="fig" id="formW"></div>
+<h3>Where this becomes much more interesting</h3>
+<p>So far we ask “what is the sum of this range?” and the prefix sums answer “here.” The more interesting problems ask something different, because now we aren’t given a range. We have to <strong>discover</strong> it.</p>
+<div class="fig scroll"><table class="tt"><tr><th>Question</th><th>What changes</th></tr><tr><td>How many subarrays have sum exactly <code>K</code>?</td><td>We must find the ranges ourselves</td></tr><tr><td>What is the longest subarray whose sum is <code>K</code>?</td><td>We must remember <em>where</em> a prefix sum first appeared</td></tr><tr><td>How many subarrays have a sum divisible by <code>K</code>?</td><td>We compare prefix sums by remainder</td></tr></table></div>
+<p>At that point prefix sums stop being merely a fast way to answer range-sum queries. They become a way of remembering the past so we can recognize a useful subarray when we reach its end. Instead of asking “what did I accumulate?”, we’ll ask <strong>“have I seen the prefix sum I need before?”</strong> That small change in the question leads naturally to <strong>prefix sum + hashmap</strong>.</p>
+<blockquote><p>When the same computation keeps appearing, ask whether some information from the past can be stored and reused.</p></blockquote>
+</main>
+
+<script>
+/* ===== SHARED HELPERS: do not change ===== */
+var $=function(i){return document.getElementById(i)};
+var L=function(v){return v.toLocaleString('en-US')};
+var num=function(x,y){return x-y};
+function isSorted(a){for(var i=1;i<a.length;i++)if(a[i-1]>a[i])return false;return true}
+
+/* cells(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label above'}, noix:true}) -> row of cells */
+function cells(a,o){o=o||{};var c=o.c||{};return '<div class="row">'+a.map(function(v,i){var g=v===''||v===null;return '<div class="cw"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="cell'+(g?' gap':'')+' '+(c[i]||'')+'">'+(g?'&nbsp;':v)+'</div><span class="ix">'+(o.noix?'':i)+'</span></div>'}).join('')+'</div>'}
+
+/* widget(id, presets, build): Previous/Next stepper.
+   presets = [[buttonLabel, params], ...]; build(params) returns [{h:htmlString, n:noteText}, ...] */
+function widget(id,opts,build){
+  var el=$(id),i=0,st=[];
+  el.innerHTML=(opts.length>1?'<div class="row" style="align-items:center">'+opts.map(function(o,k){return '<button data-k="'+k+'">'+o[0]+'</button>'}).join('')+'</div>':'')+'<div class="scroll v"></div><p class="note" aria-live="polite"></p><div class="ctl"><button class="pv">Previous</button><span class="pos"></span><button class="nx">Next</button><button class="pl">Play</button></div>';
+  var v=el.querySelector('.v'),n=el.querySelector('.note'),p=el.querySelector('.pos'),pv=el.querySelector('.pv'),nx=el.querySelector('.nx'),pl=el.querySelector('.pl'),tm=null;
+  function stop(){if(tm){clearInterval(tm);tm=null}pl.textContent='Play'}
+  function r(){v.innerHTML=st[i].h;n.textContent=st[i].n;p.textContent='Step '+(i+1)+' of '+st.length;pv.disabled=i===0;nx.disabled=i===st.length-1}
+  function pick(k){stop();st=build(opts[k][1]);i=0;[].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.k===k))});r()}
+  [].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.onclick=function(){pick(+b.dataset.k)}});
+  pv.onclick=function(){stop();if(i>0){i--;r()}};nx.onclick=function(){stop();if(i<st.length-1){i++;r()}};
+  pl.onclick=function(){if(tm){stop();return}if(i>=st.length-1){i=0;r()}pl.textContent='Pause';tm=setInterval(function(){if(i<st.length-1){i++;r()}else stop()},1100)};
+  pick(0);
+}
+
+/* tabs(id, labels, fn): tab buttons; fn(k) returns html for tab k */
+function tabs(id,labels,fn){var el=$(id);el.innerHTML='<div class="row" style="align-items:center"></div><div class="tv"></div>';var bar=el.firstChild,tv=el.lastChild;
+  labels.forEach(function(t,k){var b=document.createElement('button');b.textContent=t;b.onclick=function(){[].forEach.call(bar.children,function(x){x.setAttribute('aria-pressed',String(x===b))});tv.innerHTML=fn(k)};b.setAttribute('aria-pressed',String(k===0));bar.appendChild(b)});tv.innerHTML=fn(0)}
+
+/* growth(id, ns, bruteFn, betterFn, header1, header2): log-scale comparison table */
+function growth(id,ns,bf,tp,h1,h2){$(id).innerHTML='<table><tr><th>n</th><th>'+h1+'</th><th>'+h2+'</th></tr>'+ns.map(function(n){var b=bf(n),t=tp(n);return '<tr><td>'+L(n)+'</td><td>'+L(b)+'<div class="bar r" style="width:'+Math.max(1,Math.log10(b)/12*100)+'%;margin-left:auto"></div></td><td>'+L(t)+'<div class="bar g" style="width:'+Math.max(1,Math.log10(t)/12*100)+'%;margin-left:auto"></div></td></tr>'}).join('')+'</table><p class="cap">Bars use a log scale, otherwise the second column would be invisible.</p>'}
+
+/* flow(['step','step',...]) -> vertical arrow flow */
+function flow(a){return '<div class="flow">'+a.map(function(x){return '<div class="cell">'+x+'</div>'}).join('<span>↓</span>')+'</div>'}
+
+/* grid(matrix, {c:function(r,c){return 'ok|now|dim|mv'}, rh:[row headers], ch:[col headers]}) -> 2D table of cells (DP tables, grids, matrices) */
+function grid(m,o){o=o||{};var w=m[0].length,ch=o.ch,rh=o.rh;
+  var h='<div class="mx" style="grid-template-columns:'+(rh?'auto ':'')+'repeat('+w+',minmax(0,1fr))">';
+  if(ch){h+=(rh?'<span></span>':'')+ch.map(function(x){return '<span class="mh">'+x+'</span>'}).join('')}
+  m.forEach(function(r,i){if(rh)h+='<span class="mh">'+rh[i]+'</span>';r.forEach(function(v,j){h+='<div class="cell '+((o.c&&o.c(i,j))||'')+'">'+v+'</div>'})});
+  return h+'</div>'}
+
+/* vbars(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label'}}) -> vertical bar chart of an array (sorting, partitioning, heights) */
+function vbars(a,o){o=o||{};var c=o.c||{},mx=Math.max.apply(null,a.map(Math.abs))||1;
+  return '<div class="vb">'+a.map(function(v,i){return '<div class="vc"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="vbar '+(c[i]||'')+'" style="height:'+Math.max(4,Math.round(Math.abs(v)/mx*110))+'px"></div><span class="ix">'+v+'</span></div>'}).join('')+'</div>'}
+
+/* driver(id, cfg): "you drive the algorithm". The reader picks the move; wrong moves get a teaching message.
+   cfg = {
+     presets:[[label,param],...],
+     init:function(param){return state},
+     view:function(state,done){return html},
+     done:function(state){return bool},
+     prompt:function(state,done){return 'What should we do?'},
+     choices:[['A','button text'],['B','button text'],...],
+     expected:function(state){return 'A'},               // the correct choice id
+     apply:function(state,choiceId){ return 'Right. why it worked'},   // mutate state here
+     hint:function(state){return 'general hint'},
+     wrong:function(state,choiceId){return 'specific message for a tempting wrong choice, or undefined'}
+   } */
+function driver(id,cfg){
+  var el=$(id),k=0,s,msg='';
+  function init(){s=cfg.init(cfg.presets[k][1]);msg='';draw()}
+  function draw(){var done=cfg.done(s);
+    el.innerHTML='<div class="row" style="align-items:center">'+cfg.presets.map(function(p,j){return '<button data-p="'+j+'" aria-pressed="'+(j===k)+'">'+p[0]+'</button>'}).join('')+'</div><div class="scroll">'+cfg.view(s,done)+'</div><p class="note" aria-live="polite"><strong>'+cfg.prompt(s,done)+'</strong></p><div class="ctl">'+cfg.choices.map(function(c){return '<button data-c="'+c[0]+'"'+(done?' disabled':'')+'>'+c[1]+'</button>'}).join('')+'</div><p class="note" aria-live="polite">'+msg+'</p>';
+    [].forEach.call(el.querySelectorAll('button[data-p]'),function(b){b.onclick=function(){k=+b.dataset.p;init()}});
+    [].forEach.call(el.querySelectorAll('button[data-c]'),function(b){b.onclick=function(){choose(b.dataset.c)}})}
+  function choose(c){if(c!==cfg.expected(s)){msg=(cfg.wrong&&cfg.wrong(s,c))||('Not quite. '+cfg.hint(s));draw();return}
+    msg=cfg.apply(s,c)||'Right.';draw()}
+  init()}
+
+/* slider(id, {min,max,value,label,render:function(v){return html}}) -> "drag to see how the cost grows" figure */
+function slider(id,o){var el=$(id);el.innerHTML='<label for="'+id+'S">'+o.label+' = <strong class="so"></strong></label><input id="'+id+'S" type="range" min="'+o.min+'" max="'+o.max+'" value="'+o.value+'"><div class="sv"></div>';
+  var inp=el.querySelector('input'),out=el.querySelector('.so'),sv=el.querySelector('.sv');
+  function u(){out.textContent=inp.value;sv.innerHTML=o.render(+inp.value)}inp.oninput=u;u()}
+
+/* ===== PAGE-SPECIFIC ===== */
+var A0=[3,1,4,2,5,6];
+function prefSteps(a){var P=[],s=[],n=a.length,i;function blank(k){var o=[];for(var j=0;j<n;j++)o.push(j<k?P[j]:'_');return o}
+ s.push({h:cells(a,{})+cells(blank(0),{sub:{0:'prefix'},noix:true}),n:'Start with an empty prefix array.'});
+ for(i=0;i<n;i++){P[i]=(i?P[i-1]:0)+a[i];var c={},c2={},j;for(j=0;j<i;j++)c[j]='ok';c[i]='now';c2[i]='now';
+  s.push({h:cells(a,{c:c})+cells(blank(i+1),{c:c2,sub:{0:'prefix'},noix:true})+'<p>'+(i?'prefix['+i+'] = '+P[i-1]+' + '+a[i]+' = <strong>'+P[i]+'</strong>':'prefix[0] = <strong>'+P[0]+'</strong>')+'</p>',n:i===n-1?'Done. Each prefix value contains all the work done before it.':(i?'We reuse prefix['+(i-1)+'] instead of re-adding everything.':'The first prefix is the first element.')})}
+ return s}
+widget('build',[['[3, 1, 4, 2, 5, 6]',A0],['[1, 2, 3, 4]',[1,2,3,4]],['[-2, 0, 3, -5, 2, -1]',[-2,0,3,-5,2,-1]]],prefSteps);
+var rl=1,rr=4,RP=[3,4,8,10,15,21];
+function rmDraw(){var el=$('rm'),n=A0.length,c={},c2={},j,dir=0;
+ for(j=0;j<n;j++)c[j]=j<rl?'dim':(j<=rr?'ok':'');c2[rr]='ok';if(rl>0)c2[rl-1]='mv';
+ for(j=rl;j<=rr;j++)dir+=A0[j];
+ var eq=rl>0?'P['+rr+'] − P['+(rl-1)+'] = '+RP[rr]+' − '+RP[rl-1]+' = <strong>'+(RP[rr]-RP[rl-1])+'</strong>':'left = 0 would need P[−1], which doesn’t exist. We special-case it: the answer is just P['+rr+'] = <strong>'+RP[rr]+'</strong>.';
+ el.innerHTML='<label for="rmL">left = <strong>'+rl+'</strong></label><input id="rmL" type="range" min="0" max="5" value="'+rl+'"><label for="rmR">right = <strong>'+rr+'</strong></label><input id="rmR" type="range" min="0" max="5" value="'+rr+'">'
+ +cells(A0,{c:c,sub:{0:'array'}})+cells(RP,{c:c2,sub:{0:'prefix'},noix:true})+'<p>'+eq+'</p><p class="note">Adding the range directly: '+A0.slice(rl,rr+1).join(' + ')+' = '+dir+'. Same answer, but the prefix needed only one subtraction.</p>';
+ $('rmL').oninput=function(){rl=+this.value;if(rr<rl)rr=rl;rmDraw();$('rmL').focus()};$('rmR').oninput=function(){rr=+this.value;if(rl>rr)rl=rr;rmDraw();$('rmR').focus()}}
+rmDraw();
+tabs('zero',['Without leading zero','With leading zero'],function(k){return k?cells([0,3,4,8,10,15,21],{c:{0:'mv'},sub:{0:'P[0] = 0: the empty prefix'}})+'<p class="note">sum(left, right) = P[right + 1] − P[left].<br>sum(1, 4) = P[5] − P[1] = 15 − 3 = <strong>12</strong>.<br>sum(0, 4) = P[5] − P[0] = 15 − 0 = <strong>15</strong>. No special case.</p>':cells([3,4,8,10,15,21],{c:{0:'dim'},sub:{0:'awkward when left = 0'}})+'<p class="note">sum(left, right) = P[right] − P[left − 1].<br>sum(1, 4) = P[4] − P[0] = 15 − 3 = <strong>12</strong>.<br>sum(0, 4) needs P[−1]. It doesn’t exist, so we need an <code>if left == 0</code>.</p>'});
+var ca=4,cb=4,cp=10;
+function cmpDraw(){var n=Math.pow(10,ca),q=Math.pow(10,cb),len=Math.max(1,Math.round(n*cp/100)),nv=q*len,pf=n+q,mx=Math.max(nv,pf),el=$('cmp');
+ el.innerHTML='<label for="cmA">Array size n = <strong>'+L(n)+'</strong></label><input id="cmA" type="range" min="1" max="6" value="'+ca+'"><label for="cmB">Number of queries = <strong>'+L(q)+'</strong></label><input id="cmB" type="range" min="0" max="6" value="'+cb+'"><label for="cmP">Query range length = <strong>'+cp+'%</strong> of the array ('+L(len)+' elements)</label><input id="cmP" type="range" min="1" max="100" value="'+cp+'">'
+ +'<div class="lbl">Naive: elements added <strong>'+L(nv)+'</strong></div><div class="bar r" style="width:'+Math.max(1,nv/mx*100)+'%"></div><div class="lbl">Prefix sum: '+L(n)+' preprocessing additions + '+L(q)+' subtractions = <strong>'+L(pf)+'</strong></div><div class="bar g" style="width:'+Math.max(1,pf/mx*100)+'%"></div>'
+ +'<p class="note">'+(pf<nv?'Prefix sum does about '+L(Math.round(nv/pf))+'× less work here. We paid once so we don’t have to pay repeatedly.':'Naive is cheaper here. Not enough queries to repay the preprocessing.')+'</p>';
+ $('cmA').oninput=function(){ca=+this.value;cmpDraw();$('cmA').focus()};$('cmB').oninput=function(){cb=+this.value;cmpDraw();$('cmB').focus()};$('cmP').oninput=function(){cp=+this.value;cmpDraw();$('cmP').focus()}}
+cmpDraw();
+function pivSteps(a){var tot=a.reduce(function(p,q){return p+q},0),left=0,s=[];
+ s.push({h:cells(a,{})+'<p><code>total</code> = <strong>'+tot+'</strong></p>',n:'We know the total. We maintain left_sum as we scan.'});
+ for(var i=0;i<a.length;i++){var x=a[i],right=tot-left-x,c={},j;for(j=0;j<a.length;j++)c[j]=j<i?'ok':(j>i?'mv':'now');
+  var h=cells(a,{c:c,sub:(function(){var o={};o[i]='current';return o})()})+'<p><code>left_sum</code> = <strong>'+left+'</strong> &nbsp; current = <strong>'+x+'</strong> &nbsp; <code>right_sum</code> = '+tot+' − '+left+' − '+x+' = <strong>'+right+'</strong></p>';
+  if(left===right){s.push({h:h,n:'Equal. The pivot index is '+i+'.'});return s}
+  s.push({h:h,n:'Not equal. Add '+x+' to left_sum and move on.'});left+=x}
+ s.push({h:cells(a,{})+'<p>No index balanced the two sides.</p>',n:'No pivot. Return −1.'});return s}
+widget('piv',[['[1, 7, 3, 6, 5, 6]',[1,7,3,6,5,6]],['[2, 1, -1]',[2,1,-1]],['[1, 2, 3]',[1,2,3]]],pivSteps);
+function lrSteps(a){var tot=a.reduce(function(p,q){return p+q},0),left=0,res=[],s=[],n=a.length;
+ function rv(){var o=[];for(var j=0;j<n;j++)o.push(j<res.length?res[j]:'_');return o}
+ s.push({h:cells(a,{})+cells(rv(),{sub:{0:'result'},noix:true})+'<p><code>total</code> = <strong>'+tot+'</strong></p>',n:'Same setup: total plus a running left_sum.'});
+ for(var i=0;i<n;i++){var x=a[i],right=tot-left-x,d=Math.abs(left-right),c={},j;for(j=0;j<n;j++)c[j]=j<i?'ok':(j>i?'mv':'now');res.push(d);
+  s.push({h:cells(a,{c:c})+cells(rv(),{sub:{0:'result'},noix:true,c:(function(){var o={};o[i]='now';return o})()})+'<p>left = <strong>'+left+'</strong>, right = '+tot+' − '+left+' − '+x+' = <strong>'+right+'</strong>, |'+left+' − '+right+'| = <strong>'+d+'</strong></p>',n:'Append '+d+', then add '+x+' to left_sum.'});left+=x}
+ return s}
+widget('lr',[['[10, 4, 8, 3]',[10,4,8,3]],['[1]',[1]]],lrSteps);
+$('fl').innerHTML=flow(['Many overlapping range sums','Repeated addition','Remember cumulative sums','Subtract the unwanted prefix','O(1) query']);
+tabs('formW',['1. Problem first','2. Memory','3. Cancellation','4. Trade','5. Broader'],function(k){return '<p class="note">'+[
+ '<strong>The problem came first.</strong> We didn’t start with “let’s use prefix sums.” We started with “why am I repeatedly doing the same addition?”',
+ '<strong>Prefix sums are accumulated memory.</strong> <code>prefix[i]</code> contains the work we’ve already done up to that point.',
+ '<strong>Range sums come from cancellation.</strong> Desired range = large prefix − unwanted prefix. With the leading zero, <code>sum(left, right) = prefix[right + 1] − prefix[left]</code>.',
+ '<strong>We trade resources.</strong> More preprocessing and memory buy cheaper repeated queries. Worthwhile only when that trade makes sense.',
+ '<strong>The deeper pattern is broader.</strong> When the same computation keeps appearing, ask whether information from the past can be stored and reused.'][k]+'</p>'});
+
+/* ===== CODE TOGGLE AND THEME: do not change ===== */
+var cb=$('codeBtn'),hid=false;
+cb.onclick=function(){hid=!hid;[].forEach.call(document.querySelectorAll('details'),function(d){d.open=!hid});cb.textContent=hid?'Show code':'Hide code'};
+var root=document.documentElement,tb=$('theme');
+function setTheme(t){root.setAttribute('data-theme',t);tb.textContent=t==='dark'?'Light':'Dark'}
+try{var sv=localStorage.getItem('theme');if(sv==='dark'||sv==='light')setTheme(sv)}catch(e){}
+tb.onclick=function(){var t=root.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);try{localStorage.setItem('theme',t)}catch(e){}};
+</script>
+</body>
+</html>

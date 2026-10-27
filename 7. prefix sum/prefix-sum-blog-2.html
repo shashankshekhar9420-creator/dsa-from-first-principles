@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>When a Prefix Sum Becomes a Clue</title>
+<style>
+:root{--bg:#fff;--ink:#111;--mut:#555;--line:#ccc;--acc:#1f4e8c;--hi:#fff3b0;--hib:#c9a227;--ok:#dcf0dc;--okb:#3a8a3a;--mv:#e6edf7;--dim:#eee;--card:#fafafa;--red:#b5342b;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+:root[data-theme="dark"]{--bg:#121212;--ink:#eee;--mut:#aaa;--line:#3a3a3a;--acc:#8ab4f8;--hi:#4a4220;--hib:#c9a227;--ok:#1d3a22;--okb:#5cb85c;--mv:#1c2a40;--dim:#2a2a2a;--card:#1a1a1a;--red:#ff7b72;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:19px/1.6 "Times New Roman",Times,serif}
+main{max-width:720px;margin:0 auto;padding:40px 20px 80px}
+h1,h2,h3{font-family:inherit;line-height:1.25}
+h1{font-size:2.1rem;margin:.2em 0 .6em}
+h2{font-size:1.5rem;margin:2.6em 0 .6em;padding-top:1.2em;border-top:1px solid var(--line)}
+h3{font-size:1.1rem;margin:1.3em 0 .3em}
+blockquote{margin:1em 0;padding:.4em 1em;border-left:4px solid var(--acc);font-size:1.12rem}
+blockquote p{margin:.3em 0}
+code{font:inherit;background:var(--card);padding:1px 5px;border-radius:4px}
+a{color:var(--acc)}
+.fig{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin:1.2em 0}
+.cap{font-size:.9rem;color:var(--mut);margin:.6em 0 0}
+.scroll{overflow-x:auto}
+.row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0;align-items:flex-end}
+.cw{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ix{font-size:.8rem;color:var(--mut);min-height:1.1em;font-weight:600}
+.cell{min-width:40px;padding:7px 6px;text-align:center;border:2px solid var(--line);background:var(--bg);border-radius:6px;font-weight:600;transition:background .2s}
+.gap{border-style:dashed;background:transparent}
+.ok{background:var(--ok);border-color:var(--okb)}
+.now{background:var(--hi);border-color:var(--hib)}
+.dim{background:var(--dim);color:var(--mut);border-color:var(--dim)}
+.mv{background:var(--mv);border-color:var(--acc)}
+.mx{display:grid;gap:3px;margin:8px 0}
+.mh{font-size:.8rem;color:var(--mut);text-align:center;align-self:center}
+.mx .cell{min-width:0;padding:3px 0;font-size:.8rem}
+button{font:inherit;font-size:.95rem;padding:6px 14px;border:1px solid var(--acc);color:var(--acc);background:var(--bg);border-radius:6px;cursor:pointer}
+button:hover:not(:disabled){background:var(--mv)}
+button:disabled{opacity:.4;cursor:default}
+button[aria-pressed="true"]{background:var(--acc);color:var(--bg)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--hib);outline-offset:2px}
+.tools{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:5;display:flex;gap:8px}
+.ctl{display:flex;align-items:center;gap:12px;margin-top:10px;flex-wrap:wrap}
+.pos{color:var(--mut);font-size:.9rem}
+.note{min-height:3em;margin:.4em 0 0;font-weight:500}
+.lbl{font-size:.9rem;margin:8px 0 3px}
+.bar{height:14px;border-radius:4px;background:var(--acc);min-width:3px}
+.bar.g{background:var(--okb)}.bar.r{background:var(--red)}
+input[type=range]{width:100%}
+table{border-collapse:collapse;width:100%;font-size:.95rem}
+th,td{border:1px solid var(--line);padding:5px 8px;text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{background:var(--dim)}
+details{margin:.6em 0 .9em;border:1px solid var(--line);border-radius:8px;background:var(--card)}
+summary{cursor:pointer;padding:8px 12px;font-size:.95rem;color:var(--acc)}
+pre{margin:0;padding:6px 14px 12px;overflow-x:auto;font:.85rem/1.5 ui-monospace,Menlo,Consolas,monospace}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:560px){.two{grid-template-columns:1fr}}
+.flow{display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;font-size:.95rem}
+.flow .cell{min-width:140px}
+.zones{display:flex;border:2px solid var(--line);border-radius:6px;overflow:hidden;text-align:center;font-size:.85rem}
+.zones div{padding:10px 6px}
+.flag{font-size:.9rem;color:var(--mut)}
+.tt td:first-child{font-weight:600}
+.tt td{text-align:left}
+p{margin:.7em 0}
+ul,ol{margin:.7em 0}
+li{margin:.15em 0}
+.dg{margin:.4em 0 .9em;padding:.1em 0 .1em 14px;border-left:3px solid var(--line);overflow-x:auto}
+.dg pre{padding:0;font-size:.88rem;line-height:1.45}
+.st{display:flex;gap:5px;flex-wrap:wrap;align-items:flex-end;margin:.4em 0 .9em}
+.st .cell{min-width:38px;padding:3px 10px}
+.st .ix{min-height:0}
+.st-n{display:flex;flex-direction:column;gap:2px;margin:.4em 0 .9em;font-size:.9rem;color:var(--mut)}
+.vb{display:flex;gap:6px;align-items:flex-end;margin:6px 0}
+.vc{display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;min-width:26px;max-width:60px;justify-content:flex-end}
+.vbar{width:100%;border:2px solid var(--line);background:var(--bg);border-radius:4px 4px 0 0;transition:height .2s,background .2s}
+</style>
+</head>
+<body>
+<div class="tools"><button id="codeBtn" aria-label="Show or hide all code">Hide code</button><button id="theme" aria-label="Switch colour theme">Dark</button></div>
+<main>
+<h1>When a Prefix Sum Becomes a Clue</h1>
+<blockquote><p>A prefix sum started as a way to answer a range-sum query. Now we will use it to discover the range itself.</p></blockquote>
+<p>In the previous article we built prefix sums because repeatedly calculating overlapping ranges was wasteful. We learned that <code>prefix = accumulated history</code> and <code>sum(left, right) = prefix[right + 1] − prefix[left]</code>. That was already useful, but now we ask a slightly different question. Each idea below has something to step through or drag, and the code can be hidden with the button at the top.</p>
+<ol>
+<li><a href="#s1">What if the range is unknown?</a></li>
+<li><a href="#s2">The important transformation</a></li>
+<li><a href="#s3">We need memory: a set for existence</a></li>
+<li><a href="#s4">Equal prefix sums create zero-sum subarrays</a></li>
+<li><a href="#s5">Subarray Sum Equals K: counting</a></li>
+<li><a href="#s6">Negative numbers change the game</a></li>
+<li><a href="#s7">Maximum Size Subarray Sum Equals K: the longest</a></li>
+<li><a href="#s8">Contiguous Array: a disguised sum problem</a></li>
+<li><a href="#s9">The real power, and a mental template</a></li>
+<li><a href="#s10">Where we are now</a></li>
+</ol>
+
+<h2 id="s1">1. What if the range is unknown?</h2>
+<p>Take <code>[1, 2, 3, 4, 5]</code> and ask: does there exist a contiguous subarray whose sum is <code>6</code>? This time nobody gives us <code>left</code> and <code>right</code>. We have to <strong>find them</strong>. Here <code>[1, 2, 3]</code> works, so the answer is yes.</p>
+<h3>The naive way</h3>
+<p>From every start, keep extending: <code>[1]</code>, <code>[1, 2]</code>, <code>[1, 2, 3]</code>, and so on, then start again at <code>2</code>. A running sum while extending avoids recalculating each subarray, which helps, but there are still roughly <code>n²</code> subarrays. So the real question is: can prefix sums help us discover the desired subarray without examining every one?</p>
+
+<h2 id="s2">2. The important transformation</h2>
+<p>For <code>arr = [1, 2, 3, 4, 5]</code> the prefix sums are <code>[0, 1, 3, 6, 10, 15]</code>. Stand at the prefix <code>10</code> and think backwards. We want <code>current − earlier = 6</code>, so <code>earlier = 4</code>. There is no prefix <code>4</code>, so no subarray ending here sums to 6. At the prefix <code>6</code> we need <code>earlier = 0</code>, and we have seen <code>0</code>. That is <code>[1, 2, 3]</code>.</p>
+<p>Formally, <code>sum(i … j) = prefix[j + 1] − prefix[i]</code>, and we want that to equal <code>K</code>. Rearranged:</p>
+<blockquote><p>prefix[i] = prefix[j + 1] − K. Instead of asking “which subarray sums to K?”, ask “have I seen a prefix equal to current_prefix − K?”</p></blockquote>
+<p>That is a much easier question, and it creates a new one: how do we quickly remember which prefix sums we’ve seen?</p>
+
+<h2 id="s3">3. We need memory: a set for existence</h2>
+<p>Process the array left to right, computing the current prefix and asking whether <code>current − K</code> has been seen. A <strong>set</strong> answers “have I seen this value?”, which is all existence needs. Step through it, and try the second preset, where no subarray works.</p>
+<div class="fig" id="det"></div>
+<p class="cap">Yellow is the current element, green the subarray found. The set holds every prefix seen so far.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def has_subarray_sum_k(nums, k):
+    seen = {0}
+    prefix = 0
+
+    for num in nums:
+        prefix += num
+
+        if prefix - k in seen:
+            return True
+
+        seen.add(prefix)
+
+    return False</pre></details>
+<p>Why does <code>seen</code> start as <code>{0}</code>? Because before any element, we have accumulated a sum of <code>0</code>. This is the <strong>empty prefix</strong>, the same leading-zero idea from the last article. Without it we’d miss every subarray that starts at index 0.</p>
+<p>A hashmap can do something more useful than a set: it can remember not only <em>whether</em> a value was seen but <em>what information we attached to it</em>. That matters shortly.</p>
+
+<h2 id="s4">4. Equal prefix sums create zero-sum subarrays</h2>
+<p>If <code>prefix[i] = prefix[j]</code>, then <code>prefix[j] − prefix[i] = 0</code>, so the elements between them sum to zero. For <code>[1, -1, 1, -1]</code> the prefix sums are <code>0, 1, 0, 1, 0</code>.</p>
+<div class="fig" id="eq"></div>
+<p>Repeated prefix sums are not useless. A prefix sum isn’t merely a stored total: <strong>its relationship with another prefix sum tells us something about the subarray between them</strong>.</p>
+
+<h2 id="s5">5. Subarray Sum Equals K: counting</h2>
+<p>Now ask: how <em>many</em> subarrays have sum <code>K</code>? A set isn’t enough, because with <code>[1, -1, 1, -1]</code> and <code>K = 0</code> the same prefix appears several times and each occurrence is a different subarray. At every current prefix <code>P</code> we need an earlier prefix <code>P − K</code>, so instead of storing <code>prefix → seen</code> we store <code>prefix → how many times we’ve seen it</code>.</p>
+<h3>The naive way</h3>
+<p>Extend from every start, <code>O(n²)</code> subarrays.</p>
+<h3>Watch the counting</h3>
+<p>The third preset has <code>prefix = [0, 1, 1, 3]</code>. At the last step <code>needed = 1</code> has appeared twice, so <strong>two different subarrays end here</strong> with sum 2. That is why the frequency hashmap is inevitable rather than magical.</p>
+<div class="fig" id="cnt"></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>def subarray_sum(nums, k):
+    prefix_count = {0: 1}
+    prefix = 0
+    answer = 0
+
+    for num in nums:
+        prefix += num
+
+        answer += prefix_count.get(prefix - k, 0)
+
+        prefix_count[prefix] = prefix_count.get(prefix, 0) + 1
+
+    return answer</pre></details>
+<p>Read the key line in English: <em>how many times have I previously seen the prefix sum that would make my current prefix differ by exactly <code>k</code>?</em> That number is exactly how many valid subarrays end here.</p>
+<h3>Why <code>{0: 1}</code>?</h3>
+<p>For <code>nums = [2, 3]</code>, <code>k = 2</code>, at the first element <code>prefix = 2</code> and we need <code>2 − 2 = 0</code>. We haven’t processed anything, so where did that <code>0</code> come from? It is the empty prefix before the array starts. <code>{0: 1}</code> means “before processing any elements, prefix sum 0 has occurred once.” It is the same leading-zero idea again.</p>
+
+<h2 id="s6">6. Negative numbers change the game</h2>
+<p>A tempting approach is: “if my sum gets too large, shrink the window.” That works in some sliding-window problems but not here. With negatives, adding an element can <em>decrease</em> the sum and removing one can <em>increase</em> it, so there is no monotonic relationship between window size and sum. Drag the window length and watch the sum go up and down.</p>
+<div class="fig" id="win"></div>
+<p>Prefix sum + hashmap doesn’t care, because <code>current_prefix − old_prefix = K</code> is algebra and stays true whether numbers are positive, negative or zero.</p>
+<h3>Why not the simpler approach?</h3>
+<div class="fig scroll"><table class="tt"><tr><th></th><th>Try every subarray</th><th>Sliding window</th><th>Prefix sum + hashmap</th></tr><tr><td>Time</td><td><code>O(n²)</code></td><td><code>O(n)</code></td><td><code>O(n)</code></td></tr><tr><td>Extra space</td><td><code>O(1)</code></td><td><code>O(1)</code></td><td><code>O(n)</code></td></tr><tr><td>Negative numbers</td><td>Works</td><td>Breaks: no monotonic sum</td><td>Works</td></tr></table></div>
+<blockquote><p>Remember more so that we can compute less. And the memory is now much more powerful: it is used to discover hidden ranges.</p></blockquote>
+
+<h2 id="s7">7. Maximum Size Subarray Sum Equals K: the longest</h2>
+<p>Change the question again: what is the <strong>longest</strong> subarray whose sum is <code>K</code>? The equation is unchanged, <code>old_prefix = current_prefix − K</code>, but the hashmap must store something else. We no longer care how many times we saw a prefix. We care <strong>when we first saw it</strong>.</p>
+<p>Why the first time? If the needed prefix occurred at index <code>2</code> and again at index <code>5</code>, the subarray ending at <code>j</code> has length <code>j − 2</code> or <code>j − 5</code>. The earlier occurrence gives the <strong>longer</strong> one. So the map becomes <code>prefix → earliest index</code> instead of <code>prefix → frequency</code>.</p>
+<p>Here is the same array, <code>[1, -1, 5, -2, 3]</code> with <code>K = 3</code>, run in the longest mode. Then switch to the counting stepper above and notice that the equation never changed, only the stored value.</p>
+<div class="fig" id="lng"></div>
+<p class="cap">The map stores the earliest element index at which each prefix was reached. <code>0: -1</code> means the empty prefix, before index 0.</p>
+<details open><summary>Python code (click to hide or show)</summary><pre>def max_subarray_len(nums, k):
+    first_index = {0: -1}
+    prefix = 0
+    best = 0
+
+    for i, num in enumerate(nums):
+        prefix += num
+
+        if prefix - k in first_index:
+            best = max(best, i - first_index[prefix - k])
+
+        if prefix not in first_index:
+            first_index[prefix] = i
+
+    return best</pre></details>
+<p>Note the last two lines: we only record a prefix the <em>first</em> time, because later occurrences would give shorter subarrays. This is a nice reminder to always ask: what information do I actually need to remember?</p>
+
+<h2 id="s8">8. Contiguous Array: a disguised sum problem</h2>
+<p>Given a binary array like <code>[0, 1, 0, 1, 1, 0]</code>, find the longest contiguous subarray with an equal number of <code>0</code>s and <code>1</code>s. We need a quantity that becomes zero when they are balanced, so transform <code>0 → −1</code> and <code>1 → +1</code>. Now “equal zeros and ones” means <code>sum = 0</code>, and equal prefixes mean zero-sum subarrays. The problem has quietly become <em>find the longest subarray with sum zero</em>, which we already know how to solve. Step through it.</p>
+<div class="fig" id="ca"></div>
+<details open><summary>Python code (click to hide or show)</summary><pre>def find_max_length(nums):
+    first_index = {0: -1}
+    total = 0
+    best = 0
+
+    for i, x in enumerate(nums):
+        total += 1 if x == 1 else -1
+
+        if total in first_index:
+            best = max(best, i - first_index[total])
+        else:
+            first_index[total] = i
+
+    return best</pre></details>
+
+<h2 id="s9">9. The real power, and a mental template</h2>
+<p>The skill isn’t recognizing the words “prefix sum” in a problem statement. It is recognizing when a problem can be reduced to a <strong>difference between two accumulated states</strong>. <code>sum = K</code> becomes <code>P[j] − P[i] = K</code>, then <code>P[i] = P[j] − K</code>. “Equal zeros and ones” becomes a transformed sum of <code>0</code>, then <code>P[i] = P[j]</code>. We keep converting a <strong>range condition</strong> into a relationship between two points in the prefix history.</p>
+<p>The template has three steps. First, express the subarray as <code>current prefix − previous prefix</code>. Second, work out what the previous prefix must be (<code>current − K</code>). Third, decide what you need from the past.</p>
+<div class="fig" id="tmpl"></div>
+<p>This isn’t a collection of unrelated tricks. It is the same equation with different questions asked of the past.</p>
+
+<h2 id="s10">10. Where we are now</h2>
+<div class="fig" id="fl"></div>
+<h3>Problems covered across both prefix articles</h3>
+<div class="fig scroll"><table class="tt"><tr><th>Problem</th><th>Lesson</th></tr>
+<tr><td>Running Sum of 1D Array</td><td>A prefix sum is simply accumulated history.</td></tr>
+<tr><td>Range Sum Query – Immutable</td><td>Precompute overlapping work once so repeated queries are cheap.</td></tr>
+<tr><td>Find Pivot Index</td><td>Prefix information can be a running state, not an array.</td></tr>
+<tr><td>Left and Right Sum Differences</td><td>With the total and one side known, derive the other.</td></tr>
+<tr><td>Subarray Sum Equals K</td><td>Turn a range-sum condition into a lookup of a previous prefix.</td></tr>
+<tr><td>Maximum Size Subarray Sum Equals K</td><td>Same equation, different information stored in the map.</td></tr>
+<tr><td>Contiguous Array</td><td>Transform a condition into a sum, then reuse the machinery.</td></tr></table></div>
+<p>Don’t memorize <code>prefix_count = {0: 1}</code> as a magic line. Understand it: I am walking through the array, remembering the states I’ve seen before, because a relationship between the current state and an earlier state tells me something about the subarray between them. Prefix sums are no longer just precomputed answers. They have become <strong>clues about the past</strong>.</p>
+<blockquote><p>In the next stage the question changes from “is the difference exactly K?” to “is the difference divisible by K?” The prefix-sum idea stays. Only the definition of a matching past state changes.</p></blockquote>
+</main>
+
+<script>
+/* ===== SHARED HELPERS: do not change ===== */
+var $=function(i){return document.getElementById(i)};
+var L=function(v){return v.toLocaleString('en-US')};
+var num=function(x,y){return x-y};
+function isSorted(a){for(var i=1;i<a.length;i++)if(a[i-1]>a[i])return false;return true}
+
+/* cells(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label above'}, noix:true}) -> row of cells */
+function cells(a,o){o=o||{};var c=o.c||{};return '<div class="row">'+a.map(function(v,i){var g=v===''||v===null;return '<div class="cw"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="cell'+(g?' gap':'')+' '+(c[i]||'')+'">'+(g?'&nbsp;':v)+'</div><span class="ix">'+(o.noix?'':i)+'</span></div>'}).join('')+'</div>'}
+
+/* widget(id, presets, build): Previous/Next stepper.
+   presets = [[buttonLabel, params], ...]; build(params) returns [{h:htmlString, n:noteText}, ...] */
+function widget(id,opts,build){
+  var el=$(id),i=0,st=[];
+  el.innerHTML=(opts.length>1?'<div class="row" style="align-items:center">'+opts.map(function(o,k){return '<button data-k="'+k+'">'+o[0]+'</button>'}).join('')+'</div>':'')+'<div class="scroll v"></div><p class="note" aria-live="polite"></p><div class="ctl"><button class="pv">Previous</button><span class="pos"></span><button class="nx">Next</button><button class="pl">Play</button></div>';
+  var v=el.querySelector('.v'),n=el.querySelector('.note'),p=el.querySelector('.pos'),pv=el.querySelector('.pv'),nx=el.querySelector('.nx'),pl=el.querySelector('.pl'),tm=null;
+  function stop(){if(tm){clearInterval(tm);tm=null}pl.textContent='Play'}
+  function r(){v.innerHTML=st[i].h;n.textContent=st[i].n;p.textContent='Step '+(i+1)+' of '+st.length;pv.disabled=i===0;nx.disabled=i===st.length-1}
+  function pick(k){stop();st=build(opts[k][1]);i=0;[].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.setAttribute('aria-pressed',String(+b.dataset.k===k))});r()}
+  [].forEach.call(el.querySelectorAll('button[data-k]'),function(b){b.onclick=function(){pick(+b.dataset.k)}});
+  pv.onclick=function(){stop();if(i>0){i--;r()}};nx.onclick=function(){stop();if(i<st.length-1){i++;r()}};
+  pl.onclick=function(){if(tm){stop();return}if(i>=st.length-1){i=0;r()}pl.textContent='Pause';tm=setInterval(function(){if(i<st.length-1){i++;r()}else stop()},1100)};
+  pick(0);
+}
+
+/* tabs(id, labels, fn): tab buttons; fn(k) returns html for tab k */
+function tabs(id,labels,fn){var el=$(id);el.innerHTML='<div class="row" style="align-items:center"></div><div class="tv"></div>';var bar=el.firstChild,tv=el.lastChild;
+  labels.forEach(function(t,k){var b=document.createElement('button');b.textContent=t;b.onclick=function(){[].forEach.call(bar.children,function(x){x.setAttribute('aria-pressed',String(x===b))});tv.innerHTML=fn(k)};b.setAttribute('aria-pressed',String(k===0));bar.appendChild(b)});tv.innerHTML=fn(0)}
+
+/* growth(id, ns, bruteFn, betterFn, header1, header2): log-scale comparison table */
+function growth(id,ns,bf,tp,h1,h2){$(id).innerHTML='<table><tr><th>n</th><th>'+h1+'</th><th>'+h2+'</th></tr>'+ns.map(function(n){var b=bf(n),t=tp(n);return '<tr><td>'+L(n)+'</td><td>'+L(b)+'<div class="bar r" style="width:'+Math.max(1,Math.log10(b)/12*100)+'%;margin-left:auto"></div></td><td>'+L(t)+'<div class="bar g" style="width:'+Math.max(1,Math.log10(t)/12*100)+'%;margin-left:auto"></div></td></tr>'}).join('')+'</table><p class="cap">Bars use a log scale, otherwise the second column would be invisible.</p>'}
+
+/* flow(['step','step',...]) -> vertical arrow flow */
+function flow(a){return '<div class="flow">'+a.map(function(x){return '<div class="cell">'+x+'</div>'}).join('<span>↓</span>')+'</div>'}
+
+/* grid(matrix, {c:function(r,c){return 'ok|now|dim|mv'}, rh:[row headers], ch:[col headers]}) -> 2D table of cells (DP tables, grids, matrices) */
+function grid(m,o){o=o||{};var w=m[0].length,ch=o.ch,rh=o.rh;
+  var h='<div class="mx" style="grid-template-columns:'+(rh?'auto ':'')+'repeat('+w+',minmax(0,1fr))">';
+  if(ch){h+=(rh?'<span></span>':'')+ch.map(function(x){return '<span class="mh">'+x+'</span>'}).join('')}
+  m.forEach(function(r,i){if(rh)h+='<span class="mh">'+rh[i]+'</span>';r.forEach(function(v,j){h+='<div class="cell '+((o.c&&o.c(i,j))||'')+'">'+v+'</div>'})});
+  return h+'</div>'}
+
+/* vbars(array, {c:{index:'ok|now|dim|mv'}, sub:{index:'label'}}) -> vertical bar chart of an array (sorting, partitioning, heights) */
+function vbars(a,o){o=o||{};var c=o.c||{},mx=Math.max.apply(null,a.map(Math.abs))||1;
+  return '<div class="vb">'+a.map(function(v,i){return '<div class="vc"><span class="ix">'+((o.sub&&o.sub[i])||'&nbsp;')+'</span><div class="vbar '+(c[i]||'')+'" style="height:'+Math.max(4,Math.round(Math.abs(v)/mx*110))+'px"></div><span class="ix">'+v+'</span></div>'}).join('')+'</div>'}
+
+/* driver(id, cfg): "you drive the algorithm". The reader picks the move; wrong moves get a teaching message.
+   cfg = {
+     presets:[[label,param],...],
+     init:function(param){return state},
+     view:function(state,done){return html},
+     done:function(state){return bool},
+     prompt:function(state,done){return 'What should we do?'},
+     choices:[['A','button text'],['B','button text'],...],
+     expected:function(state){return 'A'},               // the correct choice id
+     apply:function(state,choiceId){ return 'Right. why it worked'},   // mutate state here
+     hint:function(state){return 'general hint'},
+     wrong:function(state,choiceId){return 'specific message for a tempting wrong choice, or undefined'}
+   } */
+function driver(id,cfg){
+  var el=$(id),k=0,s,msg='';
+  function init(){s=cfg.init(cfg.presets[k][1]);msg='';draw()}
+  function draw(){var done=cfg.done(s);
+    el.innerHTML='<div class="row" style="align-items:center">'+cfg.presets.map(function(p,j){return '<button data-p="'+j+'" aria-pressed="'+(j===k)+'">'+p[0]+'</button>'}).join('')+'</div><div class="scroll">'+cfg.view(s,done)+'</div><p class="note" aria-live="polite"><strong>'+cfg.prompt(s,done)+'</strong></p><div class="ctl">'+cfg.choices.map(function(c){return '<button data-c="'+c[0]+'"'+(done?' disabled':'')+'>'+c[1]+'</button>'}).join('')+'</div><p class="note" aria-live="polite">'+msg+'</p>';
+    [].forEach.call(el.querySelectorAll('button[data-p]'),function(b){b.onclick=function(){k=+b.dataset.p;init()}});
+    [].forEach.call(el.querySelectorAll('button[data-c]'),function(b){b.onclick=function(){choose(b.dataset.c)}})}
+  function choose(c){if(c!==cfg.expected(s)){msg=(cfg.wrong&&cfg.wrong(s,c))||('Not quite. '+cfg.hint(s));draw();return}
+    msg=cfg.apply(s,c)||'Right.';draw()}
+  init()}
+
+/* slider(id, {min,max,value,label,render:function(v){return html}}) -> "drag to see how the cost grows" figure */
+function slider(id,o){var el=$(id);el.innerHTML='<label for="'+id+'S">'+o.label+' = <strong class="so"></strong></label><input id="'+id+'S" type="range" min="'+o.min+'" max="'+o.max+'" value="'+o.value+'"><div class="sv"></div>';
+  var inp=el.querySelector('input'),out=el.querySelector('.so'),sv=el.querySelector('.sv');
+  function u(){out.textContent=inp.value;sv.innerHTML=o.render(+inp.value)}inp.oninput=u;u()}
+
+/* ===== PAGE-SPECIFIC ===== */
+/*SK*/
+function skSteps(p){var a=p.a,k=p.k,m=p.m,orig=p.orig,s=[],idx={0:[0]},order=[0],pre=0,ans=0,bestR=null,found=false,lab=m==='exist'?'seen':(m==='count'?'prefix_count':'first_index');
+ function ms(){if(m==='exist')return '{'+order.join(', ')+'}';if(m==='count')return '{'+order.map(function(q){return q+': '+idx[q].length}).join(', ')+'}';return '{'+order.map(function(q){return q+': '+(idx[q][0]-1)}).join(', ')+'}'}
+ function cs(i,rg){var c={},sub={},j;if(rg)for(j=rg[0];j<=rg[1];j++)c[j]='ok';if(i>=0&&i<a.length)c[i]='now';if(orig)for(j=0;j<a.length;j++)sub[j]='was '+orig[j];return cells(a,{c:c,sub:sub})}
+ function tail(){return '<p><code>'+lab+'</code> = '+ms()+(m==='count'?' &nbsp; <code>answer</code> = <strong>'+ans+'</strong>':m==='longest'?' &nbsp; <code>best</code> = <strong>'+ans+'</strong>':'')+'</p>'}
+ s.push({h:cs(-1)+'<p>Target <code>K</code> = <strong>'+k+'</strong></p>'+tail(),n:'Before any element, prefix 0 has been seen once: the empty prefix.'});
+ for(var i=0;i<a.length;i++){pre+=a[i];var need=pre-k,occ=idx[need],rg=null,note;
+  if(occ){if(m==='exist'){rg=[occ[0],i];found=true;s.push({h:cs(i,rg)+'<p>Current prefix = <strong>'+pre+'</strong>, needed = '+pre+' − '+k+' = <strong>'+need+'</strong></p><p>Seen? <strong>yes</strong>. The subarray ['+a.slice(occ[0],i+1).join(', ')+'] sums to '+k+'.</p>',n:'Found it. current prefix − old prefix = '+pre+' − '+need+' = '+k+'.'});s.ans=true;return s}
+   if(m==='count'){ans+=occ.length;rg=[occ[occ.length-1],i];note='Needed prefix '+need+' was seen '+occ.length+' time'+(occ.length>1?'s':'')+', so '+occ.length+' subarray'+(occ.length>1?'s end':' ends')+' here: '+occ.map(function(o){return '['+a.slice(o,i+1).join(', ')+']'}).join(' and ')+'.'}
+   else{var len=i+1-occ[0];rg=[occ[0],i];if(len>ans){ans=len;bestR=rg}note='Needed prefix '+need+' first appeared earlier, giving length '+len+'. The earliest occurrence gives the longest subarray.'}}
+  else note='Needed prefix '+need+' has never been seen. No valid subarray ends here.';
+  if(!idx[pre]){idx[pre]=[];order.push(pre)}idx[pre].push(i+1);
+  s.push({h:cs(i,rg)+'<p>Current prefix = <strong>'+pre+'</strong>, needed = '+pre+' − '+k+' = <strong>'+need+'</strong></p>'+tail(),n:note})}
+ if(m==='exist'){s.push({h:cs(-1)+'<p>No earlier prefix ever matched.</p>',n:'No subarray sums to '+k+'.'});s.ans=false}
+ else{s.push({h:cs(-1,m==='longest'?bestR:null)+tail(),n:m==='count'?'Answer: '+ans+' subarrays.':'Answer: '+ans+(bestR?', the highlighted subarray.':' (none).')});s.ans=ans}
+ return s}
+/*ENDSK*/
+widget('det',[['[1, 2, 3, 4, 5], K = 6',{a:[1,2,3,4,5],k:6,m:'exist'}],['[1, 2, 3, 4, 5], K = 20',{a:[1,2,3,4,5],k:20,m:'exist'}],['[3, -2, 5, -4, 2], K = 4',{a:[3,-2,5,-4,2],k:4,m:'exist'}]],skSteps);
+widget('cnt',[['[1, 1, 1], K = 2',{a:[1,1,1],k:2,m:'count'}],['[1, -1, 1, -1], K = 0',{a:[1,-1,1,-1],k:0,m:'count'}],['[1, 0, 2], K = 2',{a:[1,0,2],k:2,m:'count'}]],skSteps);
+widget('lng',[['[1, -1, 5, -2, 3], K = 3',{a:[1,-1,5,-2,3],k:3,m:'longest'}],['[-2, -1, 2, 1], K = 1',{a:[-2,-1,2,1],k:1,m:'longest'}]],skSteps);
+widget('ca',[['[0, 1, 0, 1, 1, 0]',[0,1,0,1,1,0]],['[0, 1]',[0,1]],['[0, 0, 1, 0, 0, 0, 1, 1]',[0,0,1,0,0,0,1,1]]],function(o){var t=o.map(function(x){return x?1:-1}),st=skSteps({a:t,k:0,m:'longest',orig:o});
+ st.unshift({h:cells(o,{})+cells(t,{sub:{0:'transformed'},noix:true}),n:'Transform 0 → −1 and 1 → +1. Equal zeros and ones now means sum = 0, so this is the longest zero-sum subarray.'});return st});
+$('eq').innerHTML=cells([0,1,0,1,0],{c:{0:'ok',2:'ok',4:'ok',1:'mv',3:'mv'},sub:{0:'prefix'}})+'<p class="cap">Equal prefix values share a colour. Any two of them bound a zero-sum subarray, so [1, -1, 1, -1] has 3 + 1 = 4 zero-sum subarrays.</p>';
+slider('win',{min:1,max:5,value:3,label:'Window length (starting at index 0)',render:function(r){var a=[3,-2,5,-4,2],c={},j,sm=0,pv=0;for(j=0;j<r;j++){c[j]='ok';sm+=a[j]}for(j=0;j<r-1;j++)pv+=a[j];
+ return cells(a,{c:c})+'<p class="note">Window sum = <strong>'+sm+'</strong>'+(r>1?' (was '+pv+' one element ago, so the window grew and the sum went '+(sm>pv?'up':'down')+')':'')+'. Prefix sums of this array: 3, 1, 6, 2, 4. They move in both directions, so shrinking “when too large” is unreliable.</p>'}});
+tabs('tmpl',['Existence?','How many?','Longest?'],function(k){return '<p class="note">'+[
+ '<strong>Do I need existence?</strong> Use a <strong>set</strong>: <code>if prefix - k in seen</code>.',
+ '<strong>Do I need how many?</strong> Use a <strong>frequency map</strong>: <code>prefix → count</code>, and add <code>count[prefix - k]</code> at every step.',
+ '<strong>Do I need the longest?</strong> Store the <strong>earliest index</strong>: <code>prefix → first index</code>, and measure <code>i − first[prefix - k]</code>.'][k]+'</p>'});
+$('fl').innerHTML=flow(['Repeated range calculations','Prefix sums','Unknown range: current prefix − previous prefix','Need to remember previous prefixes: hashmap','Count: prefix → frequency','Longest: prefix → earliest index']);
+
+/* ===== CODE TOGGLE AND THEME: do not change ===== */
+var cb=$('codeBtn'),hid=false;
+cb.onclick=function(){hid=!hid;[].forEach.call(document.querySelectorAll('details'),function(d){d.open=!hid});cb.textContent=hid?'Show code':'Hide code'};
+var root=document.documentElement,tb=$('theme');
+function setTheme(t){root.setAttribute('data-theme',t);tb.textContent=t==='dark'?'Light':'Dark'}
+try{var sv=localStorage.getItem('theme');if(sv==='dark'||sv==='light')setTheme(sv)}catch(e){}
+tb.onclick=function(){var t=root.getAttribute('data-theme')==='dark'?'light':'dark';setTheme(t);try{localStorage.setItem('theme',t)}catch(e){}};
+</script>
+</body>
+</html>
